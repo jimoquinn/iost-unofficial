@@ -49,9 +49,11 @@ readonly IOST_MANDATORY=""
 readonly IOST_ROOT="$HOME/go/src/github.com/iost-official/go-iost"
 alias ir="cd $IOST_ROOT"
 
-echo 'Start:  IOST setup\n" >> ~/.bashrc
-echo 'export IOST_ROOT="$HOME/go/src/github.com/iost-official/go-iost"' >> ~/.bashrc
-echo 'alias ir="cd $IOST_ROOT"'' >> ~/.bashrc
+echo "#"  >> ~/.bashrc
+echo "# Start:  IOST setup\n" >> ~/.bashrc
+echo "#"  >> ~/.bashrc
+echo "export IOST_ROOT=$HOME/go/src/github.com/iost-official/go-iost" >> ~/.bashrc
+echo "alias ir=cd $IOST_ROOT" >> ~/.bashrc
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 # NO NEED TO MODIFY BELOW THIS LINE
@@ -164,14 +166,11 @@ printf  "\n\n"
 printf  "#=-------------------------------------------------------------------------=#\n"
 printf  "#------------------     IOST BaIfS - installing packages ------------------=#\n" 
 printf  "#=-------------------------------------------------------------------------=#\n"
-#sudo DEBIAN_FRONTEND=noninteractive 
 
 sudo apt install software-properties-common build-essential curl git -y
 sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
 sudo apt install git-lfs
 git lfs install
-git config --global user.name "$GIT_USERID"
-git config --global user.email "$GIT_EMAIL"
 
 
 
