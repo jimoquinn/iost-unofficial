@@ -69,7 +69,6 @@ printf "Please read carefully as these are hard requirements:\n\n"
 printf "  1.  This is a greenfield install, do not install on a configured system. \n"
 printf "  2.  Must install on $UBUNTU_MANDATORY.  This script will confirm the distro and version. \n"
 printf "  3.  Do not run as the "root" user.  Run under a user that can sudo to "root" (see visudo).  \n"
-printf "  4.  A minimun of 16G RAM and 60G of fast storage. \n"
 printf "\n"; 
 
 
@@ -147,15 +146,15 @@ then
   fi
 else
   printf "\nGood news, you are running Linux distribution [$UBUNTU_MANDATORY], specifically [$UBUNTU_DISPLAY]. \n"
-  printf "This is good, so continuning the installation in 5 seconds...\n\n"
+  printf "Continuning the installation in 5 seconds...\n\n"
   sleep 8
 fi
 
 if [[ $(whoami) == "root" ]]; then
     printf "WARNING:  We are not kidding, you should not run this as the \"root\" user. Modify the sudoers\n"
-    printf "file with visudo.  Once in the editor, add the following to the bottom of the /etc/sudoers file \n";and replace NON-ROOT-USER with the name of your \n"
+    printf "file with visudo.  Once in the editor, add the following to the bottom of the /etc/sudoers file \n"
     printf "non-root user:\n\n"
-    printf "NON-ROOT-USER ALL=(ALL) NOPASSWD:ALL\n\n";
+    printf "NON-ROOT-USER ALL=(ALL) NOPASSWD:ALL\n\n"
     exit 96
 fi
 
