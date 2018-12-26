@@ -49,11 +49,13 @@ readonly IOST_MANDATORY=""
 readonly IOST_ROOT="$HOME/go/src/github.com/iost-official/go-iost"
 alias ir="cd $IOST_ROOT"
 
-echo "#"  >> ~/.bashrc
+echo "
+
+#"  >> ~/.bashrc
 echo "# Start:  IOST setup\n" >> ~/.bashrc
 echo "#"  >> ~/.bashrc
 echo "export IOST_ROOT=$HOME/go/src/github.com/iost-official/go-iost" >> ~/.bashrc
-echo "alias ir=cd $IOST_ROOT" >> ~/.bashrc
+echo "alias ir=\"cd $IOST_ROOT\"" >> ~/.bashrc
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 # NO NEED TO MODIFY BELOW THIS LINE
@@ -222,7 +224,7 @@ sudo apt install apt-transport-https ca-certificates
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 
 echo "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-	$(lsb_release -cs) 
+$(lsb_release -cs)  \
 stable" | sudo tee /etc/apt/sources.list.d/docker.list
 sudo apt-get update
 
