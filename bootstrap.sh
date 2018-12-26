@@ -37,7 +37,7 @@
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 # the version we're looking for
-readonly UBUNTU_MANDATORY="Ubuntu 18.04"
+readonly UBUNTU_MANDATORY="Ubuntu 18.10"
 readonly ROCKSDB_MANDATORY="v5.14.3"
 readonly GOLANG_MANDATORY="1.11.3"
 readonly NODE_MANDATORY="v10.14.2"
@@ -129,6 +129,7 @@ then
 fi
 
 
+# 2018/12/25 - implement code that supports multiple versions
 # /etc/os-release is in good shape, lets check it out.  We check out only the major and
 # minor versions, not the point release.
 readonly UBUNTU_VERSION=$(grep PRETTY_NAME /etc/os-release 2>/dev/null | grep "$UBUNTU_MANDATORY" 2>/dev/null)
