@@ -31,15 +31,6 @@
 #
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-# vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-# ALIGN WITH GITHUB SSH KEYS
-# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-readonly GIT_USERID="jimoquinn"
-readonly GIT_EMAIL="jim.oquinn@gmail.com"
-
-# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 # MODIFY VERSIONS ONLY IF NECESSARY
@@ -54,7 +45,7 @@ readonly NPM_MANDATORY="v6.4.1"
 readonly NVM_MANDATORY="v0.33.11"
 readonly DOCKER_MANDATORY="v0.33.11"
 
-readonly IOST_MANDATORY="v0.33.11"
+readonly IOST_MANDATORY=""
 readonly IOST_ROOT="$HOME/go/src/github.com/iost-official/go-iost"
 alias ir="cd $IOST_ROOT"
 
@@ -326,15 +317,19 @@ printf  "#=------------------   IOST BaIfS - build iwallet    ------------------
 printf  "#=-------------------------------------------------------------------------=#\n\n"
 
 
-go get -d github.com/iost-official/dapp
+#go get -d github.com/iost-official/dapp
 
 
 printf  "#=-------------------------------------------------------------------------=#\n"
 
 
+
+#
+#  support for a wider number Ubuntu releases (16.04, 16.10, 18.04, and 18.10)
+#  18.10 has k8s, docker, lxc, 
+#
 ### Array of supported versions
 ###declare -a versions=('xenial' 'yakkety', 'bionic');
-
 ##### check the version and extract codename of ubuntu if release codename not provided by user
 ####if [ -z "$1" ]; then
 ####    source /etc/lsb-release || \
