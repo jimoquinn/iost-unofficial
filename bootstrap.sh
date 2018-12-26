@@ -43,7 +43,7 @@ readonly GOLANG_MANDATORY="1.11.3"
 readonly NODE_MANDATORY="v10.14.2"
 readonly NPM_MANDATORY="v6.4.1"
 readonly NVM_MANDATORY="v0.33.11"
-readonly DOCKER_MANDATORY="v0.33.11"
+readonly DOCKER_MANDATORY="v18.06.0-ce"
 
 readonly IOST_MANDATORY=""
 readonly IOST_ROOT="$HOME/go/src/github.com/iost-official/go-iost"
@@ -221,8 +221,9 @@ printf  "#=---------------------------------------------------------------------
 sudo apt install apt-transport-https ca-certificates
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 
-# Update where APT will search for Docker Packages
-echo "deb [arch=amd64] https://download.docker.com/linux/ubuntu ${CODENAME} stable" | sudo tee /etc/apt/sources.list.d/docker.list
+echo "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+	$(lsb_release -cs) 
+stable" | sudo tee /etc/apt/sources.list.d/docker.list
 sudo apt-get update
 
 # Verifies APT is pulling from the correct Repository
