@@ -37,7 +37,7 @@
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 # the version we're looking for
-readonly UBUNTU_MANDATORY="Ubuntu 18.10"
+readonly UBUNTU_MANDATORY="Ubuntu 18.04"
 readonly ROCKSDB_MANDATORY="v5.14.3"
 readonly GOLANG_MANDATORY="1.11.3"
 readonly NODE_MANDATORY="v10.14.2"
@@ -101,7 +101,8 @@ printf "  3.  Golang verson $GOLANG_MANDATORY\n"
 printf "  4.  nvm version $NVM_MANDATORY\n"
 printf "  5.  node version $NODE_MANDATORY\n"
 printf "  6.  npm version $NPM_MANDATORY\n"
-printf "  7.  Many packages; software-properties-common, build-essential, curl, git, git-lfs, and more\n"
+printf "  7.  docker version $DOCKER_MANDATORY\n"
+printf "  8.  Many packages; software-properties-common, build-essential, curl, git, git-lfs, and more\n"
 printf "\n"
 
 
@@ -241,8 +242,8 @@ printf  "\n\n"
 printf  "#=-------------------------------------------------------------------------=#\n"
 printf  "#=------------------   IOST BaIfS - check out versions   ------------------=#\n"
 printf  "#=-------------------------------------------------------------------------=#\n\n"
-
 printf "\n\n";
+ERR=0
 printf "Installation completed: \n\n";
 echo -n ' OS:       '
 OS=$(echo $UBUNTU_VERSION | cut -f2 -d'=' 2>/dev/null)
@@ -252,6 +253,7 @@ echo -n '    nvm:   '
 NVM=$(nvm --version 2>/dev/null)
 if [ -z $NVM ]; then
 	echo "error"
+	ERR=1
 else
 	echo "$NVM"
 fi
@@ -270,6 +272,7 @@ echo -n ' docker:   '
 DOCKER=$(docker --version 2>/dev/null)
 if [ -z $DOCKER ]; then
 	echo "error"
+	ERR=1
 else
 	echo "$DOCKER"
 fi
@@ -278,6 +281,7 @@ echo -n ' python:   '
 PYTHON=$(python -V 2>/dev/null)
 if [ -z $PYTHON ]; then
 	echo "error"
+	ERR=1
 else
 	echo "$PYTHON"
 fi
@@ -286,7 +290,10 @@ echo -n '   git:    '
 git --version | cut -f3 -d' ' 2>/dev/null
 
 
-
+if [ $ERR == 1 ]; then
+  echo "error:  there was an error installing dependencies"
+  exit;
+fi
 
 printf  "\n\n"
 printf  "#=-------------------------------------------------------------------------=#\n"
