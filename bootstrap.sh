@@ -174,6 +174,7 @@ sudo apt install software-properties-common build-essential curl git -y
 sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
 sudo apt install git-lfs
 git lfs install
+echo "Done with updates, patches, packages, git, curl and git-lfs\n\n"
 
 
 
@@ -186,6 +187,7 @@ sudo apt install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev li
 git clone -b "$ROCKSDB_MANDATORY" https://github.com/facebook/rocksdb.git && cd rocksdb && make static_lib 
 sudo make install-static
 cd ~
+echo "Done with rocksdb install\n\n"
 
 
 
@@ -198,9 +200,30 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 nvm install $NODE_MANDATORY
-node -v
-npm -v
+echo "Done with nvm, node, and npm install\n\n"
 
+
+
+printf  "\n\n"
+printf  "#=-------------------------------------------------------------------------=#\n"
+printf  "#=------------------   IOST BaIfS - Installing Docker    ------------------=#\n"
+printf  "#=-------------------------------------------------------------------------=#\n\n"
+sudo apt install apt-transport-https ca-certificates -y
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+
+echo "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+$(lsb_release -cs)  \
+stable" | sudo tee /etc/apt/sources.list.d/docker.list
+sudo apt-get update
+
+# Verifies APT is pulling from the correct Repository
+#sudo apt-cache policy docker-ce
+
+sudo apt-get install docker-ce -y
+
+# Add user account to the docker group
+sudo usermod -aG docker $(whoami)
+echo "Done with Docker install\n\n"
 
 
 printf  "\n\n"
@@ -215,27 +238,7 @@ echo "export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin" 	    >> ~/.bashrc
 echo "export GOPATH=$HOME/go" 			                    >> ~/.bashrc
 source ~/.bashrc
 mkdir -p $GOPATH/src && cd $GOPATH/src
-
-
-printf  "\n\n"
-printf  "#=-------------------------------------------------------------------------=#\n"
-printf  "#=------------------   IOST BaIfS - Installing Docker    ------------------=#\n"
-printf  "#=-------------------------------------------------------------------------=#\n\n"
-sudo apt install apt-transport-https ca-certificates
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-
-echo "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-$(lsb_release -cs)  \
-stable" | sudo tee /etc/apt/sources.list.d/docker.list
-sudo apt-get update
-
-# Verifies APT is pulling from the correct Repository
-#sudo apt-cache policy docker-ce
-
-sudo apt install docker-ce
-
-# Add user account to the docker group
-sudo usermod -aG docker $(whoami)
+echo "Done with Golang install\n\n"
 
 
 printf  "\n\n"
