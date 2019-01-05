@@ -213,6 +213,15 @@ iost_install_packages () {
   printf  "#=-------------------------------------------------------------------------=#\n"
 
   sudo apt install software-properties-common build-essential curl git -y
+  
+  echo -n '   git:    '
+  git --version | cut -f3 -d' ' 2>/dev/null
+
+  if [ $ERR == 1 ]; then
+    echo "error:  there was an error installing dependencies"
+    exit;
+  fi
+
   sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
   sudo apt install git-lfs
   git lfs install
@@ -253,6 +262,24 @@ iost_install_nvm_node_npm () {
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
   [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
   nvm install $NODE_MANDATORY
+
+
+  echo -n '    nvm:   '
+  NVM=$(nvm --version 2>/dev/null)
+  if [ -z $NVM ]; then
+    echo "error"
+    ERR=1
+  else
+    echo "$NVM"
+  fi
+
+  echo -n '    npm:   '
+  npm --version 2>/dev/null
+
+  echo -n '   node:   '
+  node --version 2>/dev/null
+
+
   echo "Done with nvm, node, and npm install"
 }
 
@@ -278,6 +305,17 @@ iost_install_docker () {
 
   # Add user account to the docker group
   sudo usermod -aG docker $(whoami)
+
+  echo -n ' docker:   '
+  DOCKER=$(docker --version 2>/dev/null)
+
+  if [ -z $DOCKER ]; then
+    echo "error"
+    ERR=1
+  else
+    echo "$DOCKER"
+  fi
+
   echo "Done with Docker install"
 }
 
@@ -306,8 +344,13 @@ iost_install_golang () {
   sudo tar -C /usr/local -xzf go1.11.3.linux-amd64.tar.gz
   echo "export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin" 	    >> ~/.bashrc
   echo "export GOPATH=$HOME/go" 			            >> ~/.bashrc
-  source ~/.bashrc
+  .  ~/.bashrc
   mkdir -p $GOPATH/src && cd $GOPATH/src
+
+  echo -n '     go:   '
+  GO=$(go version | cut -f3 -d' ' | sed 's/go//g' 2>/dev/null)
+  echo $GO
+
   echo "Done with Golang install"
 }
 
@@ -316,6 +359,7 @@ iost_install_golang () {
 #  iost_check_deps () - 
 #
 iost_check_deps () {
+  return
   printf  "\n\n"
   printf  "#=-------------------------------------------------------------------------=#\n"
   printf  "#=------------------   IOST Install - check out versions   ------------------=#\n"
@@ -327,34 +371,10 @@ iost_check_deps () {
   OS=$(echo $UBUNTU_VERSION | cut -f2 -d'=' 2>/dev/null)
   echo $OS
 
-  echo -n '    nvm:   '
-  NVM=$(nvm --version 2>/dev/null)
-  if [ -z $NVM ]; then
-    echo "error"
-    ERR=1
-  else
-    echo "$NVM"
-  fi
 
-  echo -n '    npm:   '
-  npm --version 2>/dev/null
 
-  echo -n '   node:   '
-  node --version 2>/dev/null
-
-  echo -n '     go:   '
-  GO=$(go version | cut -f3 -d' ' | sed 's/go//g' 2>/dev/null)
-  echo $GO
-
-  echo -n ' docker:   '
-  DOCKER=$(docker --version 2>/dev/null)
-  if [ -z $DOCKER ]; then
-    echo "error"
-    ERR=1
-  else
-    echo "$DOCKER"
-  fi
-
+ 
+  
   #echo -n ' python:   '
   #PYTHON=$(python -V 2>/dev/null)
   #if [ -z $PYTHON ]; then
@@ -364,13 +384,7 @@ iost_check_deps () {
   #  echo "$PYTHON"
   #fi
 
-  echo -n '   git:    '
-  git --version | cut -f3 -d' ' 2>/dev/null
 
-  if [ $ERR == 1 ]; then
-    echo "error:  there was an error installing dependencies"
-    exit;
-  fi
 }
 
 #
@@ -416,7 +430,7 @@ iost_install_iost () {
 }
 
 
-
+set -e
 
 iost_warning_requirements
 iost_sudo_confirm
