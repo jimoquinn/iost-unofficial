@@ -51,7 +51,8 @@
 
 # the version we're looking for
 #readonly UBUNTU_MANDATORY="Ubuntu 18.04"
-readonly UBUNTU_MANDATORY="Ubuntu 16.04"
+#readonly UBUNTU_MANDATORY="Ubuntu 16.04"
+
 readonly ROCKSDB_MANDATORY="v5.14.3"
 readonly GOLANG_MANDATORY="1.11.3"
 readonly NODE_MANDATORY="v10.14.2"
@@ -59,6 +60,7 @@ readonly NPM_MANDATORY="v6.4.1"
 readonly NVM_MANDATORY="v0.33.11"
 readonly DOCKER_MANDATORY="v18.06.0-ce"
 
+readonly UBUNTU_MANDATORY=('xenial' 'yakkety', 'bionic', 'cosmic');
 readonly IOST_MANDATORY=""
 # set to "1" if this is to be used in a Vagrantfile as provision
 readonly FOR_VAGRANT="1"	
@@ -99,9 +101,19 @@ iost_warning_requirements () {
   printf  "#-----------------   IOST Install - warning & requirements   --------------=#\n" 
   printf  "#=-------------------------------------------------------------------------=#\n\n"
   printf "Please read carefully as these are hard requirements:\n\n"
-  printf "  1.  This is a greenfield install, do not install on a configured system. \n"
+  printf "  1.  This is for a greenfield install, do not install on a configured system. \n"
   printf "  2.  Must install on $UBUNTU_MANDATORY.  This script will confirm the distro and version. \n"
   printf "  3.  Do not run as the "root" user.  Run under a user that can sudo to "root" (man visudo).  \n"
+  printf "\n\n";
+  printf "This script will install the following:\n\n"
+  printf "  -  Security updates and patches for $UBUNTU_MANDATORY\n"
+  printf "  -  Rocks DB $ROCKSDB_MANDATORY\n"
+  printf "  -  Golang verson $GOLANG_MANDATORY\n"
+  printf "  -  nvm version $NVM_MANDATORY\n"
+  printf "  -  node version $NODE_MANDATORY\n"
+  printf "  -  npm version $NPM_MANDATORY\n"
+  printf "  -  docker version $DOCKER_MANDATORY\n"
+  printf "  -  Many packages; software-properties-common, build-essential, curl, git, git-lfs, and more\n"
   printf "\n\n";
   printf "First we need to confirm that you are not running as "root" and that you can "sudo" to root.\n"
   printf "\n"; 
@@ -138,63 +150,32 @@ iost_sudo_confirm () {
   printf  "#=-------------------------------------------------------------------------=#\n"
   printf  "#--------------------     IOST Install - packages       -------------------=#\n" 
   printf  "#=-------------------------------------------------------------------------=#\n\n"
-  printf "This script will install the following:\n\n"
-  printf "  -  Security updates and patches for $UBUNTU_MANDATORY\n"
-  printf "  -  Rocks DB $ROCKSDB_MANDATORY\n"
-  printf "  -  Golang verson $GOLANG_MANDATORY\n"
-  printf "  -  nvm version $NVM_MANDATORY\n"
-  printf "  -  node version $NODE_MANDATORY\n"
-  printf "  -  npm version $NPM_MANDATORY\n"
-  printf "  -  docker version $DOCKER_MANDATORY\n"
-  printf "  -  Many packages; software-properties-common, build-essential, curl, git, git-lfs, and more\n"
   printf "\n"
 
 
-  printf "Do you want to continue?  (Y/n): "
-  read CONT
-  if [ ! -z "$CONT" ]; then
-    if [ $CONT == "n" ] || [ $CONT == 'N' ]; then
-      printf "Bye, but hope to see you again soon.\n"
-      printf "\n"; printf "\n"
-      exit 99
-    fi
-  fi
+  #
+  #  support for a wider number Ubuntu releases (16.04, 16.10, 18.04, and 18.10)
+  #
 
-  if [ ! -r /etc/os-release ]
-  then
-    printf "\nCannot read [/etc/os-release] so it appears that you are not running distribution \n[$UBUNTU_MANDATORY].\n"
-    printf "Do hou want to continue? (Y/n): "
-    read CONT
-    if [ ! -z "$CONT" ]; then
-      if [ $CONT == "n" ] || [ $CONT == 'N' ]; then
-        printf "\nBecause we can't read /etc/os-release we are exiting the installation.\n" 
-        exit 98
-      fi
-    fi
-  fi
-
-
-  # 2018/12/25 - implement code that supports multiple versions of Ubuntu: 16.04, 16.10, and 18.04
-  # /etc/os-release is in good shape, lets check it out.  We check out only the major and
-  # minor versions, not the point release.
-  readonly UBUNTU_VERSION=$(grep PRETTY_NAME /etc/os-release 2>/dev/null | grep "$UBUNTU_MANDATORY" 2>/dev/null)
-  readonly UBUNTU_DISPLAY=$(echo $UBUNTU_VERSION | cut -f2 -d'=' 2>/dev/null)
-
-  if [ "$UBUNTU_VERSION" ==  "" ] 
-  then
-    printf "Appears that you are not installing on [$UBUNTU_MANDATORY]. \nDo you want to continue? (Y/n):"
-    read CONT
-    if [ ! -z "$CONT" ]; then
-      if [ $CONT == "n" ] || [ $CONT == 'N' ]; then
-        printf "Good choice, best not install unless are on [$UBUNTU_MANDATORY].\n";
-        exit 97
-      fi
-    fi
+  ### Array of supported versions
+  ###declare -a versions=('xenial' 'yakkety', 'bionic', 'cosmic');
+  # check the version and extract codename of ubuntu if release codename not provided by user
+  if [ -z "$1" ]; then
+      source /etc/lsb-release || \
+          (echo "Error: Release information not found, run script passing Ubuntu version codename as a parameter"; exit 1)
+      CODENAME=${DISTRIB_CODENAME}
   else
-    printf "\nGood news, you are running distribution [$UBUNTU_MANDATORY], specifically [$UBUNTU_DISPLAY]. \n"
-    printf "Continuning the installation in 5 seconds...\n\n"
-    sleep 8
+      CODENAME=${1}
   fi
+
+  # check version is supported
+  if echo ${UBUNTU_MANDATORY[@]} | grep -q -w ${CODENAME}; then
+      echo "Installing Hyperledger Composer prereqs for Ubuntu ${CODENAME}"
+  else
+      echo "Error: Ubuntu ${CODENAME} is not supported"
+      exit 1
+  fi
+
 
 }
 
