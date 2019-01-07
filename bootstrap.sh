@@ -163,16 +163,16 @@ iost_sudo_confirm () {
   if [ -z "$1" ]; then
       source /etc/lsb-release || \
           (echo "Error: Release information not found, run script passing Ubuntu version codename as a parameter"; exit 1)
-      CODENAME=${DISTRIB_CODENAME}
+      OS=${DISTRIB_CODENAME}
   else
-      CODENAME=${1}
+      OS=${1}
   fi
 
   # check version is supported
-  if echo ${UBUNTU_MANDATORY[@]} | grep -q -w ${CODENAME}; then
-      echo "Installing Hyperledger Composer prereqs for Ubuntu ${CODENAME}"
+  if echo ${UBUNTU_MANDATORY[@]} | grep -q -w ${OS}; then
+      echo "Installing pre-regs for Ubuntu ${OS}"
   else
-      echo "Error: Ubuntu ${CODENAME} is not supported"
+      echo "Error: Ubuntu ${OS} is not supported"
       exit 1
   fi
 
@@ -288,14 +288,14 @@ iost_install_docker () {
   sudo usermod -aG docker $(whoami)
 
   echo -n ' docker:   '
-  DOCKER=$(docker --version 2>/dev/null)
-
-  if [ -z $DOCKER ]; then
-    echo "error"
-    ERR=1
-  else
-    echo "$DOCKER"
-  fi
+  #DOCKER=$(docker --version 2>/dev/null)
+#
+#  if [ -z $DOCKER ]; then
+#    echo "error"
+#    ERR=1
+#  else
+#    echo "$DOCKER"
+#  fi
 
   echo "Done with Docker install"
 }
