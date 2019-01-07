@@ -50,8 +50,10 @@
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 # the version we're looking for
-#readonly UBUNTU_MANDATORY="Ubuntu 18.04"
-#readonly UBUNTU_MANDATORY="Ubuntu 16.04"
+readonly UBUNTU_MANDATORY=('xenial' 'yakkety', 'bionic', 'cosmic');
+readonly CENTOS_MANDATORY=('centos-7');
+readonly DEBIAN_MANDATORY=('stretch, ''');
+readonly MACOS_MANDATORY=(', ''');
 
 readonly ROCKSDB_MANDATORY="v5.14.3"
 readonly GOLANG_MANDATORY="1.11.3"
@@ -60,7 +62,6 @@ readonly NPM_MANDATORY="v6.4.1"
 readonly NVM_MANDATORY="v0.33.11"
 readonly DOCKER_MANDATORY="v18.06.0-ce"
 
-readonly UBUNTU_MANDATORY=('xenial' 'yakkety', 'bionic', 'cosmic');
 readonly IOST_MANDATORY=""
 # set to "1" if this is to be used in a Vagrantfile as provision
 readonly FOR_VAGRANT="1"	
@@ -113,41 +114,37 @@ iost_warning_requirements () {
   printf "  -  node version $NODE_MANDATORY\n"
   printf "  -  npm version $NPM_MANDATORY\n"
   printf "  -  docker version $DOCKER_MANDATORY\n"
+  printf "  -  nvm version $NVM_MANDATORY\n"
   printf "  -  Many packages; software-properties-common, build-essential, curl, git, git-lfs, and more\n"
   printf "\n\n";
-  printf "This script can do the following:\n\n"
-  printf "  1.  Linux: Vagrant   LXC        Ubuntu 18.10 (Cosmic)\n
-  printf "  2.  Linux: Vagrant   LXC        Ubuntu 18.04 (Bionic)\n
-  printf "  3.  Linux: Vagrant   LXC        Ubuntu 16.04 (Bionic)\n
-  printf "  4.  Linux: Vagrant   LXC        Ubuntu 16.04 (Bionic)\n
-  printf "  5.  Linux: Vagrant   LXC        CentOS 7 \n
-  printf "  6.  Linux: Vagrant   LXC        Debian Stretch 9.\n
-  printf "  7.  Linux: Vagrant   VMware     Ubuntu 18.04 (Bionic)\n
-  printf "  8.  Linux: Vagrant   VMware     Ubuntu 18.10 (Cosmic)\n
-  printf "  9.  Linux: Vagrant   VMware     Ubuntu 18.04 (Bionic)\n
-  printf " 10.  Linux: Vagrant   VMware     Ubuntu 16.04 (Bionic)\n
-  printf " 11.  Linux: Vagrant   VMware     Ubuntu 16.04 (Bionic)\n
-  printf " 12.  Linux: Vagrant   VMware     CentOS 7 \n
-  printf " 13.  Linux: Vagrant   VMware     Debian Stretch 7 \n
-  printf " 14.  Linux: Vagrant   VirtualBox Ubuntu 18.04 (Bionic)\n
-  printf " 15.  Linux: Vagrant   VirtualBox Ubuntu 18.10 (Cosmic)\n
-  printf " 16.  Linux: Vagrant   VirtualBox Ubuntu 18.04 (Bionic)\n
-  printf " 17.  Linux: Vagrant   VirtualBox Ubuntu 16.04 (Bionic)\n
-  printf " 18.  Linux: Vagrant   VirtualBox Ubuntu 16.04 (Bionic)\n
-  printf " 19.  Linux: Vagrant   VirtualBox CentOS 7 \n
-  printf " 20.  Linux: Vagrant   VirtualBox Debian Stretch 7 \n
+  printf "This script can install the following:\n\n"
+  printf "  1.  Linux: Vagrant   LXC        Ubuntu 18.10 (Cosmic)\n"
+  printf "  2.  Linux: Vagrant   LXC        Ubuntu 18.04 (Bionic)\n"
+  printf "  3.  Linux: Vagrant   LXC        Ubuntu 16.04 (Bionic)\n"
+  printf "  4.  Linux: Vagrant   LXC        Ubuntu 16.04 (Bionic)\n"
+  printf "  5.  Linux: Vagrant   LXC        CentOS 7 \n"
+  printf "  6.  Linux: Vagrant   LXC        Debian Stretch 9.\n"
+  printf "  7.  Linux: Vagrant   VMware     Ubuntu 18.04 (Bionic)\n"
+  printf "  8.  Linux: Vagrant   VMware     Ubuntu 18.10 (Cosmic)\n"
+  printf "  9.  Linux: Vagrant   VMware     Ubuntu 18.04 (Bionic)\n"
+  printf " 10.  Linux: Vagrant   VMware     Ubuntu 16.04 (Bionic)\n"
+  printf " 11.  Linux: Vagrant   VMware     Ubuntu 16.04 (Bionic)\n"
+  printf " 12.  Linux: Vagrant   VMware     CentOS 7 \n"
+  printf " 13.  Linux: Vagrant   VMware     Debian Stretch 7 \n"
+  printf " 14.  Linux: Vagrant   VirtualBox Ubuntu 18.04 (Bionic)\n"
+  printf " 15.  Linux: Vagrant   VirtualBox Ubuntu 18.10 (Cosmic)\n"
+  printf " 16.  Linux: Vagrant   VirtualBox Ubuntu 18.04 (Bionic)\n"
+  printf " 17.  Linux: Vagrant   VirtualBox Ubuntu 16.04 (Bionic)\n"
+  printf " 18.  Linux: Vagrant   VirtualBox Ubuntu 16.04 (Bionic)\n"
+  printf " 19.  Linux: Vagrant   VirtualBox CentOS 7 \n"
+  printf " 20.  Linux: Vagrant   VirtualBox Debian Stretch 7 \n"
 
 
+  #printf "\n\n";
+  #printf "First we need to confirm that you are not running as "root" and that you can "sudo" to root.\n"
+  #printf "\n"; 
 
-
-  printf " 14.  Rocks DB $ROCKSDB_MANDATORY\n"
-  printf "  -  Golang verson $GOLANG_MANDATORY\n"
-  printf "  -  nvm version $NVM_MANDATORY\n"
-  printf "\n\n";
-  printf "First we need to confirm that you are not running as "root" and that you can "sudo" to root.\n"
-  printf "\n"; 
-
-  printf "Do you want to continue?  (Y/n): "
+  printf "Make a selection?  (Y/n): "
   read CONT
 
   if [ ! -z "$CONT" ]; then
@@ -222,20 +219,34 @@ iost_install_packages () {
   printf  "#------------------     IOST Install - installing packages ------------------=#\n" 
   printf  "#=-------------------------------------------------------------------------=#\n"
 
-  sudo apt install software-properties-common build-essential curl git -y
-  
-  echo -n '   git:    '
-  git --version | cut -f3 -d' ' 2>/dev/null
+  printf "---> run: START iost_install_packages() \n";
+  printf "---> run: apt-get update\n";
+  sudo apt-get update
 
-  if [ $ERR == 1 ]; then
-    echo "error:  there was an error installing dependencies"
-    exit;
+  printf "---> run: apt-get upgrade\n";
+  sudo apt-get upgrade -y
+
+  printf "---> sudo apt-get install software-properties-common build-essential curl git -y\n"
+  sudo apt install software-properties-common build-essential curl git -y
+
+  if ! [ -x "$(command -v git)" ]; then
+    printf "ERROR:  git is not installed and executable.\n"; 
+    exit 98
+  else
+    echo -n '---> git:    '
+    git --version | cut -f3 -d' ' 2>/dev/null
   fi
 
+  # install Large File Support for git
+  printf "---> run: sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash\n";
   sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+
+  printf "---> run: sudo apt install git-lfs\n";
   sudo apt install git-lfs
+
+  printf "---> run: git lfs install\n";
   git lfs install
-  echo "Done with updates, patches, packages, git, curl and git-lfs"
+  printf "---> run: DONE iost_install_packages() \n";
 
 }
 
@@ -250,11 +261,20 @@ iost_install_rocksdb () {
   printf  "#=-------------     IOST Install - installing Rocks DB        ---------------=#\n"
   printf  "#=-------------------------------------------------------------------------=#\n\n"
 
+  printf "---> run: START iost_install_rocksdb() \n";
+  printf "---> run: apt-get update\n";
+
+  printf "---> run: sudo apt install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev -y \n";
   sudo apt install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev -y
+
+  printf "---> run: git clone -b "$ROCKSDB_MANDATORY" https://github.com/facebook/rocksdb.git && cd rocksdb && make static_lib \n";
   git clone -b "$ROCKSDB_MANDATORY" https://github.com/facebook/rocksdb.git && cd rocksdb && make static_lib 
+
+
+  printf "---> run: sudo make install-static\n";
   sudo make install-static
-  cd ~
-  echo "Done with rocksdb install"
+
+  printf "---> run: DONE iost_install_rocksdb() \n";
 }
 
 
