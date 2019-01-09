@@ -52,7 +52,7 @@
 # the version we're looking for
 readonly UBUNTU_MANDATORY=('xenial' 'yakkety', 'bionic', 'cosmic');
 readonly CENTOS_MANDATORY=('centos7');
-#readonly DEBIAN_MANDATORY=('stretch);
+readonly DEBIAN_MANDATORY=('stretch);
 #readonly MACOS_MANDATORY=('', '');
 
 readonly ROCKSDB_MANDATORY="v5.14.3"
@@ -123,6 +123,20 @@ iost_os_detect ()  {
   tOS=`uname`
   case $tOS in
     'Linux')
+
+	# /etc/os-release
+	# PRETTY_NAME="Debian GNU/Linux 9 (stretch)"
+	# NAME="Debian GNU/Linux"
+	# VERSION_ID="9"
+	# VERSION="9 (stretch)"
+	# ID=debian
+	# HOME_URL="https://www.debian.org/"
+	# SUPPORT_URL="https://www.debian.org/support"
+	# BUG_REPORT_URL="https://bugs.debian.org/"
+
+        # /etc/os-release
+
+
 
       #declare -a versions=('xenial' 'yakkety', 'bionic', 'cosmic');
       # check the version and extract codename of ubuntu if release codename not provided by user
@@ -243,8 +257,7 @@ iost_warning_requirements () {
 iost_detect_vm() {
   # are we running in a virtual environment?
 
-
-
+  echo "iost_detec_vm"
 
 }
 
@@ -542,6 +555,7 @@ set -e
 
 iost_warning_requirements
 iost_os_detect
+exit;
 iost_sudo_confirm
 iost_install_packages
 iost_install_rocksdb
