@@ -94,7 +94,7 @@ iost_ubuntu_options ()  {
   echo '  2.  Kubernetes and Docker'
   echo '  3.  VMware'
   echo '  4.  Vagrant and VirtualBox'
-  echo '  4.  Greenfield (aka; bare metal)'
+  echo "  4.  Greenfield (aka; bare metal)"
 }
 
 iost_os_detect ()  {
@@ -198,14 +198,14 @@ iost_os_detect ()  {
 #
 iost_warning_requirements () {
   
-  echo ''; echo ''
-  echo '#=-------------------------------------------------------------------------=#'
-  echo '#-----------------   IOST Install - warning & requirements   --------------=#'
-  echo '#=-------------------------------------------------------------------------=#'
-  echo 'Please read carefully as these are hard requirements:'; echo ''
+  echo ""; echo ""
+  echo "#=-------------------------------------------------------------------------=#"
+  echo "#-----------------   IOST Install - warning and requirements   ------------=#"
+  echo "#=-------------------------------------------------------------------------=#"
+  echo "Please read carefully as these are hard requirements:"; echo ""
   echo "  1.  This is for a greenfield install, do not install on a configured system."
   echo "  2.  Do not run as the "root" user.  Run under a user that can sudo to "root" (man visudo)."
-  echo ''; echo '';
+  echo ""; echo "";
 
 
   echo "This script will install the following:"; echo ""
@@ -220,23 +220,20 @@ iost_warning_requirements () {
   echo "  -  Many packages; software-properties-common, build-essential, curl, git, git-lfs, and more"
   echo ''
 
-
-
-
-
   #echo '\n\n'
   #echo 'First we need to confirm that you are not running as "root" and that you can "sudo" to root.\n'
   #echo '\n'
 
-  echo 'Make a selection?  (Y/n): '
+  echo "Make a selection?  (Y/n): "
   read CONT
 
   if [ ! -z "$CONT" ]; then
     if [ $CONT == "n" ] || [ $CONT == 'N' ]; then
-      echo ''; echo ''
-      echo 'Good choice, best if you do not install unless you meet the above requirements.'
-      echo 'We know you don'\''t give up that easy, so you will be back.'
-      echo ''; echo ''
+      echo ""; echo ""
+      echo "Good choice, best if you do not install unless you meet the above requirements."
+      echo "We know you don't give up that easy, so you will be back."
+      echo ""; 
+      echo ""
       exit 99
     fi
   fi
@@ -278,21 +275,21 @@ iost_sudo_confirm () {
 
   ###declare -a versions=('xenial' 'yakkety', 'bionic', 'cosmic');
   # check the version and extract codename of ubuntu if release codename not provided by user
-  if [ -z "$1" ]; then
-      source /etc/lsb-release || \
-          (echo "Error: Release information not found, run script passing Ubuntu version codename as a parameter"; exit 1)
-      OS=${DISTRIB_CODENAME}
-  else
-      OS=${1}
-  fi
+  #if [ -z "$1" ]; then
+  #    source /etc/lsb-release || \
+  #        (echo "Error: Release information not found, run script passing Ubuntu version codename as a parameter"; exit 1)
+  #    OS=${DISTRIB_CODENAME}
+  #else
+  #    OS=${1}
+  #fi
 
   # check version is supported
-  if echo ${UBUNTU_MANDATORY[@]} | grep -q -w ${OS}; then
-      echo "---> msg: Installing pre-regs for Ubuntu ${OS}"
-  else
-      echo "---> msg: ERROR: Ubuntu ${OS} is not supported"
-      exit 1
-  fi
+  #if echo ${UBUNTU_MANDATORY[@]} | grep -q -w ${OS}; then
+  #    echo "---> msg: Installing pre-regs for Ubuntu ${OS}"
+  #else
+  #    echo "---> msg: ERROR: Ubuntu ${OS} is not supported"
+  #    exit 1
+  #fi
 
 
 }
