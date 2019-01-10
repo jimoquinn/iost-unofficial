@@ -1,0 +1,5 @@
+sudo apt-get install python-dev python-pip python-virtualenv python-numpy python-matplotlib
+sudo apt-get install build-essential git
+apt-get install golang
+apt-get update && apt-get upgrade -y
+apt purge mdadm
