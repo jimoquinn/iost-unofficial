@@ -50,10 +50,10 @@
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 # the version we're looking for
-readonly UBUNTU_MANDATORY=('xenial' 'yakkety', 'bionic', 'cosmic');
+readonly UBUNTU_MANDATORY=('xenial' 'yakkety' 'bionic'  'cosmic');
 readonly CENTOS_MANDATORY=('centos7');
-readonly DEBIAN_MANDATORY=('stretch);
-#readonly MACOS_MANDATORY=('', '');
+readonly DEBIAN_MANDATORY=('stretch');
+#readonly MACOS_MANDATORY=('Darwin', 'Hitchens');
 
 readonly ROCKSDB_MANDATORY="v5.14.3"
 readonly GOLANG_MANDATORY="1.11.3"
@@ -120,7 +120,7 @@ iost_os_detect ()  {
   #echo ' 19.  Linux: Vagrant   VirtualBox CentOS 7' 
   #echo ' 20.  Linux: Vagrant   VirtualBox Debian Stretch 7'
 
-  tOS=`uname`
+  tOS=$(uname)
   case $tOS in
     'Linux')
 
@@ -204,7 +204,7 @@ iost_warning_requirements () {
   echo "#=-------------------------------------------------------------------------=#"
   echo "Please read carefully as these are hard requirements:"; echo ""
   echo "  1.  This is for a greenfield install, do not install on a configured system."
-  echo "  2.  Do not run as the "root" user.  Run under a user that can sudo to "root" (man visudo)."
+  echo "  2.  Do not run as the root user.  Run under a user that can sudo to root (man visudo)."
   echo ""; echo "";
 
 
@@ -225,8 +225,9 @@ iost_warning_requirements () {
   #echo '\n'
 
   echo "Make a selection?  (Y/n): "
-  read CONT
+  read -r CONT
 
+  # if [ -n "$CONT" ]; then
   if [ ! -z "$CONT" ]; then
     if [ $CONT == "n" ] || [ $CONT == 'N' ]; then
       echo ""; echo ""
@@ -353,7 +354,7 @@ iost_install_rocksdb () {
   echo "---> run: sudo apt install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev -y"
   sudo apt install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev -y
 
-  echo "---> run: git clone -b "$ROCKSDB_MANDATORY" https://github.com/facebook/rocksdb.git && cd rocksdb && make static_lib"
+  echo "---> run: git clone -b $ROCKSDB_MANDATORY https://github.com/facebook/rocksdb.git && cd rocksdb && make static_lib"
   git clone -b "$ROCKSDB_MANDATORY" https://github.com/facebook/rocksdb.git && cd rocksdb && make static_lib 
 
 
@@ -373,6 +374,8 @@ iost_install_nvm_node_npm () {
   echo '#=-------------------------------------------------------------------------=#'
   echo '#=------------------   IOST Install - nvm, node, and npm   ----------------=#'
   echo '#=-------------------------------------------------------------------------=#'
+
+  cd ~
   curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash
   export NVM_DIR="$HOME/.nvm"
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
@@ -461,7 +464,9 @@ iost_install_golang () {
   sudo tar -C /usr/local -xzf go1.11.3.linux-amd64.tar.gz
   echo "export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin" 	    >> ~/.bashrc
   echo "export GOPATH=$HOME/go" 			            >> ~/.bashrc
-  .  ~/.bashrc
+  export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
+  export GOPATH=$HOME/go
+  #.  ~/.bashrc
   mkdir -p $GOPATH/src && cd $GOPATH/src
 
   echo -n '     go:   '
@@ -571,13 +576,14 @@ iost_install_iost () {
 
 set -e
 
+cd ~
 iost_warning_requirements
 iost_os_detect
 iost_sudo_confirm
-iost_install_packages
-iost_install_rocksdb
-iost_install_nvm_node_npm
-iost_install_docker
+#iost_install_packages
+#iost_install_rocksdb
+#iost_install_nvm_node_npm
+#iost_install_docker
 iost_install_golang
 #iost_check_deps
 iost_install_iost
