@@ -552,11 +552,11 @@ iost_install_golang () {
   fi
 
   echo "
-  #"                               >> ~/.iost_env
-  echo "# Start:  IOST setup\n"    >> ~/.iost_env
-  echo "#"                         >> ~/.iost_env
-  echo "export IOST_ROOT=$HOME/go/src/github.com/iost-official/go-iost" >> ~/.iost_env
-  echo "alias ir=\"cd $IOST_ROOT\"" >> ~/.iost_env
+  #"                               >> $HOME/.iost_env
+  echo "# Start:  IOST setup\n"    >> $HOME/.iost_env
+  echo "#"                         >> $HOME/.iost_env
+  echo "export IOST_ROOT=$HOME/go/src/github.com/iost-official/go-iost" >> $HOME/.iost_env
+  echo "alias ir=\"cd $IOST_ROOT\"" >> $HOME/.iost_env
 
   if [ -f /tmp/go${GOLANG_MANDATORY}.linux-amd64.tar.gz ]; then
     echo "---> msg: removing previous go${GOLANG_MANDATORY}.linux-amd64.tar.gz";
@@ -565,11 +565,16 @@ iost_install_golang () {
 
   cd /tmp && wget https://dl.google.com/go/go1.11.3.linux-amd64.tar.gz    >> $LOG 2>&1
   sudo tar -C /usr/local -xzf go${GOLANG_MANDATORY}.linux-amd64.tar.gz    >> $LOG 2>&1
-  echo "---> msg: export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin" 	  >> ~/.iost_env
-  echo "---> msg: export GOPATH=$HOME/go" 			          >> ~/.iost_env
+
+  echo "---> msg: export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin" 	  >> $LOG 2>&1
+  echo "---> msg: export GOPATH=$HOME/go" 			          >> $LOG 2>&1
+
+  echo "export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin" 	  >> $HOME/.iost_env
+  echo "export GOPATH=$HOME/go" 			          >> $HOME/.iost_env
+
   export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
   export GOPATH=$HOME/go
-  source ~/.iost_env
+  source $HOME/.iost_env
 
   echo "---> msg: mkdir -p $GOPATH/src && cd $GOPATH/src"
   mkdir -p $GOPATH/src && cd $GOPATH/src
