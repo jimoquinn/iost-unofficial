@@ -308,14 +308,14 @@ iost_install_packages () {
 
   echo '---> run: START iost_install_packages()'
   echo '---> run: apt-get update'
-  sudo apt-get update
+  sudo apt-get update > /dev/null 2>&1
 
   echo '---> run: apt-get upgrade'
-  sudo apt-get upgrade -y
+  sudo apt-get upgrade -y   > /dev/null 2>&1
 
   echo '---> sudo apt-get install software-properties-common build-essential curl git -y'
-  sudo apt install software-properties-common build-essential curl git -y
-
+  sudo apt install software-properties-common build-essential curl git -y  > /dev/null 2>&1
+ 
   if ! [ -x "$(command -v git)" ]; then
     echo 'ERROR: git is not installed and executable'; 
     exit 98
@@ -326,13 +326,13 @@ iost_install_packages () {
 
   # install Large File Support for git
   echo '---> run: sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash'
-  sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+  sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash  > /dev/null 2>&1
 
   echo '---> run: sudo apt install git-lfs'
-  sudo apt install git-lfs
+  sudo apt install git-lfs > /dev/null 2>&1
 
   echo '---> run: git lfs install'
-  git lfs install
+  git lfs install > /dev/null 2>&1
   echo '---> run: DONE iost_install_packages\(\)'
 
 }
@@ -348,20 +348,23 @@ iost_install_rocksdb () {
   echo '#=-------------     IOST Install - installing Rocks DB        -------------=#'
   echo '#=-------------------------------------------------------------------------=#'
 
-  echo '---> run: START iost_install_rocksdb()' 
+  echo '---> msg: START iost_install_rocksdb()' 
   echo '---> run: apt-get update'
 
   echo "---> run: sudo apt install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev -y"
-  sudo apt install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev -y
+  sudo apt install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev -y  > /dev/null 2>&1
 
-  echo "---> run: git clone -b $ROCKSDB_MANDATORY https://github.com/facebook/rocksdb.git && cd rocksdb && make static_lib"
-  git clone -b "$ROCKSDB_MANDATORY" https://github.com/facebook/rocksdb.git && cd rocksdb && make static_lib 
+  echo "---> run: git clone -b $ROCKSDB_MANDATORY https://github.com/facebook/rocksdb.git "
+  git clone -b "$ROCKSDB_MANDATORY" https://github.com/facebook/rocksdb.git > /dev/null 2>&1
+  cd rocksdb  > /dev/null 2>&1
+  echo "---> run: make static_lib"
+  make static_lib  > /dev/null 2>&1
 
 
   echo '---> run: sudo make install-static'
-  sudo make install-static
+  sudo make install-static > /dev/null 2>&1
 
-  echo '---> run: DONE iost_install_rocksdb()'
+  echo '---> msg: DONE iost_install_rocksdb()'
 }
 
 
@@ -376,14 +379,15 @@ iost_install_nvm_node_npm () {
   echo '#=-------------------------------------------------------------------------=#'
 
   cd ~
-  curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash
+  # curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash   > /dev/null 2>&1
+  curl -s https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash   > /dev/null 2>&1
   export NVM_DIR="$HOME/.nvm"
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
   [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-  nvm install $NODE_MANDATORY
+  nvm install $NODE_MANDATORY   > /dev/null 2>&1
 
 
-  echo -n '    nvm:   '
+  echo -n '---> msg: nvm:   '
   NVM=$(nvm --version 2>/dev/null)
   if [ -z $NVM ]; then
     echo "error"
@@ -392,14 +396,14 @@ iost_install_nvm_node_npm () {
     echo "$NVM"
   fi
 
-  echo -n '    npm:   '
+  echo -n '---> msg: npm:   '
   npm --version 2>/dev/null
 
-  echo -n '   node:   '
+  echo -n '---> msg: node:   '
   node --version 2>/dev/null
 
 
-  echo 'Done with nvm, node, and npm install'
+  echo '---> msg: DONE: nvm, node, and npm installed'
 }
 
 
@@ -413,18 +417,18 @@ iost_install_docker () {
   echo '#=------------------   IOST Install - Installing Docker    ----------------=#'
   echo '#=-------------------------------------------------------------------------=#'
 
-  sudo apt install apt-transport-https ca-certificates -y
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  sudo apt install apt-transport-https ca-certificates -y > /dev/null 2>&1
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - > /dev/null 2>&1
 
   echo "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
   $(lsb_release -cs)  \
   stable" | sudo tee /etc/apt/sources.list.d/docker.list
-  sudo apt-get update
+  sudo apt-get update   > /dev/null 2>&1
 
-  sudo apt-get install docker-ce -y
+  sudo apt-get install docker-ce -y  > /dev/null 2>&1
 
   # Add user account to the docker group
-  sudo usermod -aG docker $(whoami)
+  sudo usermod -aG docker $(whoami)   > /dev/null 2>&1
 
   echo -n ' docker:   '
   #DOCKER=$(docker --version 2>/dev/null)
@@ -452,21 +456,40 @@ iost_install_golang () {
   readonly IOST_ROOT="$HOME/go/src/github.com/iost-official/go-iost"
   alias ir="cd $IOST_ROOT"
 
+  # check for logic that sources IOST env file
+  if ! $(grep "IOST setup" > /dev/null >&1); then
+    echo "---> msg: did not find IOST setup in .bashrc, adding"
+    echo "if [ -f ~/.iost_env ]; then" >> ~/.bashrc
+    echo "  source ~/.iost_env"        >> ~/.bashrc
+    echo "fi"                          >> ~/.bashrc
+  else
+    echo "---> msg: found IOST setup in .bashrc, will not add"
+  fi
+
+
   echo "
 
-  #"                               >> ~/.bashrc
-  echo "# Start:  IOST setup\n"    >> ~/.bashrc
-  echo "#"                         >> ~/.bashrc
-  echo "export IOST_ROOT=$HOME/go/src/github.com/iost-official/go-iost" >> ~/.bashrc
-  echo "alias ir=\"cd $IOST_ROOT\"" >> ~/.bashrc
+  #"                               >  ~/.iost_env
+  echo "# Start:  IOST setup\n"    >> ~/.iost_env
+  echo "#"                         >> ~/.iost_env
+  echo "export IOST_ROOT=$HOME/go/src/github.com/iost-official/go-iost" >> ~/.iost_env
+  echo "alias ir=\"cd $IOST_ROOT\"" >> ~/.iost_env
 
-  cd /tmp && wget https://dl.google.com/go/go1.11.3.linux-amd64.tar.gz
-  sudo tar -C /usr/local -xzf go1.11.3.linux-amd64.tar.gz
-  echo "export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin" 	    >> ~/.bashrc
-  echo "export GOPATH=$HOME/go" 			            >> ~/.bashrc
+  if [ -f /tmp/go${GOLANG_MANDATORY}.linux-amd64.tar.gz ]; then
+    echo "---> msg: removing previous go${GOLANG_MANDATORY}.linux-amd64.tar.gz";
+    rm /tmp/go${GOLANG_MANDATORY}.linux-amd64.tar.gz > /dev/null 2>&1
+  fi
+
+  cd /tmp && wget https://dl.google.com/go/go1.11.3.linux-amd64.tar.gz    > /dev/null 2>&1
+  sudo tar -C /usr/local -xzf go${GOLANG_MANDATORY}.linux-amd64.tar.gz    > /dev/null 2>&1
+  echo "---> msg: export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin" 	    >> ~/.iost_env
+  echo "---> msg: export GOPATH=$HOME/go" 			            >> ~/.iost_env
   export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
   export GOPATH=$HOME/go
-  #.  ~/.bashrc
+  .  ~/.iost_env
+
+
+
   mkdir -p $GOPATH/src && cd $GOPATH/src
 
   echo -n '     go:   '
@@ -518,6 +541,9 @@ iost_install_iost () {
 
   ###go get -d github.com/iost-official/go-iost
   ###cd github.com/iost-official/go-iost/
+
+  echo "---> msg: env | grep GO"
+  env | grep GO
 
 
   echo "cd $GOPATH/src"
@@ -580,10 +606,10 @@ cd ~
 iost_warning_requirements
 iost_os_detect
 iost_sudo_confirm
-#iost_install_packages
+iost_install_packages
 #iost_install_rocksdb
-#iost_install_nvm_node_npm
-#iost_install_docker
+iost_install_nvm_node_npm
+iost_install_docker
 iost_install_golang
 #iost_check_deps
 iost_install_iost
