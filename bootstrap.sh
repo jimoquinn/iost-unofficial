@@ -44,6 +44,9 @@
 #
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+# set to 1 if you'd like to clean up previous install attempts
+readonly IOST_CLEAN_INSTALL="1"
+
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 # MODIFY VERSIONS ONLY IF NECESSARY
@@ -86,6 +89,27 @@ readonly LOG="/tmp/bootstrap.sh.$$.log"
 # iost_install_docker()
 # iost_install_golang()
 # iost_check_deps()
+
+#
+# 
+#
+iost_install_init ()  {
+}
+
+
+#
+# 
+#
+iost_install_rm ()  {
+}
+
+
+#
+# 
+#
+iost_install_end ()  {
+}
+
 
 
 #
@@ -162,9 +186,6 @@ iost_os_detect ()  {
 	  echo "---> msg: ERROR: appear to be running Linux ${OS}, but not a supported platform"
 	  exit 96
       fi
-
-      
-
 
       ;;
     'FreeBSD' )
@@ -310,11 +331,11 @@ iost_install_packages () {
   echo '#------------------     IOST Install - installing packages   --------------=#' 
   echo '#=-------------------------------------------------------------------------=#'
 
-  echo '---> msg: START iost_install_packages()'
+  echo '---> msg: start: iost_install_packages()'
   echo '---> run: apt-get update'
   sudo apt-get update >> $LOG 2>&1
 
-  echo '---> run: apt-get upgrade'
+  echo '---> run: apt-get upgrade -y'
   sudo apt-get upgrade -y   >> $LOG 2>&1
 
   echo '---> run: sudo apt-get install software-properties-common build-essential curl git -y'
@@ -324,7 +345,7 @@ iost_install_packages () {
     echo 'ERROR: git is not installed and executable'; 
     exit 98
   else
-    echo -n '---> git: installed version '
+    echo -n '---> msg: git installed version '
     git --version | cut -f3 -d' ' 2>/dev/null
   fi
 
@@ -337,7 +358,7 @@ iost_install_packages () {
 
   echo '---> run: git lfs install'
   git lfs install >> $LOG 2>&1
-  echo '---> msg: DONE iost_install_packages\(\)'
+  echo '---> msg: done: iost_install_packages\(\)'
 
 }
 
@@ -352,7 +373,7 @@ iost_install_rocksdb () {
   echo '#=-------------     IOST Install - installing Rocks DB        -------------=#'
   echo '#=-------------------------------------------------------------------------=#'
 
-  echo '---> msg: START iost_install_rocksdb()' 
+  echo '---> msg: start: iost_install_rocksdb()' 
   echo '---> run: apt-get update'
 
   echo "---> run: sudo apt install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev -y"
@@ -368,7 +389,7 @@ iost_install_rocksdb () {
   echo '---> run: sudo make install-static'
   sudo make install-static >> $LOG 2>&1
 
-  echo '---> msg: DONE iost_install_rocksdb()'
+  echo '---> msg: done: iost_install_rocksdb()'
 }
 
 
@@ -379,21 +400,24 @@ iost_install_nvm_node_npm () {
 
   echo ''; echo ''
   echo '#=-------------------------------------------------------------------------=#'
-  echo '#=------------------   IOST Install - nvm, node, and npm   ----------------=#'
+  echo '#=------------------   IOST Install - nvm, node, npm, & yarn  -------------=#'
   echo '#=-------------------------------------------------------------------------=#'
-  echo "---> msg: START: iost_install_nvm_node_npm ()" 
+  echo "---> msg: start: iost_install_nvm_node_npm ()" 
   cd ~
-  # curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash   >> $LOG 2>&1
+  echo "---> msg: curl -s https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash"   >> $LOG 2>&1
   curl -s https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash      >> $LOG 2>&1
 
-  echo "export NVM_DIR="$HOME/.nvm""                                  > ~/.iost_env
-  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   >> ~/.iost_env 
-  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" >> ~/.iost_env  
+  echo "export NVM_DIR="$HOME/.nvm""                                        >> ~/.iost_env
+  echo "[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh""                   >> ~/.iost_env 
+  echo "[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"" >> ~/.iost_env  
 
   source ~/.iost_env
 
+  echo "---> msg: nvm install $NODE_MANDATORY "
   nvm install $NODE_MANDATORY   >> $LOG 2>&1
 
+  echoh "---> msg: npm i yarn"
+  npm i yarn  >> $LOG 2>&1
 
   echo -n '---> msg: nvm version '
   NVM=$(nvm --version 2>/dev/null)
@@ -411,7 +435,7 @@ iost_install_nvm_node_npm () {
   node --version 2>/dev/null
 
   echo '---> msg: nvm, node, and npm installed'
-  echo "---> msg: DONE: iost_install_nvm_node_npm ()" 
+  echo "---> msg: done: iost_install_nvm_node_npm ()" 
 }
 
 
@@ -424,7 +448,7 @@ iost_install_docker () {
   echo '#=-------------------------------------------------------------------------=#'
   echo '#=------------------   IOST Install - Installing Docker    ----------------=#'
   echo '#=-------------------------------------------------------------------------=#'
-  echo "---> msg: START: iost_install_docker ()"
+  echo "---> msg: start: iost_install_docker ()"
 
   echo "---> run: sudo apt install apt-transport-https ca-certificates -y >> $LOG 2>&1"
   sudo apt install apt-transport-https ca-certificates -y >> $LOG 2>&1
@@ -455,7 +479,7 @@ iost_install_docker () {
     echo "$DOCKER"
   fi
 
-  echo "---> DONE: iost_install_docker ()"
+  echo "---> msg: done: iost_install_docker ()"
 }
 
 
@@ -468,7 +492,7 @@ iost_install_golang () {
   echo '#=------------------   IOST Install - Installing Golang    ----------------=#'
   echo '#=-------------------------------------------------------------------------=#'
 
-  echo "---> START: iost_install_golang ()"
+  echo "---> msg: start: iost_install_golang ()"
   readonly IOST_ROOT="$HOME/go/src/github.com/iost-official/go-iost"
   alias ir="cd $IOST_ROOT"
 
@@ -502,13 +526,14 @@ iost_install_golang () {
   export GOPATH=$HOME/go
   source ~/.iost_env
 
+  echo "---> msg: mkdir -p $GOPATH/src && cd $GOPATH/src"
   mkdir -p $GOPATH/src && cd $GOPATH/src
 
-  echo -n '     go:   '
+  echo -n '--> msg: go version '
   GO=$(go version | cut -f3 -d' ' | sed 's/go//g' 2>/dev/null)
   echo $GO
 
-  echo "---> DONE: iost_install_golang ()"
+  echo "---> msg: done: iost_install_golang ()"
 }
 
 
@@ -550,7 +575,8 @@ iost_install_iost () {
   echo '#=-------------------------------------------------------------------------=#'
   echo '#=--------- IOST Install - go get -d github.com/iost-official/go-iost -----=#'
   echo '#=-------------------------------------------------------------------------=#'
-  echo "---> START: iost_install_iost ()"
+  echo "---> msg: start: iost_install_iost ()"
+
   ###go get -d github.com/iost-official/go-iost
   ###cd github.com/iost-official/go-iost/
 
@@ -558,56 +584,66 @@ iost_install_iost () {
   env | grep GO
 
 
-  echo "cd $GOPATH/src"
+  echo "---> msg: cd $GOPATH/src"
   cd $GOPATH/src
-  echo "go get -d github.com/iost-official/go-iost"
+  echo "---> msg: go get -d github.com/iost-official/go-iost"
   go get -d github.com/iost-official/go-iost
 
+  echo "---> msg: go get -d github.com/iost-official/scaffold"
+  go get -d github.com/iost-official/scaffold
 
-  echo "cd $GOPATH/src"
-  cd $GOPATH/src
-  echo "go get -d github.com/iost-official/scaffold"
-  go get -d github.com/iost-official/scaffold
-  echo "go get -d github.com/iost-official/scaffold"
-  go get -d github.com/iost-official/scaffold
-  echo "cd  $GOPATH/src/github.com/iost-official/scaffold/"
-  cd  $GOPATH/src/github.com/iost-official/scaffold/
-  echo "npm install"
+  echo "---> msg: cd  $GOPATH/src/github.com/iost-official/scaffold"
+  cd  $GOPATH/src/github.com/iost-official/scaffold
+
+  echo "---> msg: npm install"
   npm install
-  echo "npm link"
+  echo "---> msg: npm link"
   npm link
+
+  echo "cd - && scaf --version"
   cd -
   scaf --version
+}
 
 
-
+iost_install_iwallet () {
 
   echo ''; echo ''
   echo '#=-------------------------------------------------------------------------=#'
   echo '#=------------------   IOST Install - build iwallet    --------------------=#'
   echo '#=-------------------------------------------------------------------------=#'
+  echo "---> start: iost_install_iwallet ()"
 
   ir && cd iwallet/contract
   npm install
 
+  echo "---> end: iost_install_iwallet ()"
+}
+
+iost_install_iwallet () {
   echo ''; echo ''
   echo '#=-------------------------------------------------------------------------=#'
   echo '#=------------------   IOST Install - deploy V8        --------------------=#'
   echo '#=-------------------------------------------------------------------------=#'
+  echo "---> start: iost_install_v8vm()"
 
   ir && cd vm/v8vm/v8
   make deploy
+  echo "---> start: iost_install_v8vm()"
+}
 
-  
+
+iost_install_iserver () {
   echo '#=-------------------------------------------------------------------------=#'
   echo '#=------------------   IOST Install - build iwallet    --------------------=#'
   echo '#=-------------------------------------------------------------------------=#'
+  echo "---> start: iost_install_iserver ()"
 
 
   #go get -d github.com/iost-official/dapp
 
 
-  printf  '#=-------------------------------------------------------------------------=#'
+  echo "---> end: iost_install_iserver ()"
 
 }
 
