@@ -93,21 +93,66 @@ readonly LOG="/tmp/bootstrap.sh.$$.log"
 #
 # 
 #
-iost_install_init ()  {
+iost_install_init () {
+  # check for: 
+  # -  apt: git, git-lfs, software-properties-common, build-essential, curl,
+  #    libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev 
+  # -  rocksdb, nvm, node, npm, yarn, docker, golang, 
+  # -  IOST: iwallet, iserver, scaf, 
+  echo "---> msg: start: iost_install_init () "
+
+
+  # check for: 
+  # - Ubuntu: 16.04, 16.10, 18.04, 18.10
+  # - Debian: 9.1-6, 10
+  # - CentOS: 7.0-6
+  # -  MacOS: 14.0.0-2
+  # -    Win: 10, Server 2016-2019
+
+
+  echo "---> msg: done: iost_install_init () "
+	
 }
 
 
 #
 # 
 #
-iost_install_rm ()  {
+iost_install_rmfr () {
+  # remove:
+  # -  apt: git, git-lfs, software-properties-common, build-essential, curl,
+  #    libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev 
+  #    docker
+  # -  rocksdb, nvm, node, npm, yarn, golang, 
+  # -  IOST: iwallet, iserver, scaf, 
+  echo "---> msg: start: iost_install_rmfr () "
+
+  echo "---> msg: sudo apt purge docker-ce libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev  -y"
+  sudo apt purge docker-ce libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev  -y
+
+
+  echo "---> msg: apt purge git git-lfs software-properties-common  build-essential curl  -y" 
+  sudo apt purge git git-lfs software-properties-common  build-essential curl  -y 
+
+  echo "---> msg: sudo apt purge install apt-transport-https ca-certificates -y "
+  sudo apt purge apt-transport-https ca-certificates -y 
+
+   if [ -f $HOME/.iost_env ]; then
+     echo "---> msg: rm -fr $HOME/.iost_env"
+     rm -fr $HOME/.iost_env
+   fi
+
+  echo "---> msg: done: iost_install_init () "
+
 }
 
 
 #
 # 
 #
-iost_install_end ()  {
+iost_install_end () {
+
+  echo "---> msg: done: iost_install_init () "
 }
 
 
@@ -115,7 +160,7 @@ iost_install_end ()  {
 #
 # 
 #
-iost_ubuntu_options ()  {
+iost_ubuntu_options () {
   echo 'This script can install IOST on the following:'
   echo '  1.  Vagrant and LXC'
   echo '  2.  Kubernetes and Docker'
@@ -416,7 +461,7 @@ iost_install_nvm_node_npm () {
   echo "---> msg: nvm install $NODE_MANDATORY "
   nvm install $NODE_MANDATORY   >> $LOG 2>&1
 
-  echoh "---> msg: npm i yarn"
+  echo "---> msg: npm i yarn"
   npm i yarn  >> $LOG 2>&1
 
   echo -n '---> msg: nvm version '
@@ -651,6 +696,9 @@ iost_install_iserver () {
 set -e
 
 sudo $(pwd)/data/exit.sh
+#iost_install_rmfr
+#exit;
+
 iost_warning_requirements
 iost_os_detect
 iost_sudo_confirm
