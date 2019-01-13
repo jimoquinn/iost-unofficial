@@ -1,4 +1,4 @@
-#!/bin/bash  
+#!/bin/bash 
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 #
@@ -65,6 +65,9 @@ readonly DOCKER_MANDATORY="v18.06.0-ce"
 readonly IOST_MANDATORY=""
 # set to "1" if this is to be used in a Vagrantfile as provision
 readonly FOR_VAGRANT="1"	
+
+
+readonly LOG="/tmp/bootstrap.sh.$$.log"
 
 
 
@@ -205,6 +208,7 @@ iost_warning_requirements () {
   echo "Please read carefully as these are hard requirements:"; echo ""
   echo "  1.  This is for a greenfield install, do not install on a configured system."
   echo "  2.  Do not run as the root user.  Run under a user that can sudo to root (man visudo)."
+  echo "  3.  The log file will be located:  $LOG "
   echo ""; echo "";
 
 
@@ -306,34 +310,34 @@ iost_install_packages () {
   echo '#------------------     IOST Install - installing packages   --------------=#' 
   echo '#=-------------------------------------------------------------------------=#'
 
-  echo '---> run: START iost_install_packages()'
+  echo '---> msg: START iost_install_packages()'
   echo '---> run: apt-get update'
-  sudo apt-get update > /dev/null 2>&1
+  sudo apt-get update >> $LOG 2>&1
 
   echo '---> run: apt-get upgrade'
-  sudo apt-get upgrade -y   > /dev/null 2>&1
+  sudo apt-get upgrade -y   >> $LOG 2>&1
 
-  echo '---> sudo apt-get install software-properties-common build-essential curl git -y'
-  sudo apt install software-properties-common build-essential curl git -y  > /dev/null 2>&1
+  echo '---> run: sudo apt-get install software-properties-common build-essential curl git -y'
+  sudo apt install software-properties-common build-essential curl git -y  >> $LOG 2>&1
  
   if ! [ -x "$(command -v git)" ]; then
     echo 'ERROR: git is not installed and executable'; 
     exit 98
   else
-    echo -n '---> git:    '
+    echo -n '---> git: installed version '
     git --version | cut -f3 -d' ' 2>/dev/null
   fi
 
   # install Large File Support for git
   echo '---> run: sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash'
-  sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash  > /dev/null 2>&1
+  sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash  >> $LOG 2>&1
 
   echo '---> run: sudo apt install git-lfs'
-  sudo apt install git-lfs > /dev/null 2>&1
+  sudo apt install git-lfs >> $LOG 2>&1
 
   echo '---> run: git lfs install'
-  git lfs install > /dev/null 2>&1
-  echo '---> run: DONE iost_install_packages\(\)'
+  git lfs install >> $LOG 2>&1
+  echo '---> msg: DONE iost_install_packages\(\)'
 
 }
 
@@ -352,17 +356,17 @@ iost_install_rocksdb () {
   echo '---> run: apt-get update'
 
   echo "---> run: sudo apt install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev -y"
-  sudo apt install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev -y  > /dev/null 2>&1
+  sudo apt install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev -y  >> $LOG 2>&1
 
   echo "---> run: git clone -b $ROCKSDB_MANDATORY https://github.com/facebook/rocksdb.git "
-  git clone -b "$ROCKSDB_MANDATORY" https://github.com/facebook/rocksdb.git > /dev/null 2>&1
-  cd rocksdb  > /dev/null 2>&1
+  git clone -b "$ROCKSDB_MANDATORY" https://github.com/facebook/rocksdb.git >> $LOG 2>&1
+  cd rocksdb  >> $LOG 2>&1
   echo "---> run: make static_lib"
-  make static_lib  > /dev/null 2>&1
+  make static_lib  >> $LOG 2>&1
 
 
   echo '---> run: sudo make install-static'
-  sudo make install-static > /dev/null 2>&1
+  sudo make install-static >> $LOG 2>&1
 
   echo '---> msg: DONE iost_install_rocksdb()'
 }
@@ -377,17 +381,21 @@ iost_install_nvm_node_npm () {
   echo '#=-------------------------------------------------------------------------=#'
   echo '#=------------------   IOST Install - nvm, node, and npm   ----------------=#'
   echo '#=-------------------------------------------------------------------------=#'
-
+  echo "---> msg: START: iost_install_nvm_node_npm ()" 
   cd ~
-  # curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash   > /dev/null 2>&1
-  curl -s https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash   > /dev/null 2>&1
-  export NVM_DIR="$HOME/.nvm"
-  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-  nvm install $NODE_MANDATORY   > /dev/null 2>&1
+  # curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash   >> $LOG 2>&1
+  curl -s https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash      >> $LOG 2>&1
+
+  echo "export NVM_DIR="$HOME/.nvm""                                  > ~/.iost_env
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   >> ~/.iost_env 
+  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" >> ~/.iost_env  
+
+  source ~/.iost_env
+
+  nvm install $NODE_MANDATORY   >> $LOG 2>&1
 
 
-  echo -n '---> msg: nvm:   '
+  echo -n '---> msg: nvm version '
   NVM=$(nvm --version 2>/dev/null)
   if [ -z $NVM ]; then
     echo "error"
@@ -396,14 +404,14 @@ iost_install_nvm_node_npm () {
     echo "$NVM"
   fi
 
-  echo -n '---> msg: npm:   '
+  echo -n '---> msg: npm version '
   npm --version 2>/dev/null
 
-  echo -n '---> msg: node:   '
+  echo -n '---> msg: node version '
   node --version 2>/dev/null
 
-
-  echo '---> msg: DONE: nvm, node, and npm installed'
+  echo '---> msg: nvm, node, and npm installed'
+  echo "---> msg: DONE: iost_install_nvm_node_npm ()" 
 }
 
 
@@ -416,31 +424,38 @@ iost_install_docker () {
   echo '#=-------------------------------------------------------------------------=#'
   echo '#=------------------   IOST Install - Installing Docker    ----------------=#'
   echo '#=-------------------------------------------------------------------------=#'
+  echo "---> msg: START: iost_install_docker ()"
 
-  sudo apt install apt-transport-https ca-certificates -y > /dev/null 2>&1
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - > /dev/null 2>&1
+  echo "---> run: sudo apt install apt-transport-https ca-certificates -y >> $LOG 2>&1"
+  sudo apt install apt-transport-https ca-certificates -y >> $LOG 2>&1
 
-  echo "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-  $(lsb_release -cs)  \
-  stable" | sudo tee /etc/apt/sources.list.d/docker.list
-  sudo apt-get update   > /dev/null 2>&1
+  echo "---> run: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -"
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - >> $LOG 2>&1
 
-  sudo apt-get install docker-ce -y  > /dev/null 2>&1
+  lsb=$(lsb_release -cs)
+  echo "deb [arch=amd64] https://download.docker.com/linux/ubuntu $lsb stable" | sudo tee /etc/apt/sources.list.d/docker.list  >> $LOG 2>&1
+
+  echo "---> run: sudo apt-get update"
+  sudo apt-get update   >> $LOG 2>&1
+
+  echo "---> run: sudo apt-get install docker-ce -y"
+  sudo apt-get install docker-ce -y  >> $LOG 2>&1
 
   # Add user account to the docker group
-  sudo usermod -aG docker $(whoami)   > /dev/null 2>&1
+  echo "---> run: sudo usermod -aG docker $(whoami) "
+  sudo usermod -aG docker $(whoami)   >> $LOG 2>&1
 
-  echo -n ' docker:   '
-  #DOCKER=$(docker --version 2>/dev/null)
-#
-#  if [ -z $DOCKER ]; then
-#    echo "error"
-#    ERR=1
-#  else
-#    echo "$DOCKER"
-#  fi
+  echo -n '---> msg: docker version '
+  DOCKER=$(docker --version 2>/dev/null)
 
-  echo "Done with Docker install"
+  if [ -z $DOCKER ]; then
+    echo "error"
+    ERR=1
+  else
+    echo "$DOCKER"
+  fi
+
+  echo "---> DONE: iost_install_docker ()"
 }
 
 
@@ -453,6 +468,7 @@ iost_install_golang () {
   echo '#=------------------   IOST Install - Installing Golang    ----------------=#'
   echo '#=-------------------------------------------------------------------------=#'
 
+  echo "---> START: iost_install_golang ()"
   readonly IOST_ROOT="$HOME/go/src/github.com/iost-official/go-iost"
   alias ir="cd $IOST_ROOT"
 
@@ -466,10 +482,8 @@ iost_install_golang () {
     echo "---> msg: found IOST setup in .bashrc, will not add"
   fi
 
-
   echo "
-
-  #"                               >  ~/.iost_env
+  #"                               >> ~/.iost_env
   echo "# Start:  IOST setup\n"    >> ~/.iost_env
   echo "#"                         >> ~/.iost_env
   echo "export IOST_ROOT=$HOME/go/src/github.com/iost-official/go-iost" >> ~/.iost_env
@@ -477,18 +491,16 @@ iost_install_golang () {
 
   if [ -f /tmp/go${GOLANG_MANDATORY}.linux-amd64.tar.gz ]; then
     echo "---> msg: removing previous go${GOLANG_MANDATORY}.linux-amd64.tar.gz";
-    rm /tmp/go${GOLANG_MANDATORY}.linux-amd64.tar.gz > /dev/null 2>&1
+    rm /tmp/go${GOLANG_MANDATORY}.linux-amd64.tar.gz >> $LOG 2>&1
   fi
 
-  cd /tmp && wget https://dl.google.com/go/go1.11.3.linux-amd64.tar.gz    > /dev/null 2>&1
-  sudo tar -C /usr/local -xzf go${GOLANG_MANDATORY}.linux-amd64.tar.gz    > /dev/null 2>&1
-  echo "---> msg: export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin" 	    >> ~/.iost_env
-  echo "---> msg: export GOPATH=$HOME/go" 			            >> ~/.iost_env
+  cd /tmp && wget https://dl.google.com/go/go1.11.3.linux-amd64.tar.gz    >> $LOG 2>&1
+  sudo tar -C /usr/local -xzf go${GOLANG_MANDATORY}.linux-amd64.tar.gz    >> $LOG 2>&1
+  echo "---> msg: export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin" 	  >> ~/.iost_env
+  echo "---> msg: export GOPATH=$HOME/go" 			          >> ~/.iost_env
   export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
   export GOPATH=$HOME/go
-  .  ~/.iost_env
-
-
+  source ~/.iost_env
 
   mkdir -p $GOPATH/src && cd $GOPATH/src
 
@@ -496,7 +508,7 @@ iost_install_golang () {
   GO=$(go version | cut -f3 -d' ' | sed 's/go//g' 2>/dev/null)
   echo $GO
 
-  echo 'Done with Golang install'
+  echo "---> DONE: iost_install_golang ()"
 }
 
 
@@ -538,7 +550,7 @@ iost_install_iost () {
   echo '#=-------------------------------------------------------------------------=#'
   echo '#=--------- IOST Install - go get -d github.com/iost-official/go-iost -----=#'
   echo '#=-------------------------------------------------------------------------=#'
-
+  echo "---> START: iost_install_iost ()"
   ###go get -d github.com/iost-official/go-iost
   ###cd github.com/iost-official/go-iost/
 
@@ -602,7 +614,7 @@ iost_install_iost () {
 
 set -e
 
-cd ~
+sudo $(pwd)/data/exit.sh
 iost_warning_requirements
 iost_os_detect
 iost_sudo_confirm
