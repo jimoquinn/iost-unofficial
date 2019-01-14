@@ -1,13 +1,18 @@
 #!/bin/bash 
 
-# vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+# vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 #
-#             IOST Developer Ecosystem 
-#           Greenfield Install for Ubuntu  
+#           IOST "One Click" Development Environment
+#            For Greenfield Ubuntu Installation
 #
-#  Objective:  to provide all the tools necessary to 
-#  do all types of development in the IOST ecosystem.
-#  Including dapps, blockchain, wallet, server, etc.
+#  Objective:  to provide a single script that will install
+#  all the necessary dependecies and IOST code required to be
+#  productive in less than 15 minutes.  No need waste time 
+#  installing a dozen packages by hand all while unsure if they 
+#  are the correct versions.
+#
+#  When the install finishes, you can develop dApps, use iWallet, 
+#  run a node with iServer, 
 #
 #  This is a greenfield install only, but I've had success 
 #  restarting the installation several times with no real 
@@ -42,10 +47,16 @@
 #  You can contact me here:
 #  jim.oquinn@gmail.com
 #
-# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 # set to 1 if you'd like to clean up previous install attempts
 readonly IOST_CLEAN_INSTALL="1"
+
+# you can hardcode the distro and 
+DIST=""
+CODE=""
+pkg_installer=''
+
 
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
@@ -94,14 +105,24 @@ readonly LOG="/tmp/bootstrap.sh.$$.log"
 # 
 #
 iost_install_init () {
-  # check for: 
-  # -  apt: git, git-lfs, software-properties-common, build-essential, curl,
-  #    libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev 
-  # -  rocksdb, nvm, node, npm, yarn, docker, golang, 
-  # -  IOST: iwallet, iserver, scaf, 
   echo "---> msg: start: iost_install_init () "
 
+  # 1st - confirm that we are not running under root
+  if [[ $(whoami) == "root" ]]; then
+      echo 'WARNING:  We are not kidding, you should not run this as the \"root\" user. Modify the sudoers'
+      echo 'file with visudo.  Once in the editor, add the following to the bottom of the file.  Be sure '
+      echo 'to replace NON-ROOT_USER with your actual user id (run \"whoami\" at the command prompt).'
+      echo ''
+      echo 'NON-ROOT-USER ALL=(ALL:ALL) ALL'
+      echo ''
+      exit 99
+  fi
 
+  # 2nd - test if we can sudo 
+  sudo $(pwd)/data/exit.sh
+
+
+  # 3rd - for installed apps
   # check for: 
   # - Ubuntu: 16.04, 16.10, 18.04, 18.10
   # - Debian: 9.1-6, 10
@@ -109,6 +130,54 @@ iost_install_init () {
   # -  MacOS: 14.0.0-2
   # -    Win: 10, Server 2016-2019
 
+  echo "---> msg: determining distributino and release"
+  if [ -e /etc/os-release ]; then
+    # Access $ID, $VERSION_ID and $PRETTY_NAME
+    source /etc/os-release
+    echo "---> msg: found distribution [$ID], release [$VERSION_ID], and pretty name [$PRETTY_NAME]"
+    DIST=$ID
+  else
+    ID=unknown
+    VERSION_ID=unknown
+    PRETTY_NAME="Unknown distribution and release"
+    echo "---> msg: /etc/os-release configuration not found, distribution unknown" 
+    if [ -z "$DIST" -o -z "$CODE" ]; then
+      echo "---> err: Neiher distribution nor release were not hardcoded at the top of this script" 
+      echo "---> err: This is an unsupported distribution and/or version" 
+      echo "---> err: Exiting install script"
+      exit 98
+    fi
+  fi
+
+
+
+  
+  # pick the installer based off distribution
+  if [ -n "$DIST" ]; then
+    DIST=${DIST,,}
+    echo "---> msg: determining package installer for \"$DIST\""
+      case "$DIST" in
+        centos|rhel)   pkg_installer=/usr/bin/yum; echo "---> msg: using yum package installer" ;;
+        debian|ubuntu) pkg_installer=/usr/bin/apt-get; echo "---> msg: using apt package installer" ;;
+        *) echo "---> err: the package installer for \"$DIST\" installation is unsupported." 
+        exit 97
+        ;;
+        esac
+
+        if [ ! -x "$pkg_installer" ]; then
+          echo "---> err: the \"$pkg_installer\" for \"$DIST\" is not executable" 
+          echo "---> err: Exiting install script"
+          exit 96
+        fi
+  fi
+
+  # TODO: check for installed apps
+  # 4th - for installed apps
+  # check for: 
+  # -  apt: git, git-lfs, software-properties-common, build-essential, curl,
+  #    libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev 
+  # -  rocksdb, nvm, node, npm, yarn, docker, golang, 
+  # -  IOST: iwallet, iserver, scaf, 
 
   echo "---> msg: done: iost_install_init () "
 	
@@ -125,143 +194,86 @@ iost_install_rmfr () {
   #    docker
   # -  rocksdb, nvm, node, npm, yarn, golang, 
   # -  IOST: iwallet, iserver, scaf, 
+
+  echo ""; echo ""
+  echo "#=-------------------------------------------------------------------------=#"
+  echo "#-----------------   IOST Install - removing previous install  ------------=#"
+  echo "#=-------------------------------------------------------------------------=#"
   echo "---> msg: start: iost_install_rmfr () "
 
   echo "---> msg: sudo apt purge docker-ce libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev  -y"
-  sudo apt purge docker-ce libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev  -y
+  sudo apt purge docker-ce libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev  -y  >> $LOG 2>&1
 
 
   echo "---> msg: apt purge git git-lfs software-properties-common  build-essential curl  -y" 
-  sudo apt purge git git-lfs software-properties-common  build-essential curl  -y 
+  sudo apt purge git git-lfs software-properties-common  build-essential curl  -y  >> $LOG 2>&1
 
   echo "---> msg: sudo apt purge install apt-transport-https ca-certificates -y "
-  sudo apt purge apt-transport-https ca-certificates -y 
+  sudo apt purge apt-transport-https ca-certificates -y   >> $LOG 2>&1
 
-   if [ -f $HOME/.iost_env ]; then
+  echo "---> msg: sudo apt autoremove -y " 
+  sudo apt autoremove -y    >> $LOG 2>&1
+
+   if [ -f "$HOME/.iost_env" ]; then
      echo "---> msg: rm -fr $HOME/.iost_env"
      rm -fr $HOME/.iost_env
    fi
 
+   if [ -f "/etc/apt/sources.list.d/docker.list" ]; then
+     echo "---> run: sudo rm -fr /etc/apt/sources.list.d/docker.list" 
+     sudo rm -fr /etc/apt/sources.list.d/docker.list
+   fi
+
+   if [ -f "$HOME/.nvm" ]; then
+     echo "---> run: rm -fr $HOME/.nvm" 
+     rm -fr $HOME/.nvm
+   fi
+
+   LOC=$(pwd)
+   echo "ROCKSDB: $LOC/rocksdb"
+
+   if [ -d "$LOC/rocksdb" ]; then
+     echo "---> run: rm -fr $LOC/rocksdb" 
+     rm -fr $LOC/rocksdb
+   fi
+
+
   echo "---> msg: done: iost_install_init () "
 
 }
 
 
 #
-# 
+#  TODO: iost_install_end () 
+#
+#  - prompt to launch iwallet
+#  - prompt to launch iserver
+#  - prompt to start dApp dev environment
 #
 iost_install_end () {
-
-  echo "---> msg: done: iost_install_init () "
+  echo "---> msg: done: iost_install_end () "
+  echo "---> msg: done: iost_install_end () "
 }
 
 
 
 #
-# 
+#  TODO: iost_ubuntu_options () 
+#  - VM/Container options for Ubuntu
+#  - create one for each of the supported OSs
 #
 iost_ubuntu_options () {
-  echo 'This script can install IOST on the following:'
-  echo '  1.  Vagrant and LXC'
-  echo '  2.  Kubernetes and Docker'
-  echo '  3.  VMware'
-  echo '  4.  Vagrant and VirtualBox'
-  echo "  4.  Greenfield (aka; bare metal)"
+  echo 'This script can install IOST with the following:'
+  echo "  1.  Greenfield (aka; bare metal fresh install)"
+  echo '  2.  Vagrant and LXC '
+  echo '  3.  Vagrant and VirtualBox'
+  echo '  4.  Kubernetes and Docker'
+  echo '  5.  Docker only'
+  echo '  6.  VMware only'
 }
 
-iost_os_detect ()  {
-  #echo 'This script can install the following:'
-  #echo '  1.  Linux: Vagrant   LXC        Ubuntu 18.10 \(Cosmic\)'
-  #echo '  2.  Linux: Vagrant   LXC        Ubuntu 18.04 \(Bionic\)'
-  #echo '  3.  Linux: Vagrant   LXC        Ubuntu 16.04 \(Bionic\)'
-  #echo '  4.  Linux: Vagrant   LXC        Ubuntu 16.04 \(Bionic\)'
-  #echo '  5.  Linux: Vagrant   LXC        CentOS 7 '
-  #echo '  6.  Linux: Vagrant   LXC        Debian Stretch 9'
-  #echo '  7.  Linux: Vagrant   VMware     Ubuntu 18.04 \(Bionic\)'
-  #echo '  8.  Linux: Vagrant   VMware     Ubuntu 18.10 \(Cosmic\)'
-  #echo '  9.  Linux: Vagrant   VMware     Ubuntu 18.04 \(Bionic\)'
-  #echo ' 10.  Linux: Vagrant   VMware     Ubuntu 16.04 \(Bionic\)'
-  #echo ' 11.  Linux: Vagrant   VMware     Ubuntu 16.04 \(Bionic\)'
-  #echo ' 12.  Linux: Vagrant   VMware     CentOS 7' 
-  #echo ' 13.  Linux: Vagrant   VMware     Debian Stretch 7' 
-  #echo ' 14.  Linux: Vagrant   VirtualBox Ubuntu 18.04 \(Bionic\)'
-  #echo ' 15.  Linux: Vagrant   VirtualBox Ubuntu 18.10 \(Cosmic\)'
-  #echo ' 16.  Linux: Vagrant   VirtualBox Ubuntu 18.04 \(Bionic\)'
-  #echo ' 17.  Linux: Vagrant   VirtualBox Ubuntu 16.04 \(Bionic\)'
-  #echo ' 18.  Linux: Vagrant   VirtualBox Ubuntu 16.04 \(Bionic\)'
-  #echo ' 19.  Linux: Vagrant   VirtualBox CentOS 7' 
-  #echo ' 20.  Linux: Vagrant   VirtualBox Debian Stretch 7'
-
-  tOS=$(uname)
-  case $tOS in
-    'Linux')
-
-	# /etc/os-release
-	# PRETTY_NAME="Debian GNU/Linux 9 (stretch)"
-	# NAME="Debian GNU/Linux"
-	# VERSION_ID="9"
-	# VERSION="9 (stretch)"
-	# ID=debian
-	# HOME_URL="https://www.debian.org/"
-	# SUPPORT_URL="https://www.debian.org/support"
-	# BUG_REPORT_URL="https://bugs.debian.org/"
-
-        # /etc/os-release
 
 
-
-      #declare -a versions=('xenial' 'yakkety', 'bionic', 'cosmic');
-      # check the version and extract codename of ubuntu if release codename not provided by user
-      if [ -z "$1" ]; then
-        source /etc/lsb-release || \
-          (echo "---> msg: ERROR: Release information not found, run script passing Ubuntu version codename as a parameter"; exit 1)
-        OS=${DISTRIB_CODENAME}
-      else
-        OS=${1}
-      fi
-
-
-#      check version is supported
-      if  echo ${UBUNTU_MANDATORY[@]} | grep -q -w ${OS}; then
-          echo "---> msg: Installing pre-regs for Ubuntu ${OS}"
-	  iost_ubuntu_options
-      elif echo ${DEBIAN_MANDATORY[@]} | grep -q -w ${OS}; then
-          echo "---> msg: Installing pre-regs for Debian ${OS}"
-      else 
-	  echo "---> msg: ERROR: appear to be running Linux ${OS}, but not a supported platform"
-	  exit 96
-      fi
-
-      ;;
-    'FreeBSD' )
-      OS='FreeBSD'
-      alias ls='ls -G'
-      ;;
-    'WindowsNT' )
-      OS='Windows'
-      ;;
-    'Darwin' )
-      OS='Mac'
-      ;;
-    'SunOS' )
-      OS='Solaris'
-      ;;
-    'AIX' ) 
-      OS='AIX'
-      ;;
-    *) 
-     OS='No Clue'	    
-    ;;
-  esac
-
-  echo "OS: $OS"
-}
-
-# if this is to be used in the provision section of a Vagrantfile then
-# skipp all the input and "sudo" check
-#if [ $FOR_VAGRANT = 1 ]; then
-#fi
-#clear
 #
 #  iost_warning_requirements () - 
 #
@@ -294,7 +306,7 @@ iost_warning_requirements () {
   #echo 'First we need to confirm that you are not running as "root" and that you can "sudo" to root.\n'
   #echo '\n'
 
-  echo "Make a selection?  (Y/n): "
+  echo -e "Make a selection?  (Y/n): "
   read -r CONT
 
   # if [ -n "$CONT" ]; then
@@ -309,17 +321,11 @@ iost_warning_requirements () {
     fi
   fi
 
-  if [[ $(whoami) == "root" ]]; then
-      echo 'WARNING:  We are not kidding, you should not run this as the \"root\" user. Modify the sudoers'
-      echo 'file with visudo.  Once in the editor, add the following to the bottom of the /etc/sudoers file'
-      echo 'non-root user:'
-      echo 'NON-ROOT-USER ALL=(ALL) NOPASSWD:ALL'
-      exit 96
-  fi
 
 }
 
 #
+#  TODO: 
 #  iost_detect_vm() - 
 #
 iost_detect_vm() {
@@ -330,6 +336,7 @@ iost_detect_vm() {
 }
 
 #
+#  TODO: 
 #  iost_sudo_confirm () - 
 #
 iost_sudo_confirm () {
@@ -338,30 +345,6 @@ iost_sudo_confirm () {
   echo '#=-------------------------------------------------------------------------=#'
   echo '#--------------------     IOST Install - packages       -------------------=#'
   echo '#=-------------------------------------------------------------------------=#'
-  echo ''; echo ''
-
-  #
-  #  support for a wider number Ubuntu releases (16.04, 16.10, 18.04, and 18.10)
-  #
-
-  ###declare -a versions=('xenial' 'yakkety', 'bionic', 'cosmic');
-  # check the version and extract codename of ubuntu if release codename not provided by user
-  #if [ -z "$1" ]; then
-  #    source /etc/lsb-release || \
-  #        (echo "Error: Release information not found, run script passing Ubuntu version codename as a parameter"; exit 1)
-  #    OS=${DISTRIB_CODENAME}
-  #else
-  #    OS=${1}
-  #fi
-
-  # check version is supported
-  #if echo ${UBUNTU_MANDATORY[@]} | grep -q -w ${OS}; then
-  #    echo "---> msg: Installing pre-regs for Ubuntu ${OS}"
-  #else
-  #    echo "---> msg: ERROR: Ubuntu ${OS} is not supported"
-  #    exit 1
-  #fi
-
 
 }
 
@@ -376,18 +359,28 @@ iost_install_packages () {
   echo '#------------------     IOST Install - installing packages   --------------=#' 
   echo '#=-------------------------------------------------------------------------=#'
 
-  echo '---> msg: start: iost_install_packages()'
-  echo '---> run: apt-get update'
-  sudo apt-get update >> $LOG 2>&1
+  echo "---> msg: start: iost_install_packages()"
+  echo "---> run: apt install apt-transport-https ca-certificates -y"
+  sudo $pkg_installer install apt-transport-https ca-certificates -y >> $LOG 2>&1
 
-  echo '---> run: apt-get upgrade -y'
-  sudo apt-get upgrade -y   >> $LOG 2>&1
+  echo "---> run: $pkg_installer update"
+  sudo $pkg_installer update >> $LOG 2>&1
 
-  echo '---> run: sudo apt-get install software-properties-common build-essential curl git -y'
-  sudo apt install software-properties-common build-essential curl git -y  >> $LOG 2>&1
+  echo "---> run: $pkg_installer upgrade -y"
+  sudo $pkg_installer upgrade -y   >> $LOG 2>&1
+
+
+  echo "---> run: sudo $pkg_installer install software-properties-common -y"
+  sudo $pkg_installer install software-properties-common -y  >> $LOG 2>&1
+
+  echo "---> run: sudo add-apt-repository ppa:git-core/ppa -y"
+  sudo add-apt-repository ppa:git-core/ppa -y >> $LOG 2>&1
+
+  echo "---> run: sudo $pkg_installer install build-essential curl git -y"
+  sudo $pkg_installer install build-essential curl git -y  >> $LOG 2>&1
  
   if ! [ -x "$(command -v git)" ]; then
-    echo 'ERROR: git is not installed and executable'; 
+    echo '---> err: git is not installed and executable'; 
     exit 98
   else
     echo -n '---> msg: git installed version '
@@ -700,15 +693,16 @@ iost_install_iserver () {
 
 set -e
 
-sudo $(pwd)/data/exit.sh
-#iost_install_rmfr
-#exit;
 
+if [ -f "$HOME/.iost_env" ]; then
+  iost_install_rmfr
+fi
+
+
+iost_install_init
 iost_warning_requirements
-iost_os_detect
-iost_sudo_confirm
 iost_install_packages
-#iost_install_rocksdb
+iost_install_rocksdb
 iost_install_nvm_node_npm
 iost_install_docker
 iost_install_golang
@@ -718,3 +712,56 @@ iost_install_iost
 
 
 
+  # This script can install the following:'
+  #  1.  Linux: Vagrant   LXC         Ubuntu 19.04 (Disco Dingo)'
+  #  1.  Linux: Vagrant   LXC         Ubuntu 18.10 (Cosmic Cuttlefish)'
+  #  2.  Linux: Vagrant   LXC         Ubuntu 18.04 (Bionic Beaver)'
+  #  3.  Linux: Vagrant   LXC         Ubuntu 16.10 (Yakkety Yak)'
+  #  4.  Linux: Vagrant   LXC         Ubuntu 16.04 (Xenial Xerus)'
+  #  5.  Linux: Vagrant   LXC         CentOS 7 '
+  #  6.  Linux: Vagrant   LXC         Debian Stretch 9'
+
+  #  7.  Linux: Vagrant   VMware      Ubuntu 19.04 (Disco Dingo)'
+  #  8.  Linux: Vagrant   VMware      Ubuntu 18.10 (Cosmic Cuttlefh)'
+  #  9.  Linux: Vagrant   VMware      Ubuntu 18.04 (Bionic Beaver)'
+  # 10.  Linux: Vagrant   VMware      Ubuntu 16.10 (Yakkety Yak)'
+  # 11.  Linux: Vagrant   VMware      Ubuntu 16.04 (Xenial Xerus)'
+  # 12.  Linux: Vagrant   VMware      CentOS 7' 
+  # 13.  Linux: Vagrant   VMware      Debian Stretch 7' 
+
+  # 14.  Linux: Vagrant   VirtualBox  Ubuntu 19.04 (Disco Dingo)'
+  # 14.  Linux: Vagrant   VirtualBox  Ubuntu 18.04 (Bionic Beaver)'
+  # 15.  Linux: Vagrant   VirtualBox  Ubuntu 18.10 (Cosmic Cuttlefish)'
+  # 16.  Linux: Vagrant   VirtualBox  Ubuntu 18.04 (Bionic)'
+  # 17.  Linux: Vagrant   VirtualBox  Ubuntu 16.04 (Bionic)'
+  # 18.  Linux: Vagrant   VirtualBox  Ubuntu 16.04 (Xenial Xerus)'
+  # 19.  Linux: Vagrant   VirtualBox  CentOS 7.0-7.6' 
+  # 20.  Linux: Vagrant   VirtualBox  Debian Stretch 9.0-9.6'
+  # 20.  Linux: Vagrant   VirtualBox  Debian Buster 10.0'
+
+  # 24.  Linux: Kubernetes Docker     Ubuntu 19.04 (Disco Dingo)'
+  # 21.  Linux: Kubernetes Docker     Ubuntu 18.10 (Cosmic Cuttlefish
+  # 22.  Linux: Kubernetes Docker     Ubuntu 18.04 (Bionic Beaver)'
+  # 23.  Linux: Kubernetes Docker     Ubuntu 16.04 (Bionic)'
+  # 24.  Linux: Kubernetes Docker     Ubuntu 16.04 (Xenial Xerus)'
+  # 25.  Linux: Kubernetes Docker     CentOS 7.0-7.6 '
+  # 26.  Linux: Kubernetes Docker     Debian 10.0     (Buster)'
+  # 26.  Linux: Kubernetes Docker     Debian 9.0-9.6' (Stretch)
+
+  # 24.  Linux: Docker only           Ubuntu 19.04 (Disco Dingo)'
+  # 21.  Linux: Docker only           Ubuntu 18.10 (Cosmic Cuttlefish
+  # 22.  Linux: Docker only           Ubuntu 18.04 (Bionic Beaver)'
+  # 23.  Linux: Docker only           Ubuntu 16.04 (Bionic)'
+  # 24.  Linux: Docker only           Ubuntu 16.04 (Xenial Xerus)'
+  # 25.  Linux: Docker only           CentOS 7.0-7.6 '
+  # 26.  Linux: Docker only           Debian 10.0     (Buster)'
+  # 26.  Linux: Docker only           Debian 9.0-9.6' (Stretch)
+
+  # 24.  Linux: VMware only           Ubuntu 19.04 (Disco Dingo)'
+  # 21.  Linux: VMware only           Ubuntu 18.10 (Cosmic Cuttlefish
+  # 22.  Linux: VMware only           Ubuntu 18.04 (Bionic Beaver)'
+  # 23.  Linux: VMware only           Ubuntu 16.04 (Bionic)'
+  # 24.  Linux: VMware only           Ubuntu 16.04 (Xenial Xerus)'
+  # 25.  Linux: VMware only           CentOS 7.0-7.6 '
+  # 26.  Linux: VMware only           Debian 10.0     (Buster)'
+  # 26.  Linux: VMware only           Debian 9.0-9.6' (Stretch)
