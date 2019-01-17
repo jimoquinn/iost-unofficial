@@ -5,6 +5,7 @@
 #           IOST "One Click" Development Environment
 #            For Greenfield Ubuntu Installation
 #
+#  Thu Jan 17 09:57:04 UTC 2019
 #
 #  Objective:  to provide a single script that will install
 #  all the necessary dependecies and IOST code required to be
@@ -105,6 +106,26 @@ readonly LOG="/tmp/bootstrap.sh.$$.log"
 # iost_install_docker()
 # iost_install_golang()
 # iost_check_deps()
+
+function __error_handler() {
+  echo "Error occurred in script at line: ${1}."
+  echo "Line exited with status: ${2}"
+}
+
+trap '_error_handler ${LINENO} $?' ERR
+
+#set -o errexit
+#set -o errtrace
+#set -o errpipe
+#set -o nounset
+
+echo "Everything is running fine..."
+
+# A command outside of a conditional that will always return a exit code of 1
+#test 1 -eq 0
+#
+#echo "This will never run, as a command has failed"
+#echo "Using unset variable ${TEST} will also cause this script to exit"
 
 #
 # 
@@ -216,6 +237,12 @@ iost_install_init () {
   # -  rocksdb, nvm, node, npm, yarn, docker, golang, 
   # -  IOST: iwallet, iserver, scaf, 
 
+
+  if [ -f "$HOME/.iost_env" ]; then
+    echo "---> irk: previous install found, running: iost_install_rmfr () "
+    iost_install_rmfr
+  fi
+
   echo "---> msg: done: iost_install_init () "
 	
 }
@@ -238,18 +265,23 @@ iost_install_rmfr () {
   echo "#=-------------------------------------------------------------------------=#"
   echo "---> msg: start: iost_install_rmfr () "
 
-  echo "---> msg: sudo $pkg_installer purge docker-ce libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev  -y"
-  sudo $pkg_installer purge docker-ce libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev  -y  >> $LOG 2>&1
+  echo "---> run: sudo systemctl disable docker-ce"
+  sudo systemctl disable docker >> $LOG 2>&1
+  echo "---> run: sudo systemctl stop docker-ce"
+  sudo systemctl stop docker >> $LOG 2>&1
+
+  echo "---> msg: sudo $pkg_installer purge docker-ce libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev  "
+  sudo $pkg_installer purge docker-ce libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev    >> $LOG 2>&1
 
 
-  echo "---> msg: $pkg_installer purge git git-lfs software-properties-common  build-essential curl  -y" 
-  sudo $pkg_installer purge git git-lfs software-properties-common  build-essential curl  -y  >> $LOG 2>&1
+  echo "---> msg: $pkg_installer purge git git-lfs software-properties-common  build-essential curl  " 
+  sudo $pkg_installer purge git git-lfs software-properties-common  build-essential curl    >> $LOG 2>&1
 
-  echo "---> msg: sudo $pkg_installer purge install apt-transport-https -y "
-  sudo $pkg_installer purge apt-transport-https -y   >> $LOG 2>&1
+  echo "---> msg: sudo $pkg_installer purge install apt-transport-https  "
+  sudo $pkg_installer purge apt-transport-https    >> $LOG 2>&1
 
-  echo "---> msg: sudo $pkg_installer autoremove -y " 
-  sudo $pkg_installer autoremove -y    >> $LOG 2>&1
+  echo "---> msg: sudo $pkg_installer autoremove  " 
+  sudo $pkg_installer autoremove     >> $LOG 2>&1
 
    if [ -f "$HOME/.iost_env" ]; then
      echo "---> msg: rm -fr $HOME/.iost_env"
@@ -261,9 +293,10 @@ iost_install_rmfr () {
      sudo rm -fr /etc/apt/sources.list.d/docker.list
    fi
 
-   if [ -f "$HOME/.nvm" ]; then
+   if [ -d "$HOME/.nvm" ]; then
      echo "---> run: rm -fr $HOME/.nvm" 
      rm -fr $HOME/.nvm
+     unset NVM_DIR
    fi
 
    LOC=$(pwd)
@@ -273,6 +306,7 @@ iost_install_rmfr () {
      echo "---> run: rm -fr $LOC/rocksdb" 
      rm -fr $LOC/rocksdb
    fi
+
 
 
   echo "---> msg: done: iost_install_init () "
@@ -397,24 +431,24 @@ iost_install_packages () {
   echo '#=-------------------------------------------------------------------------=#'
 
   echo "---> msg: start: iost_install_packages()"
-  echo "---> run: $pkg_installer install apt-transport-https ca-certificates -y"
-  sudo $pkg_installer install apt-transport-https ca-certificates -y >> $LOG 2>&1
+  echo "---> run: sudo $pkg_installer install apt-transport-https ca-certificates "
+  sudo $pkg_installer install apt-transport-https ca-certificates  >> $LOG 2>&1
 
-  echo "---> run: $pkg_installer update"
+  echo "---> run: sudo $pkg_installer update"
   sudo $pkg_installer update >> $LOG 2>&1
 
-  echo "---> run: $pkg_installer upgrade -y"
-  sudo $pkg_installer upgrade -y   >> $LOG 2>&1
+  echo "---> run: sudo $pkg_installer upgrade "
+  sudo $pkg_installer upgrade    >> $LOG 2>&1
 
 
-  echo "---> run: sudo $pkg_installer install software-properties-common -y"
-  sudo $pkg_installer install software-properties-common -y  >> $LOG 2>&1
+  echo "---> run: sudo $pkg_installer install software-properties-common "
+  sudo $pkg_installer install software-properties-common   >> $LOG 2>&1
 
-  echo "---> run: sudo add-apt-repository ppa:git-core/ppa -y"
-  sudo add-apt-repository ppa:git-core/ppa -y >> $LOG 2>&1
+  echo "---> run: sudo add-apt-repository ppa:git-core/ppa "
+  sudo add-apt-repository ppa:git-core/ppa  -y >> $LOG 2>&1
 
-  echo "---> run: sudo $pkg_installer install build-essential curl git -y"
-  sudo $pkg_installer install build-essential curl git -y  >> $LOG 2>&1
+  echo "---> run: sudo $pkg_installer install build-essential curl git "
+  sudo $pkg_installer install build-essential curl git   >> $LOG 2>&1
  
   if ! [ -x "$(command -v git)" ]; then
     echo '---> err: git is not installed and executable'; 
@@ -428,12 +462,12 @@ iost_install_packages () {
   echo '---> run: sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash'
   sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash  >> $LOG 2>&1
 
-  echo '---> run: $pkg_installer install git-lfs'
+  echo "---> run: sudo $pkg_installer install git-lfs"
   sudo $pkg_installer install git-lfs >> $LOG 2>&1
 
-  echo '---> run: git lfs install'
+  echo "---> run: git lfs install"
   git lfs install >> $LOG 2>&1
-  echo '---> msg: done: iost_install_packages\(\)'
+  echo "---> msg: done: iost_install_packages()"
 
 }
 
@@ -451,8 +485,8 @@ iost_install_rocksdb () {
   echo '---> msg: start: iost_install_rocksdb()' 
   echo '---> run: apt-get update'
 
-  echo "---> run: sudo $pkg_installer install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev -y"
-  sudo $pkg_installer install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev -y  >> $LOG 2>&1
+  echo "---> run: sudo $pkg_installer install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev "
+  sudo $pkg_installer install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev   >> $LOG 2>&1
 
   echo "---> run: git clone -b $ROCKSDB_MANDATORY https://github.com/facebook/rocksdb.git "
   git clone -b "$ROCKSDB_MANDATORY" https://github.com/facebook/rocksdb.git >> $LOG 2>&1
@@ -482,12 +516,23 @@ iost_install_nvm_node_npm () {
   echo "---> run: curl -s https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash"   
   curl -s https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash      >> $LOG 2>&1
 
-  echo "export NVM_DIR="$HOME/.nvm""                                        >> ~/.iost_env
-  echo "[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh""                   >> ~/.iost_env 
-  echo "[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"" >> ~/.iost_env  
+  export NVM_DIR="$HOME/.nvm"
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
-  echo "---> run: source $HOME/.iost_env"
-  source $HOME/.iost_env
+
+  echo "export NVM_DIR=$HOME/.nvm"                                          >> $HOME/.iost_env
+  echo "[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh""                   >> $HOME/.iost_env 
+  echo "[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"" >> $HOME/.iost_env  
+
+
+  #echo "export NVM_DIR="$HOME/.nvm""                                          >> $HOME/.iost_env
+  #echo "[ -s "$NVM_DIR"/nvm.sh ] && \. "$NVM_DIR"/nvm.sh"                     >> $HOME/.iost_env
+  #echo "[ -s "$NVM_DIR"/bash_completion" ] && \. "$NVM_DIR"/bash_completion"" >> $HOME/.iost_env
+  #echo "---> msg: export NVM_DIR=$HOME/.nvm"
+  #export NVM_DIR=$HOME/.nvm
+  #echo "---> run: source $HOME/.iost_env"
+  #. $HOME/.iost_env && true
 
   echo "---> run: nvm install $NODE_MANDATORY "
   nvm install $NODE_MANDATORY   >> $LOG 2>&1
@@ -505,9 +550,8 @@ iost_install_nvm_node_npm () {
   fi
 
   echo -n '---> msg: npm version '
-  npm --version 2>/dev/null
   NPM_V=$(npm --version 2>/dev/null)
-  if [ -z $NPM_V]; then
+  if [ -z $NPM_V ]; then
     echo "---> msg: error: npm install failed, check $LOG"
     ERR=1
   else
@@ -516,7 +560,7 @@ iost_install_nvm_node_npm () {
 
   echo -n '---> msg: node version '
   NODE_V=$(node --version 2>/dev/null)
-  if [ -z $NODE_V]; then
+  if [ -z $NODE_V ]; then
     echo "---> msg: error: node install failed, check $LOG"
     ERR=1
   else
@@ -539,8 +583,8 @@ iost_install_docker () {
   echo '#=-------------------------------------------------------------------------=#'
   echo "---> msg: start: iost_install_docker ()"
 
-  echo "---> run: sudo $pkg_installer install apt-transport-https ca-certificates -y >> $LOG 2>&1"
-  sudo $pkg_installer install apt-transport-https ca-certificates -y >> $LOG 2>&1
+  echo "---> run: sudo $pkg_installer install apt-transport-https ca-certificates  >> $LOG 2>&1"
+  sudo $pkg_installer install apt-transport-https ca-certificates  >> $LOG 2>&1
 
   echo "---> run: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -"
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - >> $LOG 2>&1
@@ -551,21 +595,35 @@ iost_install_docker () {
   echo "---> run: sudo $pkg_installer update"
   sudo $pkg_installer update                >> $LOG 2>&1
 
-  echo "---> run: sudo $pkg_installer install docker-ce -y"
-  sudo $pkg_installer install docker-ce -y  >> $LOG 2>&1
+  echo "---> run: sudo $pkg_installer install docker-ce "
+  sudo $pkg_installer install docker-ce   >> $LOG 2>&1
 
   # Add user account to the docker group
   echo "---> run: sudo usermod -aG docker $(whoami) "
   sudo usermod -aG docker $(whoami)         >> $LOG 2>&1
 
+  echo "---> run: systemctl enable dockere"
+  sudo systemctl enable docker >> $LOG 2>&1
+  echo "---> run: systemctl run docker"
+  sudo systemctl run docker >> $LOG 2>&1
+
   echo -n '---> msg: docker version '
-  DOCKER_V=$(docker version 2>/dev/null)
+  DOCKER_V=$(docker --version 2>/dev/null)
   if [ -z $DOCKER_V ]; then
-    echo "---> msg: error: docker install failed, check $LOG"
+    echo "---> msg: error: docker-ce install failed, check $LOG"
     ERR=1
   else
     echo "$DOCKER_V"
   fi
+
+  #echo -n '---> msg: docker version '
+  #DOCKER_V=$(docker --version >/dev/null)
+  #if [ -z $DOCKER_V ]; then
+  #  echo "---> msg: error: docker install failed, check $LOG"
+  #  ERR=1
+  #else
+  #  echo "$DOCKER_V"
+  #fi
 
   echo "---> msg: done: iost_install_docker ()"
 }
@@ -581,7 +639,7 @@ iost_install_golang () {
   echo '#=-------------------------------------------------------------------------=#'
 
   echo "---> msg: start: iost_install_golang ()"
-  readonly IOST_ROOT="$HOME/go/src/github.com/iost-official/go-iost"
+  IOST_ROOT="$HOME/go/src/github.com/iost-official/go-iost"
   alias ir="cd $IOST_ROOT"
 
   # check for logic that sources IOST env file
@@ -628,7 +686,7 @@ iost_install_golang () {
 
   echo -n '--> msg: go version '
   GO_V=$(go version | cut -f3 -d' ' | sed 's/go//g' 2>/dev/null)
-  if [ -z $GO_V]; then
+  if [ -z $GO_V ]; then
     echo "---> msg: error: $GOLANG_MANDATORY install failed, check $LOG"
     ERR=1
   else
@@ -750,18 +808,12 @@ iost_install_iserver () {
 }
 
 
-set -e
-
-
-if [ -f "$HOME/.iost_env" ]; then
-  iost_install_rmfr
-fi
-
+#set -e
 
 iost_install_init
 iost_warning_requirements
 iost_install_packages
-iost_install_rocksdb
+#iost_install_rocksdb
 iost_install_nvm_node_npm
 iost_install_docker
 iost_install_golang
