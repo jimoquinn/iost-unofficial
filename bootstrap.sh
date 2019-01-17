@@ -41,6 +41,7 @@
 #  - wallet - named iwallet
 #  - node - iserver
 #  - VM - virtual machiens for dapps called V8VM
+#  - scaf - dApp development tool
 #
 #  Report bugs to:
 #  https://github.com/jimoquinn/iost-unofficial
@@ -65,7 +66,9 @@ pkg_installer=''
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 # the version we're looking for
-readonly UBUNTU_MANDATORY=('xenial' 'yakkety' 'bionic'  'cosmic');
+
+# package.io not supported on cosmic yet
+readonly UBUNTU_MANDATORY=('xenial' 'yakkety' 'bionic');
 readonly CENTOS_MANDATORY=('centos7');
 readonly DEBIAN_MANDATORY=('stretch');
 #readonly MACOS_MANDATORY=('Darwin', 'Hitchens');
@@ -125,7 +128,7 @@ iost_install_init () {
 
   # 3rd - for installed apps
   # check for: 
-  # - Ubuntu: 16.04, 16.10, 18.04, 18.10
+  # - Ubuntu: 16.04, 16.10, 18.04
   # - Debian: 9.1-6, 10
   # - CentOS: 7.0-6
   # -  MacOS: 14.0.0-2
@@ -156,19 +159,47 @@ iost_install_init () {
   # pick the installer based off distribution
   if [ -n "$DIST" ]; then
     DIST=${DIST,,}
-    echo "---> msg: determining package installer for \"$DIST\""
+    echo "---> msg: determining package installer for [$PRETTY_NAME]"
       case "$DIST" in
-        centos|rhel)   pkg_installer=/usr/bin/yum; echo "---> msg: using yum package installer" ;;
-        debian|ubuntu) pkg_installer=/usr/bin/apt-get; echo "---> msg: using apt package installer" ;;
-        *) echo "---> err: the package installer for \"$DIST\" installation is unsupported." 
-        exit 97
-        ;;
+
+        centos|rhel)   
+          pkg_installer=/usr/bin/yum; 
+          echo "---> msg: [$PRETTY_NAME] is supported and using [$pkg_installer]"
+          ;;
+
+        debian)
+          # check version is supported
+          if echo ${DEBIAN_MANDATORY[@]} | grep -q -w ${DIST}; then
+            pkg_installer=/usr/bin/apt-get
+            # setup packages-debian.txt
+            echo "---> msg: [$PRETTY_NAME] is supported and using [$pkg_installer]"
+          else
+            echo "---> err: [${PRETTY_NAME}] is not supported, view $LOG"
+            exit 77
+          fi
+
+        ubuntu) 
+          # check version is supported
+          if echo ${UBUNTU_MANDATORY[@]} | grep -q -w ${DIST}; then
+            pkg_installer=/usr/bin/apt-get
+            # setup packages-ubuntu.txt
+            echo "---> msg: [$PRETTY_NAME] is supported and using [$pkg_installer]"
+          else
+            echo "---> err: [${PRETTY_NAME}] is not supported, view $LOG"
+            exit 76
+          fi
+          ;;
+
+        *) 
+          echo "---> err: the package installer for [$PRETTY_INSTALLER] is unsupported, view $LOG" 
+          exit 95
+          ;;
+
         esac
 
         if [ ! -x "$pkg_installer" ]; then
-          echo "---> err: the \"$pkg_installer\" for \"$DIST\" is not executable" 
-          echo "---> err: Exiting install script"
-          exit 96
+          echo "---> err: the [$pkg_installer] for [$PRETTY_NAME] is not executable, view $LOG" 
+          exit 94
         fi
   fi
 
@@ -209,8 +240,8 @@ iost_install_rmfr () {
   echo "---> msg: apt purge git git-lfs software-properties-common  build-essential curl  -y" 
   sudo apt purge git git-lfs software-properties-common  build-essential curl  -y  >> $LOG 2>&1
 
-  echo "---> msg: sudo apt purge install apt-transport-https ca-certificates -y "
-  sudo apt purge apt-transport-https ca-certificates -y   >> $LOG 2>&1
+  echo "---> msg: sudo apt purge install apt-transport-https -y "
+  sudo apt purge apt-transport-https -y   >> $LOG 2>&1
 
   echo "---> msg: sudo apt autoremove -y " 
   sudo apt autoremove -y    >> $LOG 2>&1
