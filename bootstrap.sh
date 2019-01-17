@@ -109,13 +109,17 @@ readonly LOG="/tmp/bootstrap.sh.$$.log"
 # 
 #
 iost_install_init () {
+  echo ""; echo ""
+  echo "#=-------------------------------------------------------------------------=#"
+  echo "#-----------------   IOST Install - pre-init      -------------------------=#"
+  echo "#=-------------------------------------------------------------------------=#"
   echo "---> msg: start: iost_install_init () "
 
   # 1st - confirm that we are not running under root
   if [[ $(whoami) == "root" ]]; then
-      echo 'WARNING:  We are not kidding, you should not run this as the \"root\" user. Modify the sudoers'
+      echo 'WARNING:  We are not kidding, you should not run this as the "root" user. Modify the sudoers'
       echo 'file with visudo.  Once in the editor, add the following to the bottom of the file.  Be sure '
-      echo 'to replace NON-ROOT_USER with your actual user id (run \"whoami\" at the command prompt).'
+      echo 'to replace NON-ROOT_USER with your actual user id (run "whoami" at the command prompt).'
       echo ''
       echo 'NON-ROOT-USER ALL=(ALL:ALL) ALL'
       echo ''
@@ -177,10 +181,9 @@ iost_install_init () {
             echo "---> err: [${PRETTY_NAME}] is not supported, view $LOG"
             exit 77
           fi
-
+          ;;
         ubuntu) 
-          # check version is supported
-          if echo ${UBUNTU_MANDATORY[@]} | grep -q -w ${DIST}; then
+	    if echo ${UBUNTU_MANDATORY[@]} | grep -q -w ${DIST}; then
             pkg_installer=/usr/bin/apt-get
             # setup packages-ubuntu.txt
             echo "---> msg: [$PRETTY_NAME] is supported and using [$pkg_installer]"
@@ -233,18 +236,18 @@ iost_install_rmfr () {
   echo "#=-------------------------------------------------------------------------=#"
   echo "---> msg: start: iost_install_rmfr () "
 
-  echo "---> msg: sudo apt purge docker-ce libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev  -y"
-  sudo apt purge docker-ce libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev  -y  >> $LOG 2>&1
+  echo "---> msg: sudo $pkg_installer purge docker-ce libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev  -y"
+  sudo $pkg_installer purge docker-ce libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev  -y  >> $LOG 2>&1
 
 
-  echo "---> msg: apt purge git git-lfs software-properties-common  build-essential curl  -y" 
-  sudo apt purge git git-lfs software-properties-common  build-essential curl  -y  >> $LOG 2>&1
+  echo "---> msg: $pkg_installer purge git git-lfs software-properties-common  build-essential curl  -y" 
+  sudo $pkg_installer purge git git-lfs software-properties-common  build-essential curl  -y  >> $LOG 2>&1
 
-  echo "---> msg: sudo apt purge install apt-transport-https -y "
-  sudo apt purge apt-transport-https -y   >> $LOG 2>&1
+  echo "---> msg: sudo $pkg_installer purge install apt-transport-https -y "
+  sudo $pkg_installer purge apt-transport-https -y   >> $LOG 2>&1
 
-  echo "---> msg: sudo apt autoremove -y " 
-  sudo apt autoremove -y    >> $LOG 2>&1
+  echo "---> msg: sudo $pkg_installer autoremove -y " 
+  sudo $pkg_installer autoremove -y    >> $LOG 2>&1
 
    if [ -f "$HOME/.iost_env" ]; then
      echo "---> msg: rm -fr $HOME/.iost_env"
@@ -392,7 +395,7 @@ iost_install_packages () {
   echo '#=-------------------------------------------------------------------------=#'
 
   echo "---> msg: start: iost_install_packages()"
-  echo "---> run: apt install apt-transport-https ca-certificates -y"
+  echo "---> run: $pkg_installer install apt-transport-https ca-certificates -y"
   sudo $pkg_installer install apt-transport-https ca-certificates -y >> $LOG 2>&1
 
   echo "---> run: $pkg_installer update"
