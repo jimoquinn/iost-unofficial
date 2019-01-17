@@ -68,7 +68,8 @@ pkg_installer=''
 # the version we're looking for
 
 # package.io not supported on cosmic yet
-readonly UBUNTU_MANDATORY=('xenial' 'yakkety' 'bionic');
+#readonly UBUNTU_MANDATORY=('xenial' 'yakkety' 'bionic');
+readonly UBUNTU_MANDATORY=('16.04' '16.10' '18.04');
 readonly CENTOS_MANDATORY=('centos7');
 readonly DEBIAN_MANDATORY=('stretch');
 #readonly MACOS_MANDATORY=('Darwin', 'Hitchens');
@@ -158,53 +159,54 @@ iost_install_init () {
   fi
 
 
-
-  
   # pick the installer based off distribution
   if [ -n "$DIST" ]; then
     DIST=${DIST,,}
     echo "---> msg: determining package installer for [$PRETTY_NAME]"
       case "$DIST" in
 
-        centos|rhel)   
-          pkg_installer=/usr/bin/yum; 
+        centos|rhel)
+          pkg_installer="/usr/bin/yum -y "
           echo "---> msg: [$PRETTY_NAME] is supported and using [$pkg_installer]"
           ;;
 
         debian)
           # check version is supported
-          if echo ${DEBIAN_MANDATORY[@]} | grep -q -w ${DIST}; then
-            pkg_installer=/usr/bin/apt-get
+          if echo ${DEBIAN_MANDATORY[@]} | grep -q -w ${VERSION_ID}; then
+            pkg_installer="/usr/bin/apt-get -y"
             # setup packages-debian.txt
             echo "---> msg: [$PRETTY_NAME] is supported and using [$pkg_installer]"
           else
-            echo "---> err: [${PRETTY_NAME}] is not supported, view $LOG"
+            echo "---> err: [$VERSION_ID] [${PRETTY_NAME}] is not supported, view $LOG"
             exit 77
           fi
           ;;
-        ubuntu) 
-	    if echo ${UBUNTU_MANDATORY[@]} | grep -q -w ${DIST}; then
-            pkg_installer=/usr/bin/apt-get
+        ubuntu)
+            if echo ${UBUNTU_MANDATORY[@]} | grep -q -w ${VERSION_ID}; then
+            pkg_installer="/usr/bin/apt-get -y "
             # setup packages-ubuntu.txt
             echo "---> msg: [$PRETTY_NAME] is supported and using [$pkg_installer]"
           else
-            echo "---> err: [${PRETTY_NAME}] is not supported, view $LOG"
+            echo "---> err: [$VERSION_ID] [${UBUNTU_MANDATORY[@]}] [${PRETTY_NAME}] is not supported, view $LOG"
             exit 76
           fi
           ;;
 
-        *) 
-          echo "---> err: the package installer for [$PRETTY_INSTALLER] is unsupported, view $LOG" 
+        *)
+          echo "---> err: the package installer for [$PRETTY_INSTALLER] is unsupported, view $LOG"
           exit 95
           ;;
 
         esac
 
-        if [ ! -x "$pkg_installer" ]; then
-          echo "---> err: the [$pkg_installer] for [$PRETTY_NAME] is not executable, view $LOG" 
-          exit 94
-        fi
+        #if [ ! -x "$pkg_installer" ]; then
+        #  echo "---> err: the [$pkg_installer] for [$PRETTY_NAME] is not executable, view $LOG"
+        #  exit 94
+        #fi
   fi
+
+
+
 
   # TODO: check for installed apps
   # 4th - for installed apps
