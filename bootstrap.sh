@@ -160,7 +160,7 @@ iost_install_init () {
   # -  MacOS: 14.0.0-2
   # -    Win: 10, Server 2016-2019
 
-  echo "---> msg: determining distributino and release"
+  echo "---> msg: determining distribution and release"
   if [ -e /etc/os-release ]; then
     # Access $ID, $VERSION_ID and $PRETTY_NAME
     source /etc/os-release
@@ -188,6 +188,7 @@ iost_install_init () {
 
         centos|rhel)
           pkg_installer="/usr/bin/yum -y "
+          git_lfs="sudo $pkg_installer install epel-release"
           echo "---> msg: [$PRETTY_NAME] is supported and using [$pkg_installer]"
           ;;
 
@@ -205,6 +206,7 @@ iost_install_init () {
         ubuntu)
             if echo ${UBUNTU_MANDATORY[@]} | grep -q -w ${VERSION_ID}; then
             pkg_installer="/usr/bin/apt-get -y "
+            git_lfs="sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash"
             # setup packages-ubuntu.txt
             echo "---> msg: [$PRETTY_NAME] is supported and using [$pkg_installer]"
           else
@@ -224,9 +226,10 @@ iost_install_init () {
         #  echo "---> err: the [$pkg_installer] for [$PRETTY_NAME] is not executable, view $LOG"
         #  exit 94
         #fi
-  fi
+    fi
 
-
+   # install git
+   $pkg_installer install git
 
 
   # TODO: check for installed apps
@@ -457,8 +460,8 @@ iost_install_packages () {
   echo "---> run: sudo $pkg_installer install software-properties-common "
   sudo $pkg_installer install software-properties-common   >> $LOG 2>&1
 
-  echo "---> run: sudo add-apt-repository ppa:git-core/ppa "
-  sudo add-apt-repository ppa:git-core/ppa  -y >> $LOG 2>&1
+  #echo "---> run: sudo add-apt-repository ppa:git-core/ppa "
+  #sudo add-apt-repository ppa:git-core/ppa  -y >> $LOG 2>&1
 
   echo "---> run: sudo $pkg_installer install build-essential curl git "
   sudo $pkg_installer install build-essential curl git   >> $LOG 2>&1
@@ -471,9 +474,10 @@ iost_install_packages () {
     git --version | cut -f3 -d' ' 2>/dev/null
   fi
 
+
   # install Large File Support for git
-  echo '---> run: sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash'
-  sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash  >> $LOG 2>&1
+  echo "---> run sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash"
+  sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.rpm.sh | sudo bash >> $LOG 2>&1
 
   echo "---> run: sudo $pkg_installer install git-lfs"
   sudo $pkg_installer install git-lfs >> $LOG 2>&1
@@ -602,8 +606,10 @@ iost_install_docker () {
   echo "---> run: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -"
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - >> $LOG 2>&1
 
-  lsb=$(lsb_release -cs)
-  echo "deb [arch=amd64] https://download.docker.com/linux/ubuntu $lsb stable" | sudo tee /etc/apt/sources.list.d/docker.list  >> $LOG 2>&1
+  echo "---> run: git_docker="\$(packages/${DIST}_${VERSION_ID}.sh >> $LOG 2>&1)"";
+  git_docker="$(packages/${DIST}_${VERSION_ID}.sh >> $LOG 2>&1)"
+  #lsb=$(lsb_release -cs)
+  #echo "deb [arch=amd64] https://download.docker.com/linux/ubuntu $lsb stable" | sudo tee /etc/apt/sources.list.d/docker.list  >> $LOG 2>&1
 
   echo "---> run: sudo $pkg_installer update"
   sudo $pkg_installer update                >> $LOG 2>&1
