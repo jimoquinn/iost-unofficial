@@ -2,53 +2,44 @@
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 #
-#           IOST "One Click" Development Environment
-#            For Greenfield Ubuntu Installation
+#                IOST "One Click" Install 
+#         Baremetal Development Environment
+#         **  For Greenfield Installs Only  **
 #
-#  Fri Jan 18 17:52:44 CST 2019
+#  Wed Jan 30 23:42:16 UTC 2019
 #
 #  Objective:  to provide a single script that will install
 #  all the necessary dependecies and IOST code required to be
-#  productive in less than 15 minutes.  No need waste time 
-#  installing a dozen packages by hand all while unsure if they 
-#  are the correct versions.
+#  productive in less than 15 minutes.  
 #
-#  When the install finishes, you can develop dApps, use iWallet, 
-#  run a node with iServer, 
+#  This is a greenfield install only, so only use on a fresh 
+#  install of Linux.  It will check for previous install attemps, 
+#  remove all the prevous installed dependicies, and start the 
+#  install again.  Consider yourself warned.
 #
-#  This is a greenfield install only, but I've had success 
-#  restarting the installation several times with no real 
-#  consequences except for a messy .bashrc. 
+#  We'll install the following: 
 #
-#  With the exception of Go and some packages, it will
-#  download, compile the source code, and install the 
-#  tools.  Then it will download and compile all the
-#  IOST code necessary to start developing in the
-#  ecosystem.
-#
-#
-#  Ubuntu 18.04 is required, we'll install:
-#  - updates and patches
-#  - git, git-lfs, build-essentials, and many more
+#  - updates and patches for your distro
+#  - apt-transport-https ca-certificates software-properties-common   
+#  - build-essential curl git git-lfs 
+#  - libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev   
 #  - RocksDB
-#  - Go 
 #  - nvm
 #  - npm 
 #  - node
-#  - docker
-#  - k8s
+#  - Go Lang
 #
 #  IOST from github.com/iost-official/go-iost
-#  - wallet - named iwallet
-#  - node - iserver
-#  - VM - virtual machiens for dapps called V8VM
-#  - scaf - dApp development tool
+#  - iWallet - the wallet for IOST
+#  - iServer - the node/servinode daemon
+#  - v8vm    - the virtual machine
+#  - scaf    - dApp development tool
 #
-#  Report bugs to:
-#  https://github.com/jimoquinn/iost-unofficial
+#  Report bugs here:
+#  -  https://github.com/jimoquinn/iost-unofficial
 #
 #  You can contact me here:
-#  jim.oquinn@gmail.com
+#  -  jim.oquinn@gmail.com
 #
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -73,7 +64,7 @@ pkg_installer=''
 readonly UBUNTU_MANDATORY=('16.04' '16.10' '18.04');
 readonly CENTOS_MANDATORY=('centos7');
 readonly DEBIAN_MANDATORY=('stretch');
-#readonly MACOS_MANDATORY=('Darwin', 'Hitchens');
+readonly MACOS_MANDATORY=('Darwin', 'Hitchens');
 
 readonly ROCKSDB_MANDATORY="v5.14.3"
 readonly GOLANG_MANDATORY="1.11.3"
@@ -83,7 +74,6 @@ readonly NVM_MANDATORY="v0.33.11"
 readonly DOCKER_MANDATORY="v18.06.0-ce"
 
 readonly IOST_MANDATORY=""
-# set to "1" if this is to be used in a Vagrantfile as provision
 readonly FOR_VAGRANT="1"	
 
 
@@ -105,7 +95,6 @@ readonly LOG="/tmp/bootstrap.sh.$$.log"
 # iost_install_nvm_node_npm()
 # iost_install_docker()
 # iost_install_golang()
-# iost_check_deps()
 
 function __error_handler() {
   echo "Error occurred in script at line: ${1}."
@@ -119,7 +108,7 @@ trap '_error_handler ${LINENO} $?' ERR
 #set -o errpipe
 #set -o nounset
 
-echo "Everything is running fine..."
+#echo "Everything is running fine..."
 
 # A command outside of a conditional that will always return a exit code of 1
 #test 1 -eq 0
@@ -139,8 +128,8 @@ iost_install_init () {
 
   # 1st - confirm that we are not running under root
   if [[ $(whoami) == "root" ]]; then
-      echo 'WARNING:  We are not kidding, you should not run this as the "root" user. Modify the sudoers'
-      echo 'file with visudo.  Once in the editor, add the following to the bottom of the file.  Be sure '
+      echo 'WARNING:  You should not run this as the "root" user. Modify the sudoers with visudo.'
+      echo 'Example, once in the editor, add the following to the bottom of the file.  Be sure '
       echo 'to replace NON-ROOT_USER with your actual user id (run "whoami" at the command prompt).'
       echo ''
       echo 'NON-ROOT-USER ALL=(ALL:ALL) ALL'
@@ -178,7 +167,6 @@ iost_install_init () {
       exit 98
     fi
   fi
-
 
   # pick the installer based off distribution
   if [ -n "$DIST" ]; then
@@ -224,7 +212,7 @@ iost_install_init () {
 
         #if [ ! -x "$pkg_installer" ]; then
         #  echo "---> err: the [$pkg_installer] for [$PRETTY_NAME] is not executable, view $LOG"
-        #  exit 94
+        #  exit 74
         #fi
     fi
 
@@ -324,7 +312,6 @@ iost_install_rmfr () {
    fi
 
 
-
   echo "---> msg: done: iost_install_init () "
 
 }
@@ -343,24 +330,6 @@ iost_install_end () {
 }
 
 
-
-#
-#  TODO: iost_ubuntu_options () 
-#  - VM/Container options for Ubuntu
-#  - create one for each of the supported OSs
-#
-iost_ubuntu_options () {
-  echo 'This script can install IOST with the following:'
-  echo "  1.  Greenfield (aka; bare metal fresh install)"
-  echo '  2.  Vagrant and LXC '
-  echo '  3.  Vagrant and VirtualBox'
-  echo '  4.  Kubernetes and Docker'
-  echo '  5.  Docker only'
-  echo '  6.  VMware only'
-}
-
-
-
 #
 #  iost_warning_requirements () - 
 #
@@ -373,68 +342,36 @@ iost_warning_requirements () {
   echo "Please read carefully as these are hard requirements:"; echo ""
   echo "  1.  This is for a greenfield install, do not install on a configured system."
   echo "  2.  Do not run as the root user.  Run under a user that can sudo to root (man visudo)."
-  echo "  3.  The log file will be located:  $LOG "
+  echo "  3.  The install log file will be located:  $LOG "
   echo ""; echo "";
 
 
   echo "This script will install the following:"; echo ""
-  echo "  -  Security updates and patches for $UBUNTU_MANDATORY"
+  echo "  -  Security updates and patches for $DIST"
   echo "  -  Rocks DB $ROCKSDB_MANDATORY"
-  echo "  -  Golang verson $GOLANG_MANDATORY"
   echo "  -  nvm version $NVM_MANDATORY"
   echo "  -  node version $NODE_MANDATORY"
   echo "  -  npm version $NPM_MANDATORY"
-  echo "  -  docker version $DOCKER_MANDATORY"
   echo "  -  nvm version $NVM_MANDATORY"
-  echo "  -  Many packages; software-properties-common, build-essential, curl, git, git-lfs, and more"
+  echo "  -  Go Lang verson $GOLANG_MANDATORY"
+  #echo "  -  docker version $DOCKER_MANDATORY"
+  #echo "  -  Many packages; software-properties-common, build-essential, curl, git, git-lfs, and more"
   echo ''
 
-  #echo '\n\n'
-  #echo 'First we need to confirm that you are not running as "root" and that you can "sudo" to root.\n'
-  #echo '\n'
-
-  echo -e "Make a selection?  (Y/n): "
+  echo -e "Continue?  (Y/n): "
   read -r CONT
 
-  # if [ -n "$CONT" ]; then
   if [ ! -z "$CONT" ]; then
     if [ $CONT == "n" ] || [ $CONT == 'N' ]; then
       echo ""; echo ""
-      echo "Good choice, best if you do not install unless you meet the above requirements."
+      echo "Best if you do not install unless you meet the above requirements."
       echo "We know you don't give up that easy, so you will be back."
       echo ""; 
       echo ""
       exit 99
     fi
   fi
-
-
 }
-
-#
-#  TODO: 
-#  iost_detect_vm() - 
-#
-iost_detect_vm() {
-  # are we running in a virtual environment?
-
-  echo "iost_detec_vm"
-
-}
-
-#
-#  TODO: 
-#  iost_sudo_confirm () - 
-#
-iost_sudo_confirm () {
-
-  echo ''; echo ''
-  echo '#=-------------------------------------------------------------------------=#'
-  echo '#--------------------     IOST Install - packages       -------------------=#'
-  echo '#=-------------------------------------------------------------------------=#'
-
-}
-
 
 
 #
@@ -456,7 +393,6 @@ iost_install_packages () {
   echo "---> run: sudo $pkg_installer upgrade "
   sudo $pkg_installer upgrade    >> $LOG 2>&1
 
-
   echo "---> run: sudo $pkg_installer install software-properties-common "
   sudo $pkg_installer install software-properties-common   >> $LOG 2>&1
 
@@ -464,7 +400,7 @@ iost_install_packages () {
   #sudo add-apt-repository ppa:git-core/ppa  -y >> $LOG 2>&1
 
   echo "---> run: sudo $pkg_installer install build-essential curl git "
-  sudo $pkg_installer install build-essential curl git   >> $LOG 2>&1
+  sudo $pkg_installer install build-essential curl git     >> $LOG 2>&1
  
   if ! [ -x "$(command -v git)" ]; then
     echo '---> err: git is not installed and executable'; 
@@ -511,7 +447,6 @@ iost_install_rocksdb () {
   echo "---> run: make static_lib"
   make static_lib  >> $LOG 2>&1
 
-
   echo "---> run: sudo make install-static"
   sudo make install-static >> $LOG 2>&1
 
@@ -530,8 +465,8 @@ iost_install_nvm_node_npm () {
   echo '#=-------------------------------------------------------------------------=#'
   echo "---> msg: start: iost_install_nvm_node_npm ()" 
   cd $HOME
-  echo "---> run: curl -s https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash"   
-  curl -s https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash      >> $LOG 2>&1
+  echo "---> run: curl -s https://raw.githubusercontent.com/creationix/nvm/${VM_MANDATORY}/install.sh | bash"   
+  curl -s https://raw.githubusercontent.com/creationix/nvm/${VM_MANDATORY}/install.sh | bash      >> $LOG 2>&1
 
   export NVM_DIR="$HOME/.nvm"
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
@@ -615,16 +550,16 @@ iost_install_docker () {
   sudo $pkg_installer update                >> $LOG 2>&1
 
   echo "---> run: sudo $pkg_installer install docker-ce "
-  sudo $pkg_installer install docker-ce   >> $LOG 2>&1
+  sudo $pkg_installer install docker-ce     >> $LOG 2>&1
 
   # Add user account to the docker group
   echo "---> run: sudo usermod -aG docker $(whoami) "
   sudo usermod -aG docker $(whoami)         >> $LOG 2>&1
 
   echo "---> run: systemctl enable dockere"
-  sudo systemctl enable docker >> $LOG 2>&1
+  sudo systemctl enable docker              >> $LOG 2>&1
   echo "---> run: systemctl run docker"
-  sudo systemctl run docker >> $LOG 2>&1
+  sudo systemctl run docker                 >> $LOG 2>&1
 
   echo -n '---> msg: docker version '
   DOCKER_V=$(docker --version 2>/dev/null)
@@ -717,38 +652,23 @@ iost_install_golang () {
 
 
 #
-#  iost_check_deps () - 
+#  iost_install_iost () - master setup function 
 #
-iost_check_deps () {
-  return
-  echo ''; echo ''
-  echo '#=-------------------------------------------------------------------------=#'
-  echo '#=------------------   IOST Install - check out versions   ----------------=#'
-  echo '#=-------------------------------------------------------------------------=#'
-  echo ''; echo ''
-  ERR=0
-  echo 'Installation completed: '; echo '';
-  echo -n ' OS:       '
-  OS=$(echo $UBUNTU_VERSION | cut -f2 -d'=' 2>/dev/null)
-  echo $OS
-
-
-  #echo -n ' python:   '
-  #PYTHON=$(python -V 2>/dev/null)
-  #if [ -z $PYTHON ]; then
-  #  echo "error"
-  #  ERR=1
-  #else
-  #  echo "$PYTHON"
-  #fi
-
+iost_install_iost () {
+  iost_install_iost_core
+  iost_install_iost_v8vm
+  iost_install_iost_iwallet
+  iost_install_iost_iserver
+  iost_install_iost_scaf
 
 }
 
+
 #
-#  iost_install_iost () - 
+#  iost_install_iost_core  () - install the IOST core code
 #
-iost_install_iost () {
+iost_install_iost_core () {
+
   echo ''; echo ''
   
   echo '#=-------------------------------------------------------------------------=#'
@@ -756,12 +676,16 @@ iost_install_iost () {
   echo '#=-------------------------------------------------------------------------=#'
   echo "---> msg: start: iost_install_iost ()"
 
+
+  echo "---> msg: setup the environment $HOME/.iost_env"
+  . $HOME/.iost_env
+
   ###go get -d github.com/iost-official/go-iost
   ###cd github.com/iost-official/go-iost/
 
   echo "---> msg: env | grep GO"
-  env | grep GO
-
+  res=`env | grep GO`
+  echo "---> msg: res [$res]"
 
   echo "---> msg: cd $GOPATH/src"
   cd $GOPATH/src
@@ -785,7 +709,10 @@ iost_install_iost () {
 }
 
 
-iost_install_iwallet () {
+#
+#  iost_install_iost_iwallet ()
+#
+iost_install_iost_iwallet () {
 
   echo ''; echo ''
   echo '#=-------------------------------------------------------------------------=#'
@@ -799,7 +726,11 @@ iost_install_iwallet () {
   echo "---> end: iost_install_iwallet ()"
 }
 
-iost_install_iwallet () {
+
+#
+#  iost_install_iost_v8vm () 
+#
+iost_install_iost_v8vm () {
   echo ''; echo ''
   echo '#=-------------------------------------------------------------------------=#'
   echo '#=------------------   IOST Install - deploy V8        --------------------=#'
@@ -812,86 +743,132 @@ iost_install_iwallet () {
 }
 
 
+#  
+#  iost_install_iserver ()
+#
 iost_install_iserver () {
   echo '#=-------------------------------------------------------------------------=#'
   echo '#=------------------   IOST Install - build iwallet    --------------------=#'
   echo '#=-------------------------------------------------------------------------=#'
   echo "---> start: iost_install_iserver ()"
 
-
   #go get -d github.com/iost-official/dapp
 
-
   echo "---> end: iost_install_iserver ()"
-
 }
 
+
+
+
+###
+###
+###   START - beginning of the install script
+###
+###
 
 #set -e
 
 iost_install_init
 iost_warning_requirements
 iost_install_packages
-#iost_install_rocksdb
+iost_install_rocksdb
 iost_install_nvm_node_npm
-iost_install_docker
+#iost_install_docker
 iost_install_golang
-#iost_check_deps
 iost_install_iost
 
 
 
+###
+###
+###   END - the end of the install script
+###
+###
 
-  # This script can install the following:'
-  #  1.  Linux: Vagrant   LXC         Ubuntu 19.04 (Disco Dingo)'
-  #  1.  Linux: Vagrant   LXC         Ubuntu 18.10 (Cosmic Cuttlefish)'
-  #  2.  Linux: Vagrant   LXC         Ubuntu 18.04 (Bionic Beaver)'
-  #  3.  Linux: Vagrant   LXC         Ubuntu 16.10 (Yakkety Yak)'
-  #  4.  Linux: Vagrant   LXC         Ubuntu 16.04 (Xenial Xerus)'
-  #  5.  Linux: Vagrant   LXC         CentOS 7 '
-  #  6.  Linux: Vagrant   LXC         Debian Stretch 9'
 
-  #  7.  Linux: Vagrant   VMware      Ubuntu 19.04 (Disco Dingo)'
-  #  8.  Linux: Vagrant   VMware      Ubuntu 18.10 (Cosmic Cuttlefh)'
-  #  9.  Linux: Vagrant   VMware      Ubuntu 18.04 (Bionic Beaver)'
-  # 10.  Linux: Vagrant   VMware      Ubuntu 16.10 (Yakkety Yak)'
-  # 11.  Linux: Vagrant   VMware      Ubuntu 16.04 (Xenial Xerus)'
-  # 12.  Linux: Vagrant   VMware      CentOS 7' 
-  # 13.  Linux: Vagrant   VMware      Debian Stretch 7' 
 
-  # 14.  Linux: Vagrant   VirtualBox  Ubuntu 19.04 (Disco Dingo)'
-  # 14.  Linux: Vagrant   VirtualBox  Ubuntu 18.04 (Bionic Beaver)'
-  # 15.  Linux: Vagrant   VirtualBox  Ubuntu 18.10 (Cosmic Cuttlefish)'
-  # 16.  Linux: Vagrant   VirtualBox  Ubuntu 18.04 (Bionic)'
-  # 17.  Linux: Vagrant   VirtualBox  Ubuntu 16.04 (Bionic)'
-  # 18.  Linux: Vagrant   VirtualBox  Ubuntu 16.04 (Xenial Xerus)'
-  # 19.  Linux: Vagrant   VirtualBox  CentOS 7.0-7.6' 
-  # 20.  Linux: Vagrant   VirtualBox  Debian Stretch 9.0-9.6'
-  # 20.  Linux: Vagrant   VirtualBox  Debian Buster 10.0'
 
-  # 24.  Linux: Kubernetes Docker     Ubuntu 19.04 (Disco Dingo)'
-  # 21.  Linux: Kubernetes Docker     Ubuntu 18.10 (Cosmic Cuttlefish
-  # 22.  Linux: Kubernetes Docker     Ubuntu 18.04 (Bionic Beaver)'
-  # 23.  Linux: Kubernetes Docker     Ubuntu 16.04 (Bionic)'
-  # 24.  Linux: Kubernetes Docker     Ubuntu 16.04 (Xenial Xerus)'
-  # 25.  Linux: Kubernetes Docker     CentOS 7.0-7.6 '
-  # 26.  Linux: Kubernetes Docker     Debian 10.0     (Buster)'
-  # 26.  Linux: Kubernetes Docker     Debian 9.0-9.6' (Stretch)
 
-  # 24.  Linux: Docker only           Ubuntu 19.04 (Disco Dingo)'
-  # 21.  Linux: Docker only           Ubuntu 18.10 (Cosmic Cuttlefish
-  # 22.  Linux: Docker only           Ubuntu 18.04 (Bionic Beaver)'
-  # 23.  Linux: Docker only           Ubuntu 16.04 (Bionic)'
-  # 24.  Linux: Docker only           Ubuntu 16.04 (Xenial Xerus)'
-  # 25.  Linux: Docker only           CentOS 7.0-7.6 '
-  # 26.  Linux: Docker only           Debian 10.0     (Buster)'
-  # 26.  Linux: Docker only           Debian 9.0-9.6' (Stretch)
 
-  # 24.  Linux: VMware only           Ubuntu 19.04 (Disco Dingo)'
-  # 21.  Linux: VMware only           Ubuntu 18.10 (Cosmic Cuttlefish
-  # 22.  Linux: VMware only           Ubuntu 18.04 (Bionic Beaver)'
-  # 23.  Linux: VMware only           Ubuntu 16.04 (Bionic)'
-  # 24.  Linux: VMware only           Ubuntu 16.04 (Xenial Xerus)'
-  # 25.  Linux: VMware only           CentOS 7.0-7.6 '
-  # 26.  Linux: VMware only           Debian 10.0     (Buster)'
-  # 26.  Linux: VMware only           Debian 9.0-9.6' (Stretch)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#  TODO - 
+
+# This script can install the following:'
+#  1.  Linux: Vagrant   LXC         Ubuntu 19.04 (Disco Dingo)'
+#  1.  Linux: Vagrant   LXC         Ubuntu 18.10 (Cosmic Cuttlefish)'
+#  2.  Linux: Vagrant   LXC         Ubuntu 18.04 (Bionic Beaver)'
+#  3.  Linux: Vagrant   LXC         Ubuntu 16.10 (Yakkety Yak)'
+#  4.  Linux: Vagrant   LXC         Ubuntu 16.04 (Xenial Xerus)'
+#  5.  Linux: Vagrant   LXC         CentOS 7 '
+#  6.  Linux: Vagrant   LXC         Debian Stretch 9'
+
+#  7.  Linux: Vagrant   VMware      Ubuntu 19.04 (Disco Dingo)'
+#  8.  Linux: Vagrant   VMware      Ubuntu 18.10 (Cosmic Cuttlefh)'
+#  9.  Linux: Vagrant   VMware      Ubuntu 18.04 (Bionic Beaver)'
+# 10.  Linux: Vagrant   VMware      Ubuntu 16.10 (Yakkety Yak)'
+# 11.  Linux: Vagrant   VMware      Ubuntu 16.04 (Xenial Xerus)'
+# 12.  Linux: Vagrant   VMware      CentOS 7' 
+# 13.  Linux: Vagrant   VMware      Debian Stretch 7' 
+
+# 14.  Linux: Vagrant   VirtualBox  Ubuntu 19.04 (Disco Dingo)'
+# 14.  Linux: Vagrant   VirtualBox  Ubuntu 18.04 (Bionic Beaver)'
+# 15.  Linux: Vagrant   VirtualBox  Ubuntu 18.10 (Cosmic Cuttlefish)'
+# 16.  Linux: Vagrant   VirtualBox  Ubuntu 18.04 (Bionic)'
+# 17.  Linux: Vagrant   VirtualBox  Ubuntu 16.04 (Bionic)'
+# 18.  Linux: Vagrant   VirtualBox  Ubuntu 16.04 (Xenial Xerus)'
+# 19.  Linux: Vagrant   VirtualBox  CentOS 7.0-7.6' 
+# 20.  Linux: Vagrant   VirtualBox  Debian Stretch 9.0-9.6'
+# 20.  Linux: Vagrant   VirtualBox  Debian Buster 10.0'
+
+# 24.  Linux: Kubernetes Docker     Ubuntu 19.04 (Disco Dingo)'
+# 21.  Linux: Kubernetes Docker     Ubuntu 18.10 (Cosmic Cuttlefish
+# 22.  Linux: Kubernetes Docker     Ubuntu 18.04 (Bionic Beaver)'
+# 23.  Linux: Kubernetes Docker     Ubuntu 16.04 (Bionic)'
+# 24.  Linux: Kubernetes Docker     Ubuntu 16.04 (Xenial Xerus)'
+# 25.  Linux: Kubernetes Docker     CentOS 7.0-7.6 '
+# 26.  Linux: Kubernetes Docker     Debian 10.0     (Buster)'
+# 26.  Linux: Kubernetes Docker     Debian 9.0-9.6' (Stretch)
+
+# 24.  Linux: Docker only           Ubuntu 19.04 (Disco Dingo)'
+# 21.  Linux: Docker only           Ubuntu 18.10 (Cosmic Cuttlefish
+# 22.  Linux: Docker only           Ubuntu 18.04 (Bionic Beaver)'
+# 23.  Linux: Docker only           Ubuntu 16.04 (Bionic)'
+# 24.  Linux: Docker only           Ubuntu 16.04 (Xenial Xerus)'
+# 25.  Linux: Docker only           CentOS 7.0-7.6 '
+# 26.  Linux: Docker only           Debian 10.0     (Buster)'
+# 26.  Linux: Docker only           Debian 9.0-9.6' (Stretch)
+
+# 24.  Linux: VMware only           Ubuntu 19.04 (Disco Dingo)'
+# 21.  Linux: VMware only           Ubuntu 18.10 (Cosmic Cuttlefish
+# 22.  Linux: VMware only           Ubuntu 18.04 (Bionic Beaver)'
+# 23.  Linux: VMware only           Ubuntu 16.04 (Bionic)'
+# 24.  Linux: VMware only           Ubuntu 16.04 (Xenial Xerus)'
+# 25.  Linux: VMware only           CentOS 7.0-7.6 '
+# 26.  Linux: VMware only           Debian 10.0     (Buster)'
+# 26.  Linux: VMware only           Debian 9.0-9.6' (Stretch)
+
+

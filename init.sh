@@ -13,21 +13,60 @@
 
 set -e
 
+readonly LOG="/tmp/init.sh.$$.log"
+
+echo ""; echo ""
+echo "#=-------------------------------------------------------------------------=#"
+echo "#-----------------   IOST Install - pre-pre-init    -----------------------=#"
+echo "#=-------------------------------------------------------------------------=#"
+echo "---> msg: start: IOST pre-pre-installer"
+echo "---> msg: a log of the install is here: $LOG"
+
+
+#
+#  find:  curl or wget
+#
 if loc=$(which wget 2>/dev/null); then
 
-  cmd="wget -q0- "
-  printf "found: wget: $loc [$cmd]\n"
+  downloader="wget -qO- "
+  echo "---> msg: downloader: $cmd"
 
 elif loc=$(which curl 2>/dev/null); then
 
-  cmd="curl -o- "
-  printf "found: curl: $loc \n"
+  downloader="curl -s "
+  echo "---> msg: downloader: $cmd"
 
 else 
-
   
-  printf "we need wget or curl for this script to work\n"
+  echo "---> err: we need wget or curl for this script to work"
+  exit 88;
 
 fi
 
+
+#
+#  find:  yum or apt
+#
+if tpkg_install_t=$(which yum 2>/dev/null); then
+  pkg_install="/usr/bin/yum -y "
+  echo "---> msg: package installer: $pkg_install "
+else
+  pkg_install="/usr/bin/apt -y "
+  echo "---> msg: package installer: $pkg_install "
+fi	
+
+
+#  find:  git or install
+if tgit=(git --version); then
+  echo "---> msg: found: $tgit"
+else
+  echo "---> run: $pkg_install install git"
+  $pkg_install install git >> $LOG 2>&1 
+fi
+
+echo "---> msg: done: IOST pre-pre-installer"
+echo "---> run: $downloader https://raw.githubusercontent.com/jimoquinn/iost-unofficial/master/bootstrap.sh | bash"
+$downloader https://raw.githubusercontent.com/jimoquinn/iost-unofficial/master/bootstrap.sh >> $LOG  2>&1 
+
+#ncmd="$cmd https://github.com/jimoquinn/iost-unofficial/bootstrap.sh | bash"
 
