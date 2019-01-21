@@ -5,7 +5,7 @@
 #           IOST "One Click" Development Environment
 #            For Greenfield Ubuntu Installation
 #
-#  Thu Jan 17 09:57:04 UTC 2019
+#  Fri Jan 18 17:52:44 CST 2019
 #
 #  Objective:  to provide a single script that will install
 #  all the necessary dependecies and IOST code required to be
@@ -239,8 +239,21 @@ iost_install_init () {
 
 
   if [ -f "$HOME/.iost_env" ]; then
-    echo "---> irk: previous install found, running: iost_install_rmfr () "
-    iost_install_rmfr
+    echo "---> irk: previous install found, should I remove this previous version? (Y/n)?"
+    read -r rCONT
+
+    if [ ! -z "$rCONT" ]; then
+      if [ $rCONT == "n" ] || [ $rCONT == 'N' ]; then
+        echo "---> msg: continuing without removing previous version";
+      else
+        echo "---> msg: start: iost_install_rmfr () "
+        iost_install_rmfr
+        echo "---> msg: done: iost_install_rmfr () "
+      fi
+    fi
+
+     
+     
   fi
 
   echo "---> msg: done: iost_install_init () "
