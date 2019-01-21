@@ -703,9 +703,9 @@ fi
 iost_install_init
 iost_warning_requirements
 iost_install_packages
-iost_install_rocksdb
-iost_install_nvm_node_npm
-iost_install_docker
+#iost_install_rocksdb
+#iost_install_nvm_node_npm
+#iost_install_docker
 iost_install_golang
 #iost_check_deps
 iost_install_iost
