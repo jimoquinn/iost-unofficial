@@ -328,10 +328,10 @@ iost_install_rmfr () {
      sudo rm -fr /etc/apt/sources.list.d/docker.list
    fi
 
+   unset NVM_DIR
    if [ -d "$HOME/.nvm" ]; then
      echo "---> run: rm -fr $HOME/.nvm" 
      rm -fr $HOME/.nvm
-     unset NVM_DIR
    fi
 
    LOC=$(pwd)
