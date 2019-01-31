@@ -79,6 +79,8 @@ readonly FOR_VAGRANT="1"
 
 readonly LOG="/tmp/bootstrap.sh.$$.log"
 
+echo "LOG: $LOG"
+
 
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
@@ -303,15 +305,15 @@ iost_install_rmfr () {
   echo "---> msg: sudo $pkg_installer purge docker-ce libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev  "
   sudo $pkg_installer purge docker-ce libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev    >> $LOG 2>&1
 
-  echo "---> msg: $pkg_installer purge git git-lfs software-properties-common  build-essential curl  " 
+  echo "---> msg: sudo $pkg_installer purge git git-lfs software-properties-common  build-essential curl  " 
   sudo $pkg_installer purge git git-lfs software-properties-common  build-essential curl    >> $LOG 2>&1
 
   pkg_installert=$pkg_installer
   pkg_installer="$pkg_installer purge "
   echo "---> msg: sudo $dev_tools" 
   sudo $dev_tools                                  >> $LOG 2>&1
-
   pkg_installer=$pkg_installert
+
   echo "---> msg: sudo $pkg_installer purge install apt-transport-https  "
   sudo $pkg_installer purge apt-transport-https    >> $LOG 2>&1
 
@@ -337,10 +339,10 @@ iost_install_rmfr () {
    LOC=$(pwd)
    #echo "ROCKSDB: $LOC/rocksdb"
 
-   if [ -d "$LOC/rocksdb" ]; then
-     echo "---> run: rm -fr $LOC/rocksdb" 
-     rm -fr $LOC/rocksdb
-   fi
+   #if [ -d "$LOC/rocksdb" ]; then
+   #  echo "---> run: rm -fr $LOC/rocksdb" 
+   #  rm -fr $LOC/rocksdb
+   #fi
 
 
   echo "---> msg: done: iost_install_rmfr () " | tee -a $LOG
@@ -445,7 +447,7 @@ iost_install_packages () {
 
 
   # install Large File Support for git
-  echo "---> run sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash"
+  echo "---> run: sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash"
   sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.rpm.sh | sudo bash >> $LOG 2>&1
 
   echo "---> run: sudo $pkg_installer install git-lfs"
@@ -552,7 +554,7 @@ iost_install_nvm_node_npm () {
     echo "$NODE_V"
   fi
 
-  if [ $ERR == 1 ]; then
+  if (( $ERR == 1 )); then
     echo '---> err: one or more of the folloing failed to install: nvm, node, npm'
     exit 55
   fi
@@ -632,7 +634,7 @@ iost_install_golang () {
 
   echo "---> msg: start: iost_install_golang ()" | tee -a $LOG
   IOST_ROOT="$HOME/go/src/github.com/iost-official/go-iost"
-  alias ir="cd $IOST_ROOT"
+  alias iost="cd $IOST_ROOT"
 
   # check for logic that sources IOST env file
   CHK_SETUP=$(grep "IOST setup" $HOME/.bashrc > /dev/null >&1)  
@@ -650,7 +652,7 @@ iost_install_golang () {
   echo "# Start:  IOST setup\n"    >> $HOME/.iost_env
   echo "#"                         >> $HOME/.iost_env
   echo "export IOST_ROOT=$HOME/go/src/github.com/iost-official/go-iost"                >> $HOME/.iost_env
-  echo "alias ir=\"cd $IOST_ROOT\""                                                    >> $HOME/.iost_env
+  echo "alias iost=\"cd $IOST_ROOT\""                                                  >> $HOME/.iost_env
 
   if [ -f "/tmp/go${GOLANG_MANDATORY}.linux-amd64.tar.gz" ]; then
     echo "---> run: rm -fr /tmp/go${GOLANG_MANDATORY}.linux-amd64.tar.gz";
@@ -695,11 +697,12 @@ iost_install_golang () {
 #  iost_install_iost () - master setup function 
 #
 iost_install_iost () {
+
   iost_install_iost_core
-  iost_install_iost_v8vm
-  iost_install_iost_iwallet
-  iost_install_iost_iserver
-  iost_install_iost_scaf
+  #iost_install_iost_v8vm
+  #iost_install_iost_iwallet
+  #iost_install_iost_iserver
+  #iost_install_iost_dapp
 
 }
 
@@ -718,7 +721,7 @@ iost_install_iost_core () {
 
 
   echo "---> msg: setup the environment $HOME/.iost_env"
-  . $HOME/.iost_env
+  source $HOME/.iost_env
 
   ###go get -d github.com/iost-official/go-iost
   ###cd github.com/iost-official/go-iost/
@@ -730,22 +733,14 @@ iost_install_iost_core () {
   echo "---> msg: cd $GOPATH/src"
   cd $GOPATH/src
   echo "---> msg: go get -d github.com/iost-official/go-iost"
-  go get -d github.com/iost-official/go-iost
+  go get -d github.com/iost-official/go-iost >> $LOG 2>&1
 
-  echo "---> msg: go get -d github.com/iost-official/scaffold"
-  go get -d github.com/iost-official/scaffold
+  echo "---> msg: use [iost] alias"
+  iost
 
-  echo "---> msg: cd  $GOPATH/src/github.com/iost-official/scaffold"
-  cd  $GOPATH/src/github.com/iost-official/scaffold
+  echo "---> msg: make build install"
+  make build install >> $LOG 2>&1 
 
-  echo "---> msg: npm install"
-  npm install
-  echo "---> msg: npm link"
-  npm link
-
-  echo "cd - && scaf --version"
-  cd -
-  scaf --version
 }
 
 
@@ -760,7 +755,7 @@ iost_install_iost_iwallet () {
   echo '#=-------------------------------------------------------------------------=#'
   echo "---> start: iost_install_iwallet ()" | tee -a $LOG
 
-  ir && cd iwallet/contract
+  iost && cd iwallet/contract
   npm install
 
   echo "---> end: iost_install_iwallet ()" | tee -a $LOG
@@ -797,6 +792,26 @@ iost_install_iserver () {
   echo "---> end: iost_install_iserver ()" | tee -a $LOG
 }
 
+
+#  
+#  iost_install_dapp ()
+#
+iost_install_dapp () {
+  echo "---> msg: go get -d github.com/iost-official/scaffold"
+  go get -d github.com/iost-official/scaffold
+
+  echo "---> msg: cd  $GOPATH/src/github.com/iost-official/scaffold"
+  cd  $GOPATH/src/github.com/iost-official/scaffold
+
+  echo "---> msg: npm install"
+  npm install
+  echo "---> msg: npm link"
+  npm link
+
+  echo "cd - && scaf --version"
+  cd -
+  scaf --version
+}
 
 
 
