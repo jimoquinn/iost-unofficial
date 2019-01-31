@@ -458,8 +458,11 @@ iost_install_rocksdb () {
   echo '#=-------------------------------------------------------------------------=#'
   echo '#=-------------     IOST Install - installing Rocks DB        -------------=#'
   echo '#=-------------------------------------------------------------------------=#'
-
   echo '---> msg: start: iost_install_rocksdb()'  | tee -a $LOG
+  echo '---> err: ROCKSDB IS DEPRECIATED, not installing" | tee -a $LOG
+  echo "---> msg: done: iost_install_rocksdb()" | tee -a $LOG
+  return;
+
   echo '---> run: apt-get update'
 
   echo "---> run: sudo $pkg_installer install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev "
@@ -765,8 +768,9 @@ iost_install_iost_v8vm () {
   echo '#=-------------------------------------------------------------------------=#'
   echo "---> start: iost_install_v8vm()" | tee -a $LOG
 
-  #iost && cd vm/v8vm/v8
-  #make deploy
+  cd $IOST_ROOT
+  cd vm/v8vm/v8
+  make deploy
   echo "---> start: iost_install_v8vm()" | tee -a $LOG
 }
 
