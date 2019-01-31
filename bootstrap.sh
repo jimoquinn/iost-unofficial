@@ -1,4 +1,4 @@
-#!/bin/bash  -x
+#!/bin/bash  
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 #
@@ -70,7 +70,7 @@ readonly ROCKSDB_MANDATORY="v5.14.3"
 readonly GOLANG_MANDATORY="1.11.3"
 readonly NODE_MANDATORY="v10.14.2"
 readonly NPM_MANDATORY="v6.4.1"
-readonly NVM_MANDATORY="v0.33.11"
+readonly NVM_MANDATORY="v0.34.0"
 readonly DOCKER_MANDATORY="v18.06.0-ce"
 
 readonly IOST_MANDATORY=""
@@ -96,6 +96,22 @@ readonly LOG="/tmp/bootstrap.sh.$$.log"
 # iost_install_docker()
 # iost_install_golang()
 
+#
+#
+#
+function exists() {
+
+  test -x $(command -v $1)
+  if (( $? >= 1 )); then
+    echo "---> err: command [$1] does not exist"
+    return $?
+  fi
+}
+
+
+#
+# TODO: __error_handler()
+#
 function __error_handler() {
   echo "Error occurred in script at line: ${1}."
   echo "Line exited with status: ${2}"
@@ -108,13 +124,6 @@ trap '_error_handler ${LINENO} $?' ERR
 #set -o errpipe
 #set -o nounset
 
-#echo "Everything is running fine..."
-
-# A command outside of a conditional that will always return a exit code of 1
-#test 1 -eq 0
-#
-#echo "This will never run, as a command has failed"
-#echo "Using unset variable ${TEST} will also cause this script to exit"
 
 #
 # 
@@ -138,8 +147,12 @@ iost_install_init () {
   fi
 
   # 2nd - test if we can sudo 
-  echo "---> msg: confirming that we can "sudo" so enter your password"
+  echo "---> msg: performing [sudo] check"
   sudo $(pwd)/data/exit.sh
+  if (( $? >= 1 )); then
+    echo "---> err: cannot [sudo]"
+    exit; 98
+  fi
 
 
   # 3rd - for installed apps
@@ -150,7 +163,6 @@ iost_install_init () {
   # -  MacOS: 14.0.0-2
   # -    Win: 10, Server 2016-2019
 
-  echo "---> msg: determining distribution and release"
   if [ -e /etc/os-release ]; then
     # Access $ID, $VERSION_ID and $PRETTY_NAME
     source /etc/os-release
@@ -228,11 +240,13 @@ iost_install_init () {
   #
   #  check that git is installed
   #
-  mygit=$(git --version 2>/dev/null)
-  if [ ! -z "$rCONT" ]; then
+
+  #command -v git >/dev/null 2>&1 || { echo >&2 "I require foo but it's not installed.  Aborting."; exit 1; }
+  if exists git; then
     echo "---> run: $pkg_installer install git"
-    $pkg_installer install git  >> $LOG 2>&1
+    sudo $pkg_installer install git  >> $LOG 2>&1
   else
+    mygit=$(git --version 2>/dev/null)
     echo "---> msg: $mygit already installed"
   fi
 
@@ -248,8 +262,6 @@ iost_install_init () {
   if [ -f "$HOME/.iost_env" ]; then
     echo "---> irk: previous install found!"
     read -p "---> irk: should I remove this previous version? (Y/n): " rCONT
-
-    echo "rCONT: $rCONT"
 
     if [ ! -z "$rCONT" ]; then
       if [ $rCONT == "n" ] || [ $rCONT == 'N' ]; then
@@ -294,9 +306,12 @@ iost_install_rmfr () {
   echo "---> msg: $pkg_installer purge git git-lfs software-properties-common  build-essential curl  " 
   sudo $pkg_installer purge git git-lfs software-properties-common  build-essential curl    >> $LOG 2>&1
 
-  echo "---> msg: $pkg_installer -e $dev_tools" 
-  sudo $pkg_installer -e $dev_tools                >> $LOG 2>&1
+  pkg_installert=$pkg_installer
+  pkg_installer="$pkg_installer purge "
+  echo "---> msg: sudo $dev_tools" 
+  sudo $dev_tools                                  >> $LOG 2>&1
 
+  pkg_installer=$pkg_installert
   echo "---> msg: sudo $pkg_installer purge install apt-transport-https  "
   sudo $pkg_installer purge apt-transport-https    >> $LOG 2>&1
 
@@ -414,8 +429,8 @@ iost_install_packages () {
   #echo "---> run: sudo add-apt-repository ppa:git-core/ppa "
   #sudo add-apt-repository ppa:git-core/ppa  -y            >> $LOG 2>&1
 
-  echo "---> run: sudo $pkg_installer $dev_tools"
-  sudo $pkg_installer install $dev_tools                   >> $LOG 2>&1
+  echo "---> run: sudo $dev_tools"
+  sudo $dev_tools                                          >> $LOG 2>&1
 
   echo "---> run: sudo $pkg_installer install build-essential curl git "
   sudo $pkg_installer install build-essential curl git     >> $LOG 2>&1
@@ -462,12 +477,10 @@ iost_install_rocksdb () {
   echo "---> run: git clone -b $ROCKSDB_MANDATORY https://github.com/facebook/rocksdb.git "
   git clone -b "$ROCKSDB_MANDATORY" https://github.com/facebook/rocksdb.git >> $LOG 2>&1
   cd rocksdb  >> $LOG 2>&1
-  echo "---> run: make static_lib"
+  echo "---> run: make static_lib - NOTE: this can take many minutes"
   make static_lib  >> $LOG 2>&1
 
   echo "---> run: sudo make install-static"
-  echo "---> msg: NOTE: this can take minutes"
-   
   sudo make install-static >> $LOG 2>&1
 
   echo "---> msg: done: iost_install_rocksdb()" | tee -a $LOG
@@ -485,8 +498,8 @@ iost_install_nvm_node_npm () {
   echo '#=-------------------------------------------------------------------------=#'
   echo "---> msg: start: iost_install_nvm_node_npm ()"  | tee -a $LOG
   cd $HOME
-  echo "---> run: curl -s https://raw.githubusercontent.com/creationix/nvm/${VM_MANDATORY}/install.sh | bash"   
-  curl -s https://raw.githubusercontent.com/creationix/nvm/${VM_MANDATORY}/install.sh | bash      >> $LOG 2>&1
+  echo "---> run: curl -s https://raw.githubusercontent.com/creationix/nvm/${NVM_MANDATORY}/install.sh | bash"   
+  curl -s https://raw.githubusercontent.com/creationix/nvm/${NVM_MANDATORY}/install.sh | bash      >> $LOG 2>&1
 
   export NVM_DIR="$HOME/.nvm"
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
