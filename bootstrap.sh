@@ -213,12 +213,12 @@ iost_install_init () {
             pkg_installer="/usr/bin/apt-get -y "
             pkg_purge=" purge "
             pkg_yes=" -y "
-            git_lfs="sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash"
-            dev_tools="sudo $pkg_installer software-properties-common  build-essential"
+            git_lfs="curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash"
+            dev_tools="$pkg_installer software-properties-common  build-essential"
             # setup packages-ubuntu.txt
             echo "---> msg: [$PRETTY_NAME] is supported and using [$pkg_installer]"
           else
-            echo "---> err: [$VERSION_ID] [${UBUNTU_MANDATORY[@]}] [${PRETTY_NAME}] is not supported, view $LOG"
+            echo "---> err: [${PRETTY_NAME}] is not supported, view $LOG"
             exit 76
           fi
           ;;
