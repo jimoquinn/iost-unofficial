@@ -43,21 +43,11 @@
 #
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-# set to 1 if you'd like to clean up previous install attempts
-readonly IOST_CLEAN_INSTALL="1"
-
-# you can hardcode the distro and 
-DIST=""
-CODE=""
-pkg_installer=''
-
 
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 # MODIFY VERSIONS ONLY IF NECESSARY
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-# the version we're looking for
 
 # package.io not supported on cosmic yet
 #readonly UBUNTU_MANDATORY=('xenial' 'yakkety' 'bionic');
@@ -73,14 +63,13 @@ readonly NPM_MANDATORY="v6.4.1"
 readonly NVM_MANDATORY="v0.34.0"
 readonly DOCKER_MANDATORY="v18.06.0-ce"
 
+# misc unused flags - use later for automatic install
 readonly IOST_MANDATORY=""
 readonly FOR_VAGRANT="1"	
+readonly IOST_CLEAN_INSTALL="1"
 
-
+# install log
 readonly LOG="/tmp/bootstrap.sh.$$.log"
-
-echo "LOG: $LOG"
-
 
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
@@ -339,10 +328,10 @@ iost_install_rmfr () {
    LOC=$(pwd)
    #echo "ROCKSDB: $LOC/rocksdb"
 
-   #if [ -d "$LOC/rocksdb" ]; then
-   #  echo "---> run: rm -fr $LOC/rocksdb" 
-   #  rm -fr $LOC/rocksdb
-   #fi
+   if [ -d "$LOC/rocksdb" ]; then
+     echo "---> run: rm -fr $LOC/rocksdb" 
+     rm -fr $LOC/rocksdb
+   fi
 
 
   echo "---> msg: done: iost_install_rmfr () " | tee -a $LOG
@@ -610,15 +599,6 @@ iost_install_docker () {
     echo "$DOCKER_V"
   fi
 
-  #echo -n '---> msg: docker version '
-  #DOCKER_V=$(docker --version >/dev/null)
-  #if [ -z $DOCKER_V ]; then
-  #  echo "---> msg: error: docker install failed, check $LOG"
-  #  ERR=1
-  #else
-  #  echo "$DOCKER_V"
-  #fi
-
   echo "---> msg: done: iost_install_docker ()" | tee -a $LOG
 }
 
@@ -693,19 +673,27 @@ iost_install_golang () {
 }
 
 
-#
-#  iost_install_iost () - master setup function 
-#
-iost_install_iost () {
 
-  iost_install_iost_core
-  #iost_install_iost_v8vm
-  #iost_install_iost_iwallet
-  #iost_install_iost_iserver
-  #iost_install_iost_dapp
+#
+#  iost_install_iost_tests () - install the IOST core code
+#
+iost_install_iost_tests () {
+
+  echo ''; echo ''
+  
+  echo '#=-------------------------------------------------------------------------=#'
+  echo '#=--------- IOST Install - itest run a_case, t_case, c_case, cv_case  -----=#'
+  echo '#=-------------------------------------------------------------------------=#'
+
+  cd $IOST_ROOT
+  cd test
+  itest run a_case
+  itest run t_case
+  itest run c_case
+  itest run cv_case
+
 
 }
-
 
 #
 #  iost_install_iost_core  () - install the IOST core code
@@ -715,9 +703,9 @@ iost_install_iost_core () {
   echo ''; echo ''
   
   echo '#=-------------------------------------------------------------------------=#'
-  echo '#=--------- IOST Install - go get -d github.com/iost-official/go-iost -----=#'
+  echo '#=--------- IOST Install - install core                               -----=#'
   echo '#=-------------------------------------------------------------------------=#'
-  echo "---> msg: start: iost_install_iost ()" | tee -a $LOG
+  echo "---> msg: start: iost_install_core ()" | tee -a $LOG
 
 
   echo "---> msg: setup the environment $HOME/.iost_env"
@@ -735,11 +723,16 @@ iost_install_iost_core () {
   echo "---> msg: go get -d github.com/iost-official/go-iost"
   go get -d github.com/iost-official/go-iost >> $LOG 2>&1
 
-  echo "---> msg: use [iost] alias"
-  iost
+  echo "---> msg: use [cd $IOST_ROOT]"
+  cd $IOST_ROOT
 
-  echo "---> msg: make build install"
+  echo "---> run: make build install"
   make build install >> $LOG 2>&1 
+
+  echo "---> run: iserver -f ./config/iserver.yml"
+  nohup iserver -f ./config/iserver.yml  >> $LOG 2>&1 &
+  echo "---> msg: check nohup.out for iserver messages"
+  sleep 10
 
 }
 
@@ -755,8 +748,8 @@ iost_install_iost_iwallet () {
   echo '#=-------------------------------------------------------------------------=#'
   echo "---> start: iost_install_iwallet ()" | tee -a $LOG
 
-  iost && cd iwallet/contract
-  npm install
+  #iost && cd iwallet/contract
+  #npm install
 
   echo "---> end: iost_install_iwallet ()" | tee -a $LOG
 }
@@ -772,8 +765,8 @@ iost_install_iost_v8vm () {
   echo '#=-------------------------------------------------------------------------=#'
   echo "---> start: iost_install_v8vm()" | tee -a $LOG
 
-  ir && cd vm/v8vm/v8
-  make deploy
+  #iost && cd vm/v8vm/v8
+  #make deploy
   echo "---> start: iost_install_v8vm()" | tee -a $LOG
 }
 
@@ -783,7 +776,7 @@ iost_install_iost_v8vm () {
 #
 iost_install_iserver () {
   echo '#=-------------------------------------------------------------------------=#'
-  echo '#=------------------   IOST Install - build iwallet    --------------------=#'
+  echo '#=------------------   IOST Install - iserver          --------------------=#'
   echo '#=-------------------------------------------------------------------------=#'
   echo "---> start: iost_install_iserver ()" | tee -a $LOG
 
@@ -814,6 +807,26 @@ iost_install_dapp () {
 }
 
 
+#
+#  iost_install_iost () - master setup function 
+#
+iost_install_iost () {
+  export IOST_ROOT=$HOME/go/src/github.com/iost-official/go-iost
+  export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
+  export GOPATH=$HOME/go
+  source $HOME/.iost_env
+  source $HOME/.bashrc
+  alias iost="cd $IOST_ROOT"
+
+  iost_install_iost_core
+  iost_install_iost_tests
+  #iost_install_iost_v8vm
+  #iost_install_iost_iwallet
+  #iost_install_iost_iserver
+  #iost_install_iost_dapp
+
+}
+
 
 ###
 ###
@@ -828,7 +841,7 @@ iost_warning_requirements
 iost_install_packages
 iost_install_rocksdb
 iost_install_nvm_node_npm
-#iost_install_docker
+iost_install_docker
 iost_install_golang
 iost_install_iost
 
