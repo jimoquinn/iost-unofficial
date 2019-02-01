@@ -6,7 +6,7 @@
 #         Baremetal Development Environment
 #         **  For Greenfield Installs Only  **
 #
-#  Wed Jan 30 23:42:16 UTC 2019
+#  Fri Feb  1 10:24:42 UTC 2019
 #
 #  Objective:  to provide a single script that will install
 #  all the necessary dependecies and IOST code required to be
@@ -50,8 +50,8 @@
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 # package.io not supported on cosmic yet
-#readonly UBUNTU_MANDATORY=('xenial' 'yakkety' 'bionic');
-readonly UBUNTU_MANDATORY=('16.04' '16.10' '18.04');
+
+readonly UBUNTU_MANDATORY=('16.04' '16.10' '18.04');  # 'xenial' 'yakkety' 'bionic'
 readonly CENTOS_MANDATORY=('centos7');
 readonly DEBIAN_MANDATORY=('stretch');
 readonly MACOS_MANDATORY=('Darwin', 'Hitchens');
@@ -70,6 +70,8 @@ readonly IOST_CLEAN_INSTALL="1"
 
 # install log
 readonly LOG="/tmp/bootstrap.sh.$$.log"
+readonly ISERVER_LOG="/tmp/iserver.$$.log"
+readonly ITEST_LOG="/tmp/itest.$$.log"
 
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
@@ -165,9 +167,7 @@ iost_install_init () {
     PRETTY_NAME="Unknown distribution and release"
     echo "---> msg: /etc/os-release configuration not found, distribution unknown" 
     if [ -z "$DIST" -o -z "$CODE" ]; then
-      echo "---> err: Neiher distribution nor release were not hardcoded at the top of this script" 
-      echo "---> err: This is an unsupported distribution and/or version" 
-      echo "---> err: Exiting install script"
+      echo "---> err: This is an unsupported distribution and/or version, exiting" 
       exit 98
     fi
   fi
@@ -220,11 +220,6 @@ iost_install_init () {
           ;;
 
         esac
-
-        #if [ ! -x "$pkg_installer" ]; then
-        #  echo "---> err: the [$pkg_installer] for [$PRETTY_NAME] is not executable, view $LOG"
-        #  exit 74
-        #fi
     fi
 
 
@@ -270,7 +265,7 @@ iost_install_init () {
 
 
 #
-# 
+# iost_install_rmfr() - remove previous installation (likely needs more work)
 #
 iost_install_rmfr () {
   # remove:
@@ -309,30 +304,31 @@ iost_install_rmfr () {
   echo "---> msg: sudo $pkg_installer autoremove  " 
   sudo $pkg_installer autoremove                   >> $LOG 2>&1
 
-   if [ -f "$HOME/.iost_env" ]; then
-     echo "---> msg: rm -fr $HOME/.iost_env"
-     rm -fr $HOME/.iost_env
-   fi
+  if [ -f "$HOME/.iost_env" ]; then
+    echo "---> msg: rm -fr $HOME/.iost_env"
+    rm -fr $HOME/.iost_env
+  fi
 
-   if [ -f "/etc/apt/sources.list.d/docker.list" ]; then
-     echo "---> run: sudo rm -fr /etc/apt/sources.list.d/docker.list" 
-     sudo rm -fr /etc/apt/sources.list.d/docker.list
-   fi
+  if [ -f "/etc/apt/sources.list.d/docker.list" ]; then
+    echo "---> run: sudo rm -fr /etc/apt/sources.list.d/docker.list" 
+    sudo rm -fr /etc/apt/sources.list.d/docker.list
+  fi
 
-   unset NVM_DIR
-   if [ -d "$HOME/.nvm" ]; then
-     echo "---> run: rm -fr $HOME/.nvm" 
-     rm -fr $HOME/.nvm
-   fi
+  unset NVM_DIR
+  if [ -d "$HOME/.nvm" ]; then
+    echo "---> run: rm -fr $HOME/.nvm" 
+    rm -fr $HOME/.nvm
+  fi
 
-   LOC=$(pwd)
-   #echo "ROCKSDB: $LOC/rocksdb"
 
-   if [ -d "$LOC/rocksdb" ]; then
-     echo "---> run: rm -fr $LOC/rocksdb" 
-     rm -fr $LOC/rocksdb
-   fi
-
+  # ROCKSDB - DEPRECIATED
+  #LOC=$(pwd)
+  ##echo "ROCKSDB: $LOC/rocksdb"
+  #
+  #if [ -d "$LOC/rocksdb" ]; then
+  #  echo "---> run: rm -fr $LOC/rocksdb" 
+  #  rm -fr $LOC/rocksdb
+  #fi
 
   echo "---> msg: done: iost_install_rmfr () " | tee -a $LOG
 
@@ -409,10 +405,10 @@ iost_install_packages () {
   sudo $pkg_installer install apt-transport-https ca-certificates  >> $LOG 2>&1
 
   echo "---> run: sudo $pkg_installer update"
-  sudo $pkg_installer update >> $LOG 2>&1
+  sudo $pkg_installer update                               >> $LOG 2>&1
 
   echo "---> run: sudo $pkg_installer upgrade "
-  sudo $pkg_installer upgrade    >> $LOG 2>&1
+  sudo $pkg_installer upgrade                              >> $LOG 2>&1
 
   echo "---> run: sudo $pkg_installer install software-properties-common "
   sudo $pkg_installer install software-properties-common   >> $LOG 2>&1
@@ -425,14 +421,15 @@ iost_install_packages () {
 
   echo "---> run: sudo $pkg_installer install build-essential curl git "
   sudo $pkg_installer install build-essential curl git     >> $LOG 2>&1
- 
-  if ! [ -x "$(command -v git)" ]; then
-    echo '---> err: git is not installed and executable'; 
-    exit 98
-  else
-    echo -n '---> msg: git installed version '
-    git --version | cut -f3 -d' ' 2>/dev/null
-  fi
+
+  # already handeled 
+  #if ! [ -x "$(command -v git)" ]; then
+  #  echo '---> err: git is not installed and executable'; 
+  #  exit 98
+  #else
+  #  echo -n '---> msg: git installed version '
+  #  git --version | cut -f3 -d' ' 2>/dev/null
+  #fi
 
 
   # install Large File Support for git
@@ -454,12 +451,12 @@ iost_install_packages () {
 #  iost_install_rocksdb () - 
 #
 iost_install_rocksdb () {
-  echo ''; echo ''
-  echo '#=-------------------------------------------------------------------------=#'
-  echo '#=-------------     IOST Install - installing Rocks DB        -------------=#'
-  echo '#=-------------------------------------------------------------------------=#'
-  echo '---> msg: start: iost_install_rocksdb()'  | tee -a $LOG
-  echo '---> err: ROCKSDB IS DEPRECIATED, not installing" | tee -a $LOG
+  echo ""; echo ""
+  echo "#=-------------------------------------------------------------------------=#"
+  echo "#=-------------     IOST Install - installing Rocks DB        -------------=#"
+  echo "#=-------------------------------------------------------------------------=#"
+  echo "---> msg: start: iost_install_rocksdb()"  | tee -a $LOG
+  echo "---> err: ROCKSDB IS DEPRECIATED, not installing" | tee -a $LOG
   echo "---> msg: done: iost_install_rocksdb()" | tee -a $LOG
   return;
 
@@ -486,10 +483,12 @@ iost_install_rocksdb () {
 #
 iost_install_nvm_node_npm () {
 
-  echo ''; echo ''
-  echo '#=-------------------------------------------------------------------------=#'
-  echo '#=------------------   IOST Install - nvm, node, npm, & yarn  -------------=#'
-  echo '#=-------------------------------------------------------------------------=#'
+  local ERR=0
+
+  echo ""; echo ""
+  echo "#=-------------------------------------------------------------------------=#"
+  echo "#=------------------   IOST Install - nvm, node, npm, & yarn  -------------=#"
+  echo "#=-------------------------------------------------------------------------=#"
   echo "---> msg: start: iost_install_nvm_node_npm ()"  | tee -a $LOG
   cd $HOME
   echo "---> run: curl -s https://raw.githubusercontent.com/creationix/nvm/${NVM_MANDATORY}/install.sh | bash"   
@@ -503,15 +502,6 @@ iost_install_nvm_node_npm () {
   echo "export NVM_DIR=$HOME/.nvm"                                          >> $HOME/.iost_env
   echo "[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh""                   >> $HOME/.iost_env 
   echo "[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"" >> $HOME/.iost_env  
-
-
-  #echo "export NVM_DIR="$HOME/.nvm""                                          >> $HOME/.iost_env
-  #echo "[ -s "$NVM_DIR"/nvm.sh ] && \. "$NVM_DIR"/nvm.sh"                     >> $HOME/.iost_env
-  #echo "[ -s "$NVM_DIR"/bash_completion" ] && \. "$NVM_DIR"/bash_completion"" >> $HOME/.iost_env
-  #echo "---> msg: export NVM_DIR=$HOME/.nvm"
-  #export NVM_DIR=$HOME/.nvm
-  #echo "---> run: source $HOME/.iost_env"
-  #. $HOME/.iost_env && true
 
   echo "---> run: nvm install $NODE_MANDATORY "
   nvm install $NODE_MANDATORY   >> $LOG 2>&1
@@ -551,7 +541,7 @@ iost_install_nvm_node_npm () {
     exit 55
   fi
 
-  echo '---> msg: nvm, node, and npm installed'
+  echo "---> msg: nvm, node, and npm installed"
   echo "---> msg: done: iost_install_nvm_node_npm ()"  | tee -a $LOG
 }
 
@@ -561,10 +551,10 @@ iost_install_nvm_node_npm () {
 #  iost_install_docker () - 
 #
 iost_install_docker () {
-  echo ''; echo ''
-  echo '#=-------------------------------------------------------------------------=#'
-  echo '#=------------------   IOST Install - Installing Docker    ----------------=#'
-  echo '#=-------------------------------------------------------------------------=#'
+  echo ""; echo ""
+  echo "#=-------------------------------------------------------------------------=#"
+  echo "#=------------------   IOST Install - Installing Docker    ----------------=#"
+  echo "#=-------------------------------------------------------------------------=#"
   echo "---> msg: start: iost_install_docker ()" | tee -a $LOG
 
   echo "---> run: sudo $pkg_installer install apt-transport-https ca-certificates  >> $LOG 2>&1"
@@ -575,6 +565,7 @@ iost_install_docker () {
 
   echo "---> run: git_docker="$(packages/${DIST}_${VERSION_ID}.sh >> $LOG 2>&1)"";
   git_docker="$(packages/${DIST}_${VERSION_ID}.sh >> $LOG 2>&1)"
+
   #lsb=$(lsb_release -cs)
   #echo "deb [arch=amd64] https://download.docker.com/linux/ubuntu $lsb stable" | sudo tee /etc/apt/sources.list.d/docker.list  >> $LOG 2>&1
 
@@ -610,14 +601,14 @@ iost_install_docker () {
 #  iost_install_golang() - 
 #
 iost_install_golang () {
-  echo ''; echo ''
-  echo '#=-------------------------------------------------------------------------=#'
-  echo '#=------------------   IOST Install - Installing Golang    ----------------=#'
-  echo '#=-------------------------------------------------------------------------=#'
+  echo ""; echo ""
+  echo "#=-------------------------------------------------------------------------=#"
+  echo "#=------------------   IOST Install - Installing Golang    ----------------=#"
+  echo "#=-------------------------------------------------------------------------=#"
 
   echo "---> msg: start: iost_install_golang ()" | tee -a $LOG
   IOST_ROOT="$HOME/go/src/github.com/iost-official/go-iost"
-  alias iost="cd $IOST_ROOT"
+  alias IOST="cd $IOST_ROOT"
 
   # check for logic that sources IOST env file
   CHK_SETUP=$(grep "IOST setup" $HOME/.bashrc > /dev/null >&1)  
@@ -630,12 +621,12 @@ iost_install_golang () {
     echo "---> msg: found IOST setup in [$HOME/.bashrc], will not add"
   fi
 
-  echo "
-  #"                               >> $HOME/.iost_env
-  echo "# Start:  IOST setup\n"    >> $HOME/.iost_env
+  echo ""                          >> $HOME/.iost_env
+  echo "#"                         >> $HOME/.iost_env
+  echo "# Start:  IOST setup"      >> $HOME/.iost_env
   echo "#"                         >> $HOME/.iost_env
   echo "export IOST_ROOT=$HOME/go/src/github.com/iost-official/go-iost"                >> $HOME/.iost_env
-  echo "alias iost=\"cd $IOST_ROOT\""                                                  >> $HOME/.iost_env
+  echo "alias IOST=\"cd $IOST_ROOT\""                                                  >> $HOME/.iost_env
 
   if [ -f "/tmp/go${GOLANG_MANDATORY}.linux-amd64.tar.gz" ]; then
     echo "---> run: rm -fr /tmp/go${GOLANG_MANDATORY}.linux-amd64.tar.gz";
@@ -676,27 +667,57 @@ iost_install_golang () {
 }
 
 
-
 #
-#  iost_install_iost_tests () - install the IOST core code
+#  iost_run_iserver() - start up a local iServer
 #
-iost_install_iost_tests () {
+iost_run_iserver () {
 
-  echo ''; echo ''
-  
-  echo '#=-------------------------------------------------------------------------=#'
-  echo '#=--------- IOST Install - itest run a_case, t_case, c_case, cv_case  -----=#'
-  echo '#=-------------------------------------------------------------------------=#'
-
-  cd $IOST_ROOT
-  cd test
-  itest run a_case
-  itest run t_case
-  itest run c_case
-  itest run cv_case
-
+  # check for a running iserver
+  tpid=$(pidof iserver);
+  if [ -z $tpid ]; then
+    echo "  ---> msg: iServer is now starting...."
+    cd $IOST_ROOT 
+    echo "iserver -f config/iserver.yml >> $ISERVER_LOG 2>&1" > /tmp/iserver.start.sh
+    chmod +x /tmp/iserver.start.sh
+    nohup /tmp/iserver.start.sh >> $ISERVER_LOG 2>&1 & 
+    #systemctl start iost.iserver"
+    read -p "  ---> msg: server log is located: $ISERVER_LOG, hit any key to continue"
+  else
+    read -p "  ---> msg: iServer already running pid [$tpid], want to restart? (Y/n): " rSTRT
+    if [ ! -z "$rSTRT" ]; then
+      if [ $rSTRT == "y" ] || [ $rSTRT == 'Y' ]; then
+        echo "  ---> msg: kililng iserver pid [$tpid]"
+        kill -15 $tpid
+        read -p "  ---> msg: server is dead, hit any key to contine " tCONT
+	iost_run_iserver
+      else
+        read -p "  ---> msg: not restarting iServer [$tpid], hit any key to contine " tCONT
+        iost_run
+      fi
+    fi
+  fi
 
 }
+
+#
+#  iost_stop_iserver() - gracefully shutdown iServer
+#
+iost_stop_iserver () {
+
+  # check for a running iserver
+  tpid=$(pidof iserver);
+  if [ -z $tpid ]; then
+    read -p "  ---> msg: iServer not running, hit any key to contine " tCONT
+    iost_run
+  else
+    echo "  ---> msg: iServer running as pid [$tpid] and now stopping"
+    kill -15 $tpid
+    read -p "  ---> msg: iServer stopped, hit any key to contine " tCONT
+    iost_run
+  fi
+
+}
+
 
 #
 #  iost_install_iost_core  () - install the IOST core code
@@ -732,10 +753,23 @@ iost_install_iost_core () {
   echo "---> run: make build install"
   make build install >> $LOG 2>&1 
 
-  echo "---> run: iserver -f ./config/iserver.yml"
-  nohup iserver -f ./config/iserver.yml  >> $LOG 2>&1 &
-  echo "---> msg: check nohup.out for iserver messages"
-  sleep 10
+  read -p "---> core IOST is installed, continue to the IOST Admin Menu? (Y/n): " tADM
+
+  if [ ! -z "$tADM" ]; then
+    if [ $tADM == "n" ] || [ $tADM == 'N' ]; then
+        echo "---> msg: our work is done, now exiting"
+	exit
+    else
+        iost_run
+    fi
+  fi
+
+  # call the IOST Admin Menu
+  #iost_run
+  #echo "---> run: iserver -f ./config/iserver.yml"
+  #nohup iserver -f ./config/iserver.yml  >> $LOG 2>&1 &
+  #echo "---> msg: check nohup.out for iserver messages"
+  #sleep 10
 
 }
 
@@ -812,6 +846,120 @@ iost_install_dapp () {
 
 
 #
+#  iost_run_itests () - install the IOST core code
+#
+iost_run_itests () {
+
+  echo ''; echo ''
+
+  echo "  #=--------------------------------------------------=#"
+  echo "  #=--------- IOST Install Administration Menu  ------=#"
+  echo '  #=-- itest run a_case, t_case, c_case, cv_case  ----=#'
+  echo "  #=--------------------------------------------------=#"
+  
+
+  cd $IOST_ROOT
+  echo "cd $IOST_ROOT/test"
+  cd test
+  echo "  ---> run: itest run a_case";
+  itest run a_case  >> $ITEST_LOG 2>&1
+
+  echo "  ---> run: itest run t_case";
+  itest run t_case  >> $ITEST_LOG 2>&1
+
+  echo "  ---> run: itest run c_case";
+  itest run c_case  >> $ITEST_LOG 2>&1
+
+  echo "  ---> run: itest run cv_case";
+  itest run cv_case >> $ITEST_LOG 2>&1
+
+  read -p "  ---> hit any key to view the test logs" ttLOGS
+  vi $ITEST_LOG
+
+}
+
+
+
+#
+#  iost_run() - the main menu where we can control various
+#  parts of the IOST ecosystem
+#
+iost_run () {
+  source $HOME/.iost_env
+
+  clear
+
+  echo "  #=--------------------------------------------------=#"
+  echo "  #=--------- IOST Install Administration Menu  ------=#"
+  echo "  #=--------------------------------------------------=#"
+
+  echo ""
+  echo "    1.  Start local iServer           [working]"
+  echo "    2.  Stop local iServer            [working]"
+  echo "    3.  Run itest suite               [working]"
+  echo "    4.  Connect to testnet            [n/a]"
+  echo "    5.  Setup dApp development tools  [n/a]"
+  echo "    6.  Run test dApp                 [n/a]"
+  echo "    7.  Drop to a command prompt      [working]"
+  echo "    9.  Quit"
+  echo ""
+
+  read -p "  Select a number: " iNUM
+
+  case "$iNUM" in
+
+    1) echo ""
+       echo "  ---> msg: starting iServer"
+       iost_run_iserver
+       iost_run
+    ;;
+
+    2) echo ""
+       echo "  ---> msg: stopping iServer"
+       iost_stop_iserver
+       iost_run
+    ;;
+
+    3) echo ""
+       echo "  ---> msg: running iTests"
+       iost_run_iserver
+       iost_run_itests
+       iost_run
+    ;;
+
+    4) echo ""
+       #echo "  ---> msg: stopping iServer"
+       read -p "  ---> msg: not implemented, hit any key to continue" tIN
+       iost_run
+    ;;
+
+    5) echo ""
+       read -p "  ---> msg: not implemented, hit any key to continue" tIN
+       iost_run
+    ;;
+
+    6) echo ""
+       read -p "  ---> msg: not implemented, hit any key to continue" tIN
+       iost_run
+    ;;
+
+    7) echo "   ---> msg: opening a /bin/bash, type exit or CTRL-D to return"
+       /bin/bash
+       iost_run
+    ;;
+
+    9) echo ""
+       echo "  ---> msg: exiting"
+       exit
+    ;;
+
+  esac
+
+}
+
+
+
+#
 #  iost_install_iost () - master setup function 
 #
 iost_install_iost () {
@@ -820,10 +968,10 @@ iost_install_iost () {
   export GOPATH=$HOME/go
   source $HOME/.iost_env
   source $HOME/.bashrc
-  alias iost="cd $IOST_ROOT"
+  alias IOST="cd $IOST_ROOT"
 
   iost_install_iost_core
-  iost_install_iost_tests
+  iost_run_itests
   #iost_install_iost_v8vm
   #iost_install_iost_iwallet
   #iost_install_iost_iserver
@@ -848,6 +996,7 @@ iost_install_nvm_node_npm
 iost_install_docker
 iost_install_golang
 iost_install_iost
+iost_run
 
 
 
