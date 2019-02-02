@@ -23,7 +23,7 @@
 #  - apt-transport-https ca-certificates software-properties-common   
 #  - build-essential curl git git-lfs 
 #  - libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev   
-#  - RocksDB
+#  - RocksDB (depreciated)
 #  - nvm
 #  - npm 
 #  - node
@@ -250,7 +250,7 @@ iost_install_init () {
     read -p "---> irk: should I remove this previous version? (Y/n): " rCONT
 
     if [ ! -z "$rCONT" ]; then
-      if [ $rCONT == "n" ] || [ $rCONT == 'N' ]; then
+      if [ $rCONT == "n" ] || [ $rCONT == 'N' ] || [ $rCONT == '' ]; then
         echo "---> msg: continuing without removing previous version";
       else
         echo "---> msg: will REMOVE PREVIOUS version";
@@ -365,8 +365,8 @@ iost_warning_requirements () {
 
 
   echo "This script will install the following:"; echo ""
-  echo "  -  Security updates and patches for $DIST"
-  echo "  -  Rocks DB $ROCKSDB_MANDATORY"
+  echo "  -  Security updates and patches for $PRETTY_NAME"
+  #echo "  -  Rocks DB $ROCKSDB_MANDATORY" (depreciated)
   echo "  -  nvm version $NVM_MANDATORY"
   echo "  -  node version $NODE_MANDATORY"
   echo "  -  npm version $NPM_MANDATORY"
@@ -379,7 +379,7 @@ iost_warning_requirements () {
   read -p "Continue?  (Y/n): " CONT
 
   if [ ! -z "$CONT" ]; then
-    if [ $CONT == "n" ] || [ $CONT == 'N' ]; then
+    if [ $CONT == "n" ] || [ $CONT == 'N' ] || [ $CONT == '' ]; then
       echo ""; echo ""
       echo "Best if you do not install unless you meet the above requirements."
       echo "We know you don't give up that easy, so you will be back."
@@ -401,8 +401,18 @@ iost_install_packages () {
   echo '#=-------------------------------------------------------------------------=#'
 
   echo "---> msg: start: iost_install_packages()" | tee -a $LOG
+
+  #$sec_updt=$($pkg_installer list --upgradable | grep security | wc -l)
+  #$reg_updt=$($pkg_installer list --upgradable | wc -l)
+
   echo "---> run: sudo $pkg_installer install apt-transport-https ca-certificates "
   sudo $pkg_installer install apt-transport-https ca-certificates  >> $LOG 2>&1
+
+  #echo "---> msg: $sec_updt security udpates and $reg_updt regular updates needed"
+  #if (( $reg_updt >= 25 )); then
+  #  echo "---> msg: NOTE: given the large number if updagtes, this may take a while"
+  #fi
+
 
   echo "---> run: sudo $pkg_installer update"
   sudo $pkg_installer update                               >> $LOG 2>&1
@@ -681,11 +691,12 @@ iost_run_iserver () {
     chmod +x /tmp/iserver.start.sh
     nohup /tmp/iserver.start.sh >> $ISERVER_LOG 2>&1 & 
     #systemctl start iost.iserver"
+    sleep 5
     read -p "  ---> msg: server log is located: $ISERVER_LOG, hit any key to continue"
   else
     read -p "  ---> msg: iServer already running pid [$tpid], want to restart? (Y/n): " rSTRT
     if [ ! -z "$rSTRT" ]; then
-      if [ $rSTRT == "y" ] || [ $rSTRT == 'Y' ]; then
+      if [ $rSTRT == "y" ] || [ $rSTRT == 'Y' || $rSTRT == '' ]; then
         echo "  ---> msg: kililng iserver pid [$tpid]"
         kill -15 $tpid
         read -p "  ---> msg: server is dead, hit any key to contine " tCONT
@@ -739,7 +750,7 @@ iost_install_iost_core () {
   ###cd github.com/iost-official/go-iost/
 
   echo "---> msg: env | grep GO"
-  res=`env | grep GO`
+  res=$(env | grep GO > /dev/null 2>&1)
   echo "---> msg: res [$res]"
 
   echo "---> msg: cd $GOPATH/src"
@@ -753,10 +764,17 @@ iost_install_iost_core () {
   echo "---> run: make build install"
   make build install >> $LOG 2>&1 
 
-  read -p "---> core IOST is installed, continue to the IOST Admin Menu? (Y/n): " tADM
+  echo "  ---> run: cd vm/v8vm/v8"
+  cd vm/v8vm/v8
+  echo "  ---> run: make clean js_bin vm install"
+  #make clean js_bin vm install
+  make clean js_bin vm install deploy >> $LOG 2>&1
+  make deploy                         >> $LOG 2>&1
+
+  read -p "---> msg: core IOST is installed, continue to the IOST Admin Menu? (Y/n): " tADM
 
   if [ ! -z "$tADM" ]; then
-    if [ $tADM == "n" ] || [ $tADM == 'N' ]; then
+    if [ $tADM == "n" ] || [ $tADM == 'N' ] || [ $tADM == '' ]; then
         echo "---> msg: our work is done, now exiting"
 	exit
     else
@@ -799,14 +817,21 @@ iost_install_iost_iwallet () {
 iost_install_iost_v8vm () {
   echo ''; echo ''
   echo '#=-------------------------------------------------------------------------=#'
-  echo '#=------------------   IOST Install - deploy V8        --------------------=#'
+  echo '#=------------------   IOST Install - deploy v8vm  ------------------------=#'
   echo '#=-------------------------------------------------------------------------=#'
-  echo "---> start: iost_install_v8vm()" | tee -a $LOG
+  echo "  ---> start: iost_install_v8vm()" | tee -a $LOG
 
   cd $IOST_ROOT
+  echo "  ---> run: cd $IOST_ROOT"
+  cd $IOST_ROOT
+  echo "  ---> run: cd vm/v8vm/v8"
   cd vm/v8vm/v8
-  make deploy
-  echo "---> start: iost_install_v8vm()" | tee -a $LOG
+  echo "  ---> run: make clean js_bin vm install"
+  #make clean js_bin vm install
+  make clean js_bin vm install deploy >> $LOG 2>&1
+  make deploy                         >> $LOG 2>&1
+
+  echo "  ---> start: iost_install_v8vm()" | tee -a $LOG
 }
 
 
@@ -814,13 +839,13 @@ iost_install_iost_v8vm () {
 #  iost_install_iserver ()
 #
 iost_install_iserver () {
-  echo '#=-------------------------------------------------------------------------=#'
-  echo '#=------------------   IOST Install - iserver          --------------------=#'
-  echo '#=-------------------------------------------------------------------------=#'
+  echo ''; echo ''
+  echo "  #=--------------------------------------------------=#"
+  echo '  #=---------   IOST Install - iserver  --------------=#'
+  echo "  #=--------------------------------------------------=#"
+
   echo "---> start: iost_install_iserver ()" | tee -a $LOG
-
-  #go get -d github.com/iost-official/dapp
-
+  cd $IOST_ROOT
   echo "---> end: iost_install_iserver ()" | tee -a $LOG
 }
 
@@ -972,8 +997,8 @@ iost_install_iost () {
   alias IOST="cd $IOST_ROOT"
 
   iost_install_iost_core
-  iost_run_itests
   #iost_install_iost_v8vm
+  #iost_run_itests
   #iost_install_iost_iwallet
   #iost_install_iost_iserver
   #iost_install_iost_dapp
@@ -982,9 +1007,7 @@ iost_install_iost () {
 
 
 ###
-###
 ###   START - beginning of the install script
-###
 ###
 
 #set -e
@@ -992,7 +1015,7 @@ iost_install_iost () {
 iost_install_init
 iost_warning_requirements
 iost_install_packages
-iost_install_rocksdb
+#iost_install_rocksdb
 iost_install_nvm_node_npm
 #iost_install_docker
 iost_install_golang
@@ -1000,11 +1023,8 @@ iost_install_iost
 iost_run
 
 
-
-###
 ###
 ###   END - the end of the install script
-###
 ###
 
 
