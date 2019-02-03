@@ -6,7 +6,7 @@
 #         Baremetal Development Environment
 #         **  For Greenfield Installs Only  **
 #
-#  Fri Feb  1 10:24:42 UTC 2019
+#  Sat Feb  2 16:57:27 UTC 2019
 #
 #  Objective:  to provide a single script that will install
 #  all the necessary dependecies and IOST code required to be
@@ -56,7 +56,6 @@ readonly CENTOS_MANDATORY=('centos7');
 readonly DEBIAN_MANDATORY=('stretch');
 readonly MACOS_MANDATORY=('Darwin', 'Hitchens');
 
-readonly ROCKSDB_MANDATORY="v5.14.3"
 readonly GOLANG_MANDATORY="1.11.3"
 readonly NODE_MANDATORY="v10.14.2"
 readonly NPM_MANDATORY="v6.4.1"
@@ -68,7 +67,7 @@ readonly IOST_MANDATORY=""
 readonly FOR_VAGRANT="1"	
 readonly IOST_CLEAN_INSTALL="1"
 
-# install log
+# install and blockchain logs
 readonly LOG="/tmp/bootstrap.sh.$$.log"
 readonly ISERVER_LOG="/tmp/iserver.$$.log"
 readonly ITEST_LOG="/tmp/itest.$$.log"
@@ -84,7 +83,6 @@ readonly ITEST_LOG="/tmp/itest.$$.log"
 # iost_warning_reqirements()
 # iost_sudo_confirm()
 # iost_install_packages()
-# iost_install_rocksdb()
 # iost_install_nvm_node_npm()
 # iost_install_docker()
 # iost_install_golang()
@@ -92,7 +90,7 @@ readonly ITEST_LOG="/tmp/itest.$$.log"
 #
 #
 #
-function exists() {
+exists() {
 
   test -x $(command -v $1)
   if (( $? >= 1 )); then
@@ -105,7 +103,7 @@ function exists() {
 #
 # TODO: __error_handler()
 #
-function __error_handler() {
+__error_handler() {
   echo "Error occurred in script at line: ${1}."
   echo "Line exited with status: ${2}"
 }
@@ -242,7 +240,7 @@ iost_install_init () {
   # check for: 
   # -  apt: git, git-lfs, software-properties-common, build-essential, curl,
   #    libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev 
-  # -  rocksdb, nvm, node, npm, yarn, docker, golang, 
+  # -  nvm, node, npm, yarn, docker, golang, 
   # -  IOST: iwallet, iserver, scaf, 
   #
   if [ -f "$HOME/.iost_env" ]; then
@@ -272,7 +270,7 @@ iost_install_rmfr () {
   # -  apt: git, git-lfs, software-properties-common, build-essential, curl,
   #    libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev 
   #    docker
-  # -  rocksdb, nvm, node, npm, yarn, golang, 
+  # -  nvm, node, npm, yarn, golang, 
   # -  IOST: iwallet, iserver, scaf, 
 
   echo ""; echo ""
@@ -320,16 +318,6 @@ iost_install_rmfr () {
     rm -fr $HOME/.nvm
   fi
 
-
-  # ROCKSDB - DEPRECIATED
-  #LOC=$(pwd)
-  ##echo "ROCKSDB: $LOC/rocksdb"
-  #
-  #if [ -d "$LOC/rocksdb" ]; then
-  #  echo "---> run: rm -fr $LOC/rocksdb" 
-  #  rm -fr $LOC/rocksdb
-  #fi
-
   echo "---> msg: done: iost_install_rmfr () " | tee -a $LOG
 
 }
@@ -366,7 +354,6 @@ iost_warning_requirements () {
 
   echo "This script will install the following:"; echo ""
   echo "  -  Security updates and patches for $PRETTY_NAME"
-  #echo "  -  Rocks DB $ROCKSDB_MANDATORY" (depreciated)
   echo "  -  nvm version $NVM_MANDATORY"
   echo "  -  node version $NODE_MANDATORY"
   echo "  -  npm version $NPM_MANDATORY"
@@ -453,38 +440,6 @@ iost_install_packages () {
   git lfs install >> $LOG 2>&1
   echo "---> msg: done: iost_install_packages()" | tee -a $LOG
 
-}
-
-
-
-#
-#  iost_install_rocksdb () - 
-#
-iost_install_rocksdb () {
-  echo ""; echo ""
-  echo "#=-------------------------------------------------------------------------=#"
-  echo "#=-------------     IOST Install - installing Rocks DB        -------------=#"
-  echo "#=-------------------------------------------------------------------------=#"
-  echo "---> msg: start: iost_install_rocksdb()"  | tee -a $LOG
-  echo "---> err: ROCKSDB IS DEPRECIATED, not installing" | tee -a $LOG
-  echo "---> msg: done: iost_install_rocksdb()" | tee -a $LOG
-  return;
-
-  echo '---> run: apt-get update'
-
-  echo "---> run: sudo $pkg_installer install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev "
-  sudo $pkg_installer install libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev   >> $LOG 2>&1
-
-  echo "---> run: git clone -b $ROCKSDB_MANDATORY https://github.com/facebook/rocksdb.git "
-  git clone -b "$ROCKSDB_MANDATORY" https://github.com/facebook/rocksdb.git >> $LOG 2>&1
-  cd rocksdb  >> $LOG 2>&1
-  echo "---> run: make static_lib - NOTE: this can take many minutes"
-  make static_lib  >> $LOG 2>&1
-
-  echo "---> run: sudo make install-static"
-  sudo make install-static >> $LOG 2>&1
-
-  echo "---> msg: done: iost_install_rocksdb()" | tee -a $LOG
 }
 
 
@@ -676,27 +631,36 @@ iost_install_golang () {
   echo "---> msg: done: iost_install_golang ()" | tee -a $LOG
 }
 
+#
+#  iost_check_iserver() - confirm that local iServer is running
+#  usage: if iost_check_server; then; echo "running"; fi
+#  1 - successful, the iserver is running
+#  0 - not successful, the iserver is not running
+iost_check_iserver () {
+  # check for a running iserver
+  tpid=$(pidof bioset);
+
+  echo "tpid: $tpid";
+
+  if (( $? == 1 )); then
+    echo "not found tpid: $tpid";
+    return 0
+  else
+    echo "found tpid: $tpid";
+    return 1
+  fi
+}
 
 #
 #  iost_run_iserver() - start up a local iServer
 #
 iost_run_iserver () {
 
-  # check for a running iserver
-  tpid=$(pidof iserver);
-  if [ -z $tpid ]; then
-    echo "  ---> msg: iServer is now starting...."
-    cd $IOST_ROOT 
-    echo "iserver -f config/iserver.yml >> $ISERVER_LOG 2>&1" > /tmp/iserver.start.sh
-    chmod +x /tmp/iserver.start.sh
-    nohup /tmp/iserver.start.sh >> $ISERVER_LOG 2>&1 & 
-    #systemctl start iost.iserver"
-    sleep 5
-    read -p "  ---> msg: server log is located: $ISERVER_LOG, hit any key to continue"
-  else
+  # 0=running, 1=not running
+  if iost_check_iserver; then
     read -p "  ---> msg: iServer already running pid [$tpid], want to restart? (Y/n): " rSTRT
     if [ ! -z "$rSTRT" ]; then
-      if [ $rSTRT == "y" ] || [ $rSTRT == 'Y' || $rSTRT == '' ]; then
+      if [ $rSTRT == "y" ] || [ $rSTRT == 'Y' || [ $rSTRT == '' ]; then
         echo "  ---> msg: kililng iserver pid [$tpid]"
         kill -15 $tpid
         read -p "  ---> msg: server is dead, hit any key to contine " tCONT
@@ -706,6 +670,20 @@ iost_run_iserver () {
         iost_run
       fi
     fi
+  else
+    echo "  ---> msg: iServer is now starting...."
+    cd $IOST_ROOT 
+    iserver -f config/iserver.yml >> $ISERVER_LOG 2>&1 &
+    ISERVER_PID=$!
+
+    echo "  ---> msg:  iserver PID:  $ISERVER_PID"
+
+    #echo "iserver -f config/iserver.yml >> $ISERVER_LOG 2>&1" > /tmp/iserver.start.sh
+    #chmod +x /tmp/iserver.start.sh
+    #nohup /tmp/iserver.start.sh >> $ISERVER_LOG 2>&1 & 
+    #systemctl start iost.iserver"
+    sleep 5
+    read -p "  ---> msg: server log is located: $ISERVER_LOG, hit any key to continue"
   fi
 
 }
@@ -986,9 +964,10 @@ iost_run () {
 
 
 #
-#  iost_install_iost () - master setup function 
+#  iost_install_iost () - master setup func
 #
 iost_install_iost () {
+
   export IOST_ROOT=$HOME/go/src/github.com/iost-official/go-iost
   export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
   export GOPATH=$HOME/go
@@ -1012,10 +991,19 @@ iost_install_iost () {
 
 #set -e
 
+rc=iost_check_iserver
+echo "rc: $rc"
+if [[ "$(iost_check_iserver)" ]]; then
+  echo "running"
+else
+  echo "not running"
+fi
+
+exit
+
 iost_install_init
 iost_warning_requirements
 iost_install_packages
-#iost_install_rocksdb
 iost_install_nvm_node_npm
 #iost_install_docker
 iost_install_golang
@@ -1026,91 +1014,5 @@ iost_run
 ###
 ###   END - the end of the install script
 ###
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#  TODO - 
-
-# This script can install the following:'
-#  1.  Linux: Vagrant   LXC         Ubuntu 19.04 (Disco Dingo)'
-#  1.  Linux: Vagrant   LXC         Ubuntu 18.10 (Cosmic Cuttlefish)'
-#  2.  Linux: Vagrant   LXC         Ubuntu 18.04 (Bionic Beaver)'
-#  3.  Linux: Vagrant   LXC         Ubuntu 16.10 (Yakkety Yak)'
-#  4.  Linux: Vagrant   LXC         Ubuntu 16.04 (Xenial Xerus)'
-#  5.  Linux: Vagrant   LXC         CentOS 7 '
-#  6.  Linux: Vagrant   LXC         Debian Stretch 9'
-
-#  7.  Linux: Vagrant   VMware      Ubuntu 19.04 (Disco Dingo)'
-#  8.  Linux: Vagrant   VMware      Ubuntu 18.10 (Cosmic Cuttlefh)'
-#  9.  Linux: Vagrant   VMware      Ubuntu 18.04 (Bionic Beaver)'
-# 10.  Linux: Vagrant   VMware      Ubuntu 16.10 (Yakkety Yak)'
-# 11.  Linux: Vagrant   VMware      Ubuntu 16.04 (Xenial Xerus)'
-# 12.  Linux: Vagrant   VMware      CentOS 7' 
-# 13.  Linux: Vagrant   VMware      Debian Stretch 7' 
-
-# 14.  Linux: Vagrant   VirtualBox  Ubuntu 19.04 (Disco Dingo)'
-# 14.  Linux: Vagrant   VirtualBox  Ubuntu 18.04 (Bionic Beaver)'
-# 15.  Linux: Vagrant   VirtualBox  Ubuntu 18.10 (Cosmic Cuttlefish)'
-# 16.  Linux: Vagrant   VirtualBox  Ubuntu 18.04 (Bionic)'
-# 17.  Linux: Vagrant   VirtualBox  Ubuntu 16.04 (Bionic)'
-# 18.  Linux: Vagrant   VirtualBox  Ubuntu 16.04 (Xenial Xerus)'
-# 19.  Linux: Vagrant   VirtualBox  CentOS 7.0-7.6' 
-# 20.  Linux: Vagrant   VirtualBox  Debian Stretch 9.0-9.6'
-# 20.  Linux: Vagrant   VirtualBox  Debian Buster 10.0'
-
-# 24.  Linux: Kubernetes Docker     Ubuntu 19.04 (Disco Dingo)'
-# 21.  Linux: Kubernetes Docker     Ubuntu 18.10 (Cosmic Cuttlefish
-# 22.  Linux: Kubernetes Docker     Ubuntu 18.04 (Bionic Beaver)'
-# 23.  Linux: Kubernetes Docker     Ubuntu 16.04 (Bionic)'
-# 24.  Linux: Kubernetes Docker     Ubuntu 16.04 (Xenial Xerus)'
-# 25.  Linux: Kubernetes Docker     CentOS 7.0-7.6 '
-# 26.  Linux: Kubernetes Docker     Debian 10.0     (Buster)'
-# 26.  Linux: Kubernetes Docker     Debian 9.0-9.6' (Stretch)
-
-# 24.  Linux: Docker only           Ubuntu 19.04 (Disco Dingo)'
-# 21.  Linux: Docker only           Ubuntu 18.10 (Cosmic Cuttlefish
-# 22.  Linux: Docker only           Ubuntu 18.04 (Bionic Beaver)'
-# 23.  Linux: Docker only           Ubuntu 16.04 (Bionic)'
-# 24.  Linux: Docker only           Ubuntu 16.04 (Xenial Xerus)'
-# 25.  Linux: Docker only           CentOS 7.0-7.6 '
-# 26.  Linux: Docker only           Debian 10.0     (Buster)'
-# 26.  Linux: Docker only           Debian 9.0-9.6' (Stretch)
-
-# 24.  Linux: VMware only           Ubuntu 19.04 (Disco Dingo)'
-# 21.  Linux: VMware only           Ubuntu 18.10 (Cosmic Cuttlefish
-# 22.  Linux: VMware only           Ubuntu 18.04 (Bionic Beaver)'
-# 23.  Linux: VMware only           Ubuntu 16.04 (Bionic)'
-# 24.  Linux: VMware only           Ubuntu 16.04 (Xenial Xerus)'
-# 25.  Linux: VMware only           CentOS 7.0-7.6 '
-# 26.  Linux: VMware only           Debian 10.0     (Buster)'
-# 26.  Linux: VMware only           Debian 9.0-9.6' (Stretch)
 
 
