@@ -284,26 +284,26 @@ iost_install_rmfr () {
   echo "---> run: sudo systemctl stop docker-ce"
   sudo systemctl stop docker >> $LOG 2>&1
 
-  echo "---> msg: sudo $pkg_installer purge docker-ce libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev  "
+  echo "---> run: sudo $pkg_installer purge docker-ce libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev  "
   sudo $pkg_installer purge docker-ce libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev    >> $LOG 2>&1
 
-  echo "---> msg: sudo $pkg_installer purge git git-lfs software-properties-common  build-essential curl  " 
+  echo "---> run: sudo $pkg_installer purge git git-lfs software-properties-common  build-essential curl  " 
   sudo $pkg_installer purge git git-lfs software-properties-common  build-essential curl    >> $LOG 2>&1
 
   pkg_installert=$pkg_installer
   pkg_installer="$pkg_installer purge "
-  echo "---> msg: sudo $dev_tools" 
+  echo "---> run: sudo $dev_tools" 
   sudo $dev_tools                                  >> $LOG 2>&1
   pkg_installer=$pkg_installert
 
-  echo "---> msg: sudo $pkg_installer purge install apt-transport-https  "
+  echo "---> run: sudo $pkg_installer purge install apt-transport-https  "
   sudo $pkg_installer purge apt-transport-https    >> $LOG 2>&1
 
-  echo "---> msg: sudo $pkg_installer autoremove  " 
+  echo "---> run: sudo $pkg_installer autoremove  " 
   sudo $pkg_installer autoremove                   >> $LOG 2>&1
 
   if [ -f "$HOME/.iost_env" ]; then
-    echo "---> msg: rm -fr $HOME/.iost_env"
+    echo "---> run: rm -fr $HOME/.iost_env"
     rm -fr $HOME/.iost_env
   fi
 
@@ -637,8 +637,9 @@ iost_install_golang () {
 #  1 - successful, the iserver is running
 #  0 - not successful, the iserver is not running
 iost_check_iserver () {
+
   # check for a running iserver
-  tpid=$(pidof bioset);
+  tpid=$(pidof iserver);
 
   echo "tpid: $tpid";
 
@@ -991,15 +992,22 @@ iost_install_iost () {
 
 #set -e
 
-rc=iost_check_iserver
-echo "rc: $rc"
+iost_check_iserver
+echo "rc: $?"
+
+ls
+echo "rc: $?"
+
+iost_check_iserver
+echo "rc: $?"
+
 if [[ "$(iost_check_iserver)" ]]; then
   echo "running"
 else
   echo "not running"
 fi
 
-exit
+#exit
 
 iost_install_init
 iost_warning_requirements
