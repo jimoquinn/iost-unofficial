@@ -5,8 +5,8 @@
 #                IOST "One Click" Install 
 #         Baremetal Development Environment
 #         **  For Greenfield Installs Only  **
-#
-#  Sat Feb  2 16:57:27 UTC 2019
+#  
+#  Sun Feb 10 16:32:15 CST 2019
 #
 #  Objective:  to provide a single script that will install
 #  all the necessary dependecies and IOST code required to be
@@ -20,13 +20,12 @@
 #  We'll install the following: 
 #
 #  - updates and patches for your distro
-#  - apt-transport-https ca-certificates software-properties-common   
+#  - apt-transport-https ca-certificates 
+#  - software-properties-common 
 #  - build-essential curl git git-lfs 
-#  - libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev   
-#  - RocksDB (depreciated)
-#  - nvm
-#  - npm 
-#  - node
+#  - libgflags-dev libsnappy-dev zlib1g-dev 
+#  - libbz2-dev liblz4-dev libzstd-dev   
+#  - nvm npm node
 #  - Go Lang
 #
 #  IOST from github.com/iost-official/go-iost
@@ -634,8 +633,8 @@ iost_install_golang () {
 #
 #  iost_check_iserver() - confirm that local iServer is running
 #  usage: if iost_check_server; then; echo "running"; fi
-#  1 - successful, the iserver is running
-#  0 - not successful, the iserver is not running
+#  >=1 - successful, the iserver is running
+#   =0 - not successful, the iserver is not running
 iost_check_iserver () {
 
   # check for a running iserver
@@ -645,49 +644,65 @@ iost_check_iserver () {
 
   if (( $? == 1 )); then
     echo "not found tpid: $tpid";
-    return 0
+    echo 0
   else
     echo "found tpid: $tpid";
-    return 1
+    echo $tpid
   fi
 }
 
 #
-#  iost_run_iserver() - start up a local iServer
-#
+#  iost_run_iserver() 
+#  - if already running, stop then start or return
+#  - if not running, then start
+#  -  
 iost_run_iserver () {
+
+  local tPID
 
   # 0=running, 1=not running
   if iost_check_iserver; then
     read -p "  ---> msg: iServer already running pid [$tpid], want to restart? (Y/n): " rSTRT
     if [ ! -z "$rSTRT" ]; then
-      if [ $rSTRT == "y" ] || [ $rSTRT == 'Y' || [ $rSTRT == '' ]; then
-        echo "  ---> msg: kililng iserver pid [$tpid]"
-        kill -15 $tpid
-        read -p "  ---> msg: server is dead, hit any key to contine " tCONT
-	iost_run_iserver
+      if [ $rSTRT == "y" ] || [ $rSTRT == 'Y' ] || [ $rSTRT == '' ]; then
+        iost_stop_iserver 
+	iost_start_iserver
       else
-        read -p "  ---> msg: not restarting iServer [$tpid], hit any key to contine " tCONT
+        read -p "  ---> msg: not restarting iServer, hit any key to contine " tCONT
         iost_run
       fi
     fi
   else
-    echo "  ---> msg: iServer is now starting...."
-    cd $IOST_ROOT 
-    iserver -f config/iserver.yml >> $ISERVER_LOG 2>&1 &
-    ISERVER_PID=$!
-
-    echo "  ---> msg:  iserver PID:  $ISERVER_PID"
-
-    #echo "iserver -f config/iserver.yml >> $ISERVER_LOG 2>&1" > /tmp/iserver.start.sh
-    #chmod +x /tmp/iserver.start.sh
-    #nohup /tmp/iserver.start.sh >> $ISERVER_LOG 2>&1 & 
-    #systemctl start iost.iserver"
-    sleep 5
+    
+    tPID=$(iost_start_iserver)
+    
     read -p "  ---> msg: server log is located: $ISERVER_LOG, hit any key to continue"
   fi
 
 }
+
+
+#
+#  iost_start_iserver() -  simply start the iserver
+#
+iost_start_iserver () {
+
+  # check for a running iserver
+  tpid=$(pidof iserver);
+  if [ -z $tpid ]; then
+    read -p "  ---> msg: iServer not running, hit any key to contine " tCONT
+    iost_run
+  else
+    echo "  ---> msg: iServer running as pid [$tpid] and now stopping"
+    kill -15 $tpid
+    sleep 5
+    read -p "  ---> msg: iServer stopped, now starting" tCONT
+    iserver -f config/iserver.yaml
+    iost_run
+  fi
+
+}
+
 
 #
 #  iost_stop_iserver() - gracefully shutdown iServer
@@ -789,29 +804,6 @@ iost_install_iost_iwallet () {
   echo "---> end: iost_install_iwallet ()" | tee -a $LOG
 }
 
-
-#
-#  iost_install_iost_v8vm () 
-#
-iost_install_iost_v8vm () {
-  echo ''; echo ''
-  echo '#=-------------------------------------------------------------------------=#'
-  echo '#=------------------   IOST Install - deploy v8vm  ------------------------=#'
-  echo '#=-------------------------------------------------------------------------=#'
-  echo "  ---> start: iost_install_v8vm()" | tee -a $LOG
-
-  cd $IOST_ROOT
-  echo "  ---> run: cd $IOST_ROOT"
-  cd $IOST_ROOT
-  echo "  ---> run: cd vm/v8vm/v8"
-  cd vm/v8vm/v8
-  echo "  ---> run: make clean js_bin vm install"
-  #make clean js_bin vm install
-  make clean js_bin vm install deploy >> $LOG 2>&1
-  make deploy                         >> $LOG 2>&1
-
-  echo "  ---> start: iost_install_v8vm()" | tee -a $LOG
-}
 
 
 #  
