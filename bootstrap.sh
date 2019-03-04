@@ -6,7 +6,7 @@
 #         Baremetal Development Environment
 #         **  For Greenfield Installs Only  **
 #  
-#  Sun Feb 10 16:32:15 CST 2019
+#  Mon Mar  4 14:59:46 UTC 2019
 #
 #  Objective:  to provide a single script that will install
 #  all the necessary dependecies and IOST code required to be
@@ -14,8 +14,9 @@
 #
 #  This is a greenfield install only, so only use on a fresh 
 #  install of Linux.  It will check for previous install attemps, 
-#  remove all the prevous installed dependicies, and start the 
-#  install again.  Consider yourself warned.
+#  remove all the prevous installed dependicies, including config
+#  or source that you may have modified, and start the install 
+#  again.  Consider yourself warned.
 #
 #  We'll install the following: 
 #
@@ -233,6 +234,13 @@ iost_install_init () {
     mygit=$(git --version 2>/dev/null)
     echo "---> msg: $mygit already installed"
   fi
+
+
+  #
+  #  unset any variables
+  #
+  unset $NVM_DIR
+
 
   #
   # TODO: check for installed apps
@@ -1016,8 +1024,8 @@ clear
 
   echo ""
   #echo "    1.  Start install of IOST node" 
-  #echo "    2.  Start install of IOST ServiNode" 
-  echo "    3.  Start install of IOST development environment"
+  echo "    2.  Uninstall IOST developmen environment"
+  echo "    3.  Install IOST development environment"
   echo "    4.  Administer existing installation"
   echo "    5.  Run iTest suite (requires working install)"
   echo "    6.  Drop to a command prompt"
@@ -1039,11 +1047,9 @@ clear
     ;;
 
     2) echo ""
-       read -p "  ---> msg: not implemented, hit any key to continue" tIN
+       iost_install_rmfr
+       read -p "---> msg: development environment removed, hit any key to continue" tIN
        iost_admin_or_install
-       #echo "  ---> msg: stopping iServer"
-       #iost_stop_iserver
-       #iost_run
     ;;
 
     3) iost_install_init 
@@ -1082,6 +1088,11 @@ clear
     ;;
 
     9) echo ""
+       echo "  ---> msg: exiting"
+       exit
+    ;;
+
+    10) echo ""
        echo "  ---> msg: exiting"
        exit
     ;;
