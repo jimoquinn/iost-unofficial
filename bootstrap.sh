@@ -119,6 +119,7 @@ trap '_error_handler ${LINENO} $?' ERR
 # 
 #
 iost_install_init () {
+  clear
   echo ""; echo ""
   echo "#=-------------------------------------------------------------------------=#"
   echo "#-----------------   IOST Install - pre-init      -------------------------=#"
@@ -640,14 +641,14 @@ iost_check_iserver () {
   # check for a running iserver
   tpid=$(pidof iserver);
 
-  echo "tpid: $tpid";
+  #echo "tpid: $tpid";
 
   if (( $? == 1 )); then
-    echo "not found tpid: $tpid";
-    echo 0
+    #echo "not found tpid: $tpid";
+    return 0
   else
-    echo "found tpid: $tpid";
-    echo $tpid
+    #echo "found tpid: $tpid";
+    return $tpid
   fi
 }
 
@@ -984,23 +985,112 @@ iost_install_iost () {
 
 #set -e
 
-iost_check_iserver
-echo "rc: $?"
+#iost_check_iserver
+#echo "rc: $?"
 
-ls
-echo "rc: $?"
+#ls
+#echo "rc: $?"
 
 iost_check_iserver
-echo "rc: $?"
+#echo "rc: $?"
 
 if [[ "$(iost_check_iserver)" ]]; then
-  echo "running"
+  # echo "running"
+  echo ""
 else
-  echo "not running"
+  # echo "not running"
+  echo ""
 fi
 
-#exit
+#
+#  iost_install_iost () - master setup func
+#
+iost_admin_or_install ()  {
+clear
 
+  echo "  #=--------------------------------------------------=#"
+  echo "  #=--        IOST Install, Test, or Admin          --=#"
+  echo "  #=--  https://github.com/iost-official/go-iost    --=#"
+  echo "  #=--        Codebase Version: 3.0.1               --=#"
+  echo "  #=--------------------------------------------------=#"
+
+  echo ""
+  #echo "    1.  Start install of IOST node" 
+  #echo "    2.  Start install of IOST ServiNode" 
+  echo "    3.  Start install of IOST development environment"
+  echo "    4.  Administer existing installation"
+  echo "    5.  Run iTest suite (requires working install)"
+  echo "    6.  Drop to a command prompt"
+  #echo "    6.  Connect to testnet"
+  #echo "    8.  Run test dApp "
+  echo "   10.  Quit"
+  echo ""
+
+  read -p "  Select a number: " iNUM
+
+  case "$iNUM" in
+
+    1) echo ""
+       read -p "  ---> msg: not implemented, hit any key to continue" tIN
+       iost_admin_or_install
+       #echo "  ---> msg: starting iServer"
+       #iost_run_iserver
+       #iost_run
+    ;;
+
+    2) echo ""
+       read -p "  ---> msg: not implemented, hit any key to continue" tIN
+       iost_admin_or_install
+       #echo "  ---> msg: stopping iServer"
+       #iost_stop_iserver
+       #iost_run
+    ;;
+
+    3) iost_install_init 
+       iost_warning_requirements
+       iost_install_packages
+       iost_install_nvm_node_npm
+       #iost_install_docker
+       iost_install_golang
+       iost_install_iost
+       iost_run 
+    ;;
+
+    4) echo ""
+       #echo "  ---> msg: stopping iServer"
+       read -p "  ---> msg: not implemented, hit any key to continue" tIN
+       iost_run
+    ;;
+
+    5) echo ""
+       read -p "  ---> msg: not implemented, hit any key to continue" tIN
+       iost_run
+       #read -p "  ---> msg: not implemented, hit any key to continue" tIN
+       #iost_run
+    ;;
+
+    5) echo ""
+       echo "  ---> msg: running iTests"
+       iost_run_iserver
+       iost_run_itests
+       iost_run
+    ;;
+
+    6) echo "   ---> msg: opening a /bin/bash, type exit or CTRL-D to return"
+       /bin/bash
+       iost_run
+    ;;
+
+    9) echo ""
+       echo "  ---> msg: exiting"
+       exit
+    ;;
+
+  esac
+
+}
+
+iost_admin_or_install
 iost_install_init
 iost_warning_requirements
 iost_install_packages
