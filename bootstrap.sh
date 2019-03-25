@@ -61,6 +61,7 @@ readonly NODE_MANDATORY="v10.14.2"
 readonly NPM_MANDATORY="v6.4.1"
 readonly NVM_MANDATORY="v0.34.0"
 readonly DOCKER_MANDATORY="v18.06.0-ce"
+readonly DOCKER_INSTALL="0"    # 1-yes | 0-no
 
 # misc unused flags - use later for automatic install
 readonly IOST_MANDATORY=""
@@ -68,7 +69,7 @@ readonly FOR_VAGRANT="1"
 readonly IOST_CLEAN_INSTALL="1"
 
 # install and blockchain logs
-readonly LOG="/tmp/bootstrap.sh.$$.log"
+readonly SERVER_LOG="/tmp/bootstrap.sh.$$.log"
 readonly ISERVER_LOG="/tmp/iserver.$$.log"
 readonly ITEST_LOG="/tmp/itest.$$.log"
 
@@ -125,7 +126,7 @@ iost_install_init () {
   echo "#=-------------------------------------------------------------------------=#"
   echo "#-----------------   IOST Install - pre-init      -------------------------=#"
   echo "#=-------------------------------------------------------------------------=#"
-  echo "---> msg: start: iost_install_init () " | tee -a $LOG
+  echo "---> msg: start: iost_install_init () " | tee -a $SERVER_LOG
 
   # 1st - confirm that we are not running under root
   if [[ $(whoami) == "root" ]]; then
@@ -194,7 +195,7 @@ iost_install_init () {
             # setup packages-debian.txt
             echo "---> msg: [$PRETTY_NAME] is supported and using [$pkg_installer]"
           else
-            echo "---> err: [$VERSION_ID] [${PRETTY_NAME}] is not supported, view $LOG"
+            echo "---> err: [$VERSION_ID] [${PRETTY_NAME}] is not supported, view $SERVER_LOG"
             exit 77
           fi
           ;;
@@ -208,13 +209,13 @@ iost_install_init () {
             # setup packages-ubuntu.txt
             echo "---> msg: [$PRETTY_NAME] is supported and using [$pkg_installer]"
           else
-            echo "---> err: [${PRETTY_NAME}] is not supported, view $LOG"
+            echo "---> err: [${PRETTY_NAME}] is not supported, view $SERVER_LOG"
             exit 76
           fi
           ;;
 
         *)
-          echo "---> err: the package installer for [$PRETTY_INSTALLER] is unsupported, view $LOG"
+          echo "---> err: the package installer for [$PRETTY_INSTALLER] is unsupported, view $SERVER_LOG"
           exit 95
           ;;
 
@@ -229,7 +230,7 @@ iost_install_init () {
   #command -v git >/dev/null 2>&1 || { echo >&2 "I require foo but it's not installed.  Aborting."; exit 1; }
   if exists git; then
     echo "---> run: $pkg_installer install git"
-    sudo $pkg_installer install git  >> $LOG 2>&1
+    sudo $pkg_installer install git  >> $SERVER_LOG 2>&1
   else
     mygit=$(git --version 2>/dev/null)
     echo "---> msg: $mygit already installed"
@@ -265,7 +266,7 @@ iost_install_init () {
     fi
   fi
 
-  echo "---> msg: done: iost_install_init () " | tee -a $LOG
+  echo "---> msg: done: iost_install_init () " | tee -a $SERVER_LOG
 	
 }
 
@@ -285,39 +286,44 @@ iost_install_rmfr () {
   echo "#=-------------------------------------------------------------------------=#"
   echo "#-----------------   IOST Install - removing previous install  ------------=#"
   echo "#=-------------------------------------------------------------------------=#"
-  echo "---> msg: start: iost_install_rmfr () " | tee -a $LOG
+  echo "---> msg: start: iost_install_rmfr () " | tee -a $SERVER_LOG
+  echo "---> msg: view log file: $SERVER_LOG"
 
-  echo "---> run: sudo systemctl disable docker-ce"
-  sudo systemctl disable docker >> $LOG 2>&1
-  echo "---> run: sudo systemctl stop docker-ce"
-  sudo systemctl stop docker >> $LOG 2>&1
+
+  if [ $DOCKER_INSTALL ]; then
+    echo "---> run: sudo systemctl disable docker-ce"
+    sudo systemctl disable docker >> $SERVER_LOG 2>&1
+    echo "---> run: sudo systemctl stop docker-ce"
+    sudo systemctl stop docker >> $SERVER_LOG 2>&1
+    sudo $pkg_installer purge docker-ce >> $SERVER_LOG 2>&1
+
+    if [ -f "/etc/apt/sources.list.d/docker.list" ]; then
+      echo "---> run: sudo rm -fr /etc/apt/sources.list.d/docker.list" 
+      sudo rm -fr /etc/apt/sources.list.d/docker.list
+    fi
+  fi
 
   echo "---> run: sudo $pkg_installer purge docker-ce libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev  "
-  sudo $pkg_installer purge docker-ce libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev    >> $LOG 2>&1
+  sudo $pkg_installer purge libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev    >> $SERVER_LOG 2>&1
 
   echo "---> run: sudo $pkg_installer purge git git-lfs software-properties-common  build-essential curl  " 
-  sudo $pkg_installer purge git git-lfs software-properties-common  build-essential curl    >> $LOG 2>&1
+  sudo $pkg_installer purge git git-lfs software-properties-common  build-essential curl    >> $SERVER_LOG 2>&1
 
   pkg_installert=$pkg_installer
   pkg_installer="$pkg_installer purge "
   echo "---> run: sudo $dev_tools" 
-  sudo $dev_tools                                  >> $LOG 2>&1
+  sudo $dev_tools                                  >> $SERVER_LOG 2>&1
   pkg_installer=$pkg_installert
 
-  echo "---> run: sudo $pkg_installer purge install apt-transport-https  "
-  sudo $pkg_installer purge apt-transport-https    >> $LOG 2>&1
+  echo "---> run: sudo $pkg_installer purge apt-transport-https  "
+  sudo $pkg_installer purge apt-transport-https    >> $SERVER_LOG 2>&1
 
   echo "---> run: sudo $pkg_installer autoremove  " 
-  sudo $pkg_installer autoremove                   >> $LOG 2>&1
+  sudo $pkg_installer autoremove                   >> $SERVER_LOG 2>&1
 
   if [ -f "$HOME/.iost_env" ]; then
     echo "---> run: rm -fr $HOME/.iost_env"
     rm -fr $HOME/.iost_env
-  fi
-
-  if [ -f "/etc/apt/sources.list.d/docker.list" ]; then
-    echo "---> run: sudo rm -fr /etc/apt/sources.list.d/docker.list" 
-    sudo rm -fr /etc/apt/sources.list.d/docker.list
   fi
 
   unset NVM_DIR
@@ -326,7 +332,7 @@ iost_install_rmfr () {
     rm -fr $HOME/.nvm
   fi
 
-  echo "---> msg: done: iost_install_rmfr () " | tee -a $LOG
+  echo "---> msg: done: iost_install_rmfr () " | tee -a $SERVER_LOG
 
 }
 
@@ -356,7 +362,7 @@ iost_warning_requirements () {
   echo "Please read carefully as these are hard requirements:"; echo ""
   echo "  1.  This is for a greenfield install, do not install on a configured system."
   echo "  2.  Do not run as the root user.  Run under a user that can sudo to root (man visudo)."
-  echo "  3.  The install log file will be located:  $LOG "
+  echo "  3.  The install log file will be located:  $SERVER_LOG "
   echo ""; echo "";
 
 
@@ -395,13 +401,13 @@ iost_install_packages () {
   echo '#------------------     IOST Install - installing packages   --------------=#' 
   echo '#=-------------------------------------------------------------------------=#'
 
-  echo "---> msg: start: iost_install_packages()" | tee -a $LOG
+  echo "---> msg: start: iost_install_packages()" | tee -a $SERVER_LOG
 
   #$sec_updt=$($pkg_installer list --upgradable | grep security | wc -l)
   #$reg_updt=$($pkg_installer list --upgradable | wc -l)
 
   echo "---> run: sudo $pkg_installer install apt-transport-https ca-certificates "
-  sudo $pkg_installer install apt-transport-https ca-certificates  >> $LOG 2>&1
+  sudo $pkg_installer install apt-transport-https ca-certificates  >> $SERVER_LOG 2>&1
 
   #echo "---> msg: $sec_updt security udpates and $reg_updt regular updates needed"
   #if (( $reg_updt >= 25 )); then
@@ -410,22 +416,22 @@ iost_install_packages () {
 
 
   echo "---> run: sudo $pkg_installer update"
-  sudo $pkg_installer update                               >> $LOG 2>&1
+  sudo $pkg_installer update                               >> $SERVER_LOG 2>&1
 
   echo "---> run: sudo $pkg_installer upgrade "
-  sudo $pkg_installer upgrade                              >> $LOG 2>&1
+  sudo $pkg_installer upgrade                              >> $SERVER_LOG 2>&1
 
   echo "---> run: sudo $pkg_installer install software-properties-common "
-  sudo $pkg_installer install software-properties-common   >> $LOG 2>&1
+  sudo $pkg_installer install software-properties-common   >> $SERVER_LOG 2>&1
 
   #echo "---> run: sudo add-apt-repository ppa:git-core/ppa "
-  #sudo add-apt-repository ppa:git-core/ppa  -y            >> $LOG 2>&1
+  #sudo add-apt-repository ppa:git-core/ppa  -y            >> $SERVER_LOG 2>&1
 
   echo "---> run: sudo $dev_tools"
-  sudo $dev_tools                                          >> $LOG 2>&1
+  sudo $dev_tools                                          >> $INSTALL_LOG 2>&1
 
   echo "---> run: sudo $pkg_installer install build-essential curl git "
-  sudo $pkg_installer install build-essential curl git     >> $LOG 2>&1
+  sudo $pkg_installer install build-essential curl git     >> $INSTALL_LOG 2>&1
 
   # already handeled 
   #if ! [ -x "$(command -v git)" ]; then
@@ -439,14 +445,14 @@ iost_install_packages () {
 
   # install Large File Support for git
   echo "---> run: sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash"
-  sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.rpm.sh | sudo bash >> $LOG 2>&1
+  sudo curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.rpm.sh | sudo bash >> $INSTALL_LOG 2>&1
 
   echo "---> run: sudo $pkg_installer install git-lfs"
-  sudo $pkg_installer install git-lfs >> $LOG 2>&1
+  sudo $pkg_installer install git-lfs >> $INSTALL_LOG 2>&1
 
   echo "---> run: git lfs install"
-  git lfs install >> $LOG 2>&1
-  echo "---> msg: done: iost_install_packages()" | tee -a $LOG
+  git lfs install >> $INSTALL_LOG 2>&1
+  echo "---> msg: done: iost_install_packages()" | tee -a $INSTALL_LOG
 
 }
 
@@ -462,10 +468,10 @@ iost_install_nvm_node_npm () {
   echo "#=-------------------------------------------------------------------------=#"
   echo "#=------------------   IOST Install - nvm, node, npm, & yarn  -------------=#"
   echo "#=-------------------------------------------------------------------------=#"
-  echo "---> msg: start: iost_install_nvm_node_npm ()"  | tee -a $LOG
+  echo "---> msg: start: iost_install_nvm_node_npm ()"  | tee -a $INSTALL_LOG
   cd $HOME
   echo "---> run: curl -s https://raw.githubusercontent.com/creationix/nvm/${NVM_MANDATORY}/install.sh | bash"   
-  curl -s https://raw.githubusercontent.com/creationix/nvm/${NVM_MANDATORY}/install.sh | bash      >> $LOG 2>&1
+  curl -s https://raw.githubusercontent.com/creationix/nvm/${NVM_MANDATORY}/install.sh | bash      >> $INSTALL_LOG 2>&1
 
   export NVM_DIR="$HOME/.nvm"
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
@@ -477,15 +483,15 @@ iost_install_nvm_node_npm () {
   echo "[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"" >> $HOME/.iost_env  
 
   echo "---> run: nvm install $NODE_MANDATORY "
-  nvm install $NODE_MANDATORY   >> $LOG 2>&1
+  nvm install $NODE_MANDATORY   >> $INSTALL_LOG 2>&1
 
   echo "---> run: npm i yarn"
-  npm i yarn  >> $LOG 2>&1
+  npm i yarn  >> $INSTALL_LOG 2>&1
 
   echo -n '---> msg: nvm version '
   NVM_V=$(nvm --version 2>/dev/null)
   if [ -z $NVM_V ]; then
-    echo ""; echo "---> msg: error: nvm install failed, check $LOG"
+    echo ""; echo "---> msg: error: nvm install failed, check $INSTALL_LOG"
     ERR=1
   else
     echo "$NVM_V"
@@ -494,7 +500,7 @@ iost_install_nvm_node_npm () {
   echo -n '---> msg: npm version '
   NPM_V=$(npm --version 2>/dev/null)
   if [ -z $NPM_V ]; then
-    echo ""; echo "---> msg: error: npm install failed, check $LOG"
+    echo ""; echo "---> msg: error: npm install failed, check $INSTALL_LOG"
     ERR=1
   else
     echo "$NPM_V"
@@ -503,7 +509,7 @@ iost_install_nvm_node_npm () {
   echo -n '---> msg: node version '
   NODE_V=$(node --version 2>/dev/null)
   if [ -z $NODE_V ]; then
-    echo ""; echo "---> msg: error: node install failed, check $LOG"
+    echo ""; echo "---> msg: error: node install failed, check $INSTALL_LOG"
     ERR=1
   else
     echo "$NODE_V"
@@ -515,7 +521,7 @@ iost_install_nvm_node_npm () {
   fi
 
   echo "---> msg: nvm, node, and npm installed"
-  echo "---> msg: done: iost_install_nvm_node_npm ()"  | tee -a $LOG
+  echo "---> msg: done: iost_install_nvm_node_npm ()"  | tee -a $INSTALL_LOG
 }
 
 
@@ -528,45 +534,45 @@ iost_install_docker () {
   echo "#=-------------------------------------------------------------------------=#"
   echo "#=------------------   IOST Install - Installing Docker    ----------------=#"
   echo "#=-------------------------------------------------------------------------=#"
-  echo "---> msg: start: iost_install_docker ()" | tee -a $LOG
+  echo "---> msg: start: iost_install_docker ()" | tee -a $INSTALL_LOG
 
-  echo "---> run: sudo $pkg_installer install apt-transport-https ca-certificates  >> $LOG 2>&1"
-  sudo $pkg_installer install apt-transport-https ca-certificates  >> $LOG 2>&1
+  echo "---> run: sudo $pkg_installer install apt-transport-https ca-certificates  >> $INSTALL_LOG 2>&1"
+  sudo $pkg_installer install apt-transport-https ca-certificates  >> $INSTALL_LOG 2>&1
 
   echo "---> run: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -"
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - >> $LOG 2>&1
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - >> $INSTALL_LOG 2>&1
 
-  echo "---> run: git_docker="$(packages/${DIST}_${VERSION_ID}.sh >> $LOG 2>&1)"";
-  git_docker="$(packages/${DIST}_${VERSION_ID}.sh >> $LOG 2>&1)"
+  echo "---> run: git_docker="$(packages/${DIST}_${VERSION_ID}.sh >> $INSTALL_LOG 2>&1)"";
+  git_docker="$(packages/${DIST}_${VERSION_ID}.sh >> $INSTALL_LOG 2>&1)"
 
   #lsb=$(lsb_release -cs)
-  #echo "deb [arch=amd64] https://download.docker.com/linux/ubuntu $lsb stable" | sudo tee /etc/apt/sources.list.d/docker.list  >> $LOG 2>&1
+  #echo "deb [arch=amd64] https://download.docker.com/linux/ubuntu $lsb stable" | sudo tee /etc/apt/sources.list.d/docker.list  >> $INSTALL_LOG 2>&1
 
   echo "---> run: sudo $pkg_installer update"
-  sudo $pkg_installer update                >> $LOG 2>&1
+  sudo $pkg_installer update                >> $INSTALL_LOG 2>&1
 
   echo "---> run: sudo $pkg_installer install docker-ce "
-  sudo $pkg_installer install docker-ce     >> $LOG 2>&1
+  sudo $pkg_installer install docker-ce     >> $INSTALL_LOG 2>&1
 
   # Add user account to the docker group
   echo "---> run: sudo usermod -aG docker $(whoami) "
-  sudo usermod -aG docker $(whoami)         >> $LOG 2>&1
+  sudo usermod -aG docker $(whoami)         >> $INSTALL_LOG 2>&1
 
   echo "---> run: systemctl enable docker"
-  sudo systemctl enable docker              >> $LOG 2>&1
+  sudo systemctl enable docker              >> $INSTALL_LOG 2>&1
   echo "---> run: systemctl run docker"
-  sudo systemctl run docker                 >> $LOG 2>&1
+  sudo systemctl run docker                 >> $INSTALL_LOG 2>&1
 
   echo -n '---> msg: docker version '
   DOCKER_V=$(docker --version 2>/dev/null)
   if [ -z $DOCKER_V ]; then
-    echo "---> msg: error: docker-ce install failed, check $LOG"
+    echo "---> msg: error: docker-ce install failed, check $INSTALL_LOG"
     ERR=1
   else
     echo "$DOCKER_V"
   fi
 
-  echo "---> msg: done: iost_install_docker ()" | tee -a $LOG
+  echo "---> msg: done: iost_install_docker ()" | tee -a $INSTALL_LOG
 }
 
 
@@ -579,7 +585,7 @@ iost_install_golang () {
   echo "#=------------------   IOST Install - Installing Golang    ----------------=#"
   echo "#=-------------------------------------------------------------------------=#"
 
-  echo "---> msg: start: iost_install_golang ()" | tee -a $LOG
+  echo "---> msg: start: iost_install_golang ()" | tee -a $INSTALL_LOG
   IOST_ROOT="$HOME/go/src/github.com/iost-official/go-iost"
   alias IOST="cd $IOST_ROOT"
 
@@ -603,17 +609,17 @@ iost_install_golang () {
 
   if [ -f "/tmp/go${GOLANG_MANDATORY}.linux-amd64.tar.gz" ]; then
     echo "---> run: rm -fr /tmp/go${GOLANG_MANDATORY}.linux-amd64.tar.gz";
-    rm -fr /tmp/go${GOLANG_MANDATORY}.linux-amd64.tar.gz                               >> $LOG 2>&1
+    rm -fr /tmp/go${GOLANG_MANDATORY}.linux-amd64.tar.gz                               >> $INSTALL_LOG 2>&1
   fi
 
   echo "---> run: cd /tmp && wget https://dl.google.com/go/go${GOLANG_MANDATORY}.linux-amd64.tar.gz"
-  cd /tmp && wget https://dl.google.com/go/go${GOLANG_MANDATORY}.linux-amd64.tar.gz    >> $LOG 2>&1
+  cd /tmp && wget https://dl.google.com/go/go${GOLANG_MANDATORY}.linux-amd64.tar.gz    >> $INSTALL_LOG 2>&1
 
   echo "---> run: sudo tar -C /usr/local -xzf go${GOLANG_MANDATORY}.linux-amd64.tar.gz"
-  sudo tar -C /usr/local -xzf go${GOLANG_MANDATORY}.linux-amd64.tar.gz                 >> $LOG 2>&1
+  sudo tar -C /usr/local -xzf go${GOLANG_MANDATORY}.linux-amd64.tar.gz                 >> $INSTALL_LOG 2>&1
 
-  echo "---> run: export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin" 	               >> $LOG 2>&1
-  echo "---> run: export GOPATH=$HOME/go" 			                       >> $LOG 2>&1
+  echo "---> run: export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin" 	               >> $INSTALL_LOG 2>&1
+  echo "---> run: export GOPATH=$HOME/go" 			                       >> $INSTALL_LOG 2>&1
 
   echo "export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin" 	                       >> $HOME/.iost_env
   echo "export GOPATH=$HOME/go" 			                               >> $HOME/.iost_env
@@ -629,14 +635,14 @@ iost_install_golang () {
   echo -n '---> msg: go version '
   GO_V=$(go version | cut -f3 -d' ' | sed 's/go//g' 2>/dev/null)
   if [ -z $GO_V ]; then
-    echo "---> msg: error: $GOLANG_MANDATORY install failed, check $LOG"
+    echo "---> msg: error: $GOLANG_MANDATORY install failed, check $INSTALL_LOG"
     ERR=1
     exit 50
   else
     echo "$GO_V"
   fi
 
-  echo "---> msg: done: iost_install_golang ()" | tee -a $LOG
+  echo "---> msg: done: iost_install_golang ()" | tee -a $INSTALL_LOG
 }
 
 #
@@ -685,7 +691,7 @@ iost_run_iserver () {
     
     tPID=$(iost_start_iserver)
     
-    read -p "  ---> msg: server log is located: $ISERVER_LOG, hit any key to continue"
+    read -p "  ---> msg: server log is located: $SERVER_LOG, hit any key to continue"
   fi
 
 }
@@ -743,7 +749,7 @@ iost_install_iost_core () {
   echo '#=-------------------------------------------------------------------------=#'
   echo '#=--------- IOST Install - install core                               -----=#'
   echo '#=-------------------------------------------------------------------------=#'
-  echo "---> msg: start: iost_install_core ()" | tee -a $LOG
+  echo "---> msg: start: iost_install_core ()" | tee -a $SERVER_LOG
 
 
   echo "---> msg: setup the environment $HOME/.iost_env"
@@ -759,20 +765,20 @@ iost_install_iost_core () {
   echo "---> msg: cd $GOPATH/src"
   cd $GOPATH/src
   echo "---> msg: go get -d github.com/iost-official/go-iost"
-  go get -d github.com/iost-official/go-iost >> $LOG 2>&1
+  go get -d github.com/iost-official/go-iost >> $SERVER_LOG 2>&1
 
   echo "---> msg: use [cd $IOST_ROOT]"
   cd $IOST_ROOT
 
   echo "---> run: make build install"
-  make build install >> $LOG 2>&1 
+  make build install >> $SERVER_LOG 2>&1 
 
   echo "  ---> run: cd vm/v8vm/v8"
   cd vm/v8vm/v8
   echo "  ---> run: make clean js_bin vm install"
   #make clean js_bin vm install
-  make clean js_bin vm install deploy >> $LOG 2>&1
-  make deploy                         >> $LOG 2>&1
+  make clean js_bin vm install deploy >> $SERVER_LOG 2>&1
+  make deploy                         >> $SERVER_LOG 2>&1
 
   read -p "---> msg: core IOST is installed, continue to the IOST Admin Menu? (Y/n): " tADM
 
@@ -789,7 +795,7 @@ iost_install_iost_core () {
   # call the IOST Admin Menu
   #iost_run
   #echo "---> run: iserver -f ./config/iserver.yml"
-  #nohup iserver -f ./config/iserver.yml  >> $LOG 2>&1 &
+  #nohup iserver -f ./config/iserver.yml  >> $SERVER_LOG 2>&1 &
   #echo "---> msg: check nohup.out for iserver messages"
   #sleep 10
 
@@ -805,12 +811,12 @@ iost_install_iost_iwallet () {
   echo '#=-------------------------------------------------------------------------=#'
   echo '#=------------------   IOST Install - build iwallet    --------------------=#'
   echo '#=-------------------------------------------------------------------------=#'
-  echo "---> start: iost_install_iwallet ()" | tee -a $LOG
+  echo "---> start: iost_install_iwallet ()" | tee -a $SERVER_LOG
 
   #iost && cd iwallet/contract
   #npm install
 
-  echo "---> end: iost_install_iwallet ()" | tee -a $LOG
+  echo "---> end: iost_install_iwallet ()" | tee -a $SERVER_LOG
 }
 
 
@@ -824,9 +830,9 @@ iost_install_iserver () {
   echo '  #=---------   IOST Install - iserver  --------------=#'
   echo "  #=--------------------------------------------------=#"
 
-  echo "---> start: iost_install_iserver ()" | tee -a $LOG
+  echo "---> start: iost_install_iserver ()" | tee -a $SERVER_LOG
   cd $IOST_ROOT
-  echo "---> end: iost_install_iserver ()" | tee -a $LOG
+  echo "---> end: iost_install_iserver ()" | tee -a $SERVER_LOG
 }
 
 
@@ -1017,20 +1023,21 @@ iost_admin_or_install ()  {
 clear
 
   echo "  #=--------------------------------------------------=#"
-  echo "  #=--        IOST Install, Test, or Admin          --=#"
+  echo "  #=--        IOST Install/Test/Admin Script        --=#"
   echo "  #=--  https://github.com/iost-official/go-iost    --=#"
   echo "  #=--        Codebase Version: 3.0.1               --=#"
   echo "  #=--------------------------------------------------=#"
 
   echo ""
-  #echo "    1.  Start install of IOST node" 
-  echo "    2.  Uninstall IOST developmen environment"
-  echo "    3.  Install IOST development environment"
-  echo "    4.  Administer existing installation"
-  echo "    5.  Run iTest suite (requires working install)"
-  echo "    6.  Drop to a command prompt"
-  #echo "    6.  Connect to testnet"
-  #echo "    8.  Run test dApp "
+  echo "    1.  Install IOST node" 
+  echo "    2.  Install & run IOST single node native blockchain" 
+  echo "    3.  Install IOST dApp development environment"
+  echo "    4.  Uninstall IOST (will wipe out everything)"
+  echo "    5.  Administer existing installation"
+  echo "    6.  Run iTest suite (requires working install)"
+  echo "    7.  Drop to a command prompt"
+  #echo "    8.  Connect to testnet"
+  #echo "    9.  Run test dApp "
   echo "   10.  Quit"
   echo ""
 
@@ -1039,14 +1046,15 @@ clear
   case "$iNUM" in
 
     1) echo ""
-       read -p "  ---> msg: not implemented, hit any key to continue" tIN
+       read -p "  ---> msg: [node install] not implemented yet, hit any key to continue" tIN
        iost_admin_or_install
-       #echo "  ---> msg: starting iServer"
-       #iost_run_iserver
-       #iost_run
     ;;
 
     2) echo ""
+       read -p "  ---> msg: [ServiNode install] not implemented yet, hit any key to continue" tIN
+       iost_admin_or_install
+    ;; 
+    4) echo ""
        iost_install_rmfr
        read -p "---> msg: development environment removed, hit any key to continue" tIN
        iost_admin_or_install
@@ -1068,12 +1076,6 @@ clear
        iost_run
     ;;
 
-    5) echo ""
-       read -p "  ---> msg: not implemented, hit any key to continue" tIN
-       iost_run
-       #read -p "  ---> msg: not implemented, hit any key to continue" tIN
-       #iost_run
-    ;;
 
     5) echo ""
        echo "  ---> msg: running iTests"
