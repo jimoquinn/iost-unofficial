@@ -6,7 +6,7 @@
 #         Baremetal Development Environment
 #         **  For Greenfield Installs Only  **
 #  
-#  Mon Mar  4 14:59:46 UTC 2019
+#   Wed Mar 20 22:58:33 UTC 2019
 #
 #  Objective:  to provide a single script that will install
 #  all the necessary dependecies and IOST code required to be
@@ -49,8 +49,14 @@
 # MODIFY VERSIONS ONLY IF NECESSARY
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-# package.io not supported on cosmic yet
+# variables
+IOST_DOCKER=""
+IOST_BAREMETAL=""
 
+# readonly
+readonly IOST_RELEASE="3.0.4"
+
+# package.io not supported on cosmic yet
 readonly UBUNTU_MANDATORY=('16.04' '16.10' '18.04');  # 'xenial' 'yakkety' 'bionic'
 readonly CENTOS_MANDATORY=('centos7');
 readonly DEBIAN_MANDATORY=('stretch');
@@ -1016,6 +1022,46 @@ else
   echo ""
 fi
 
+
+#
+#  iost_install_iost () - master setup func
+#
+iost_baremetal_or_docker ()  {
+clear
+
+  echo "  #=--------------------------------------------------=#"
+  echo "  #=--        IOST Install, Test, or Admin          --=#"
+  echo "  #=--  https://github.com/iost-official/go-iost    --=#"
+  echo "  #=--        Codebase Version: $IOST_RELEASE               --=#"
+  echo "  #=--------------------------------------------------=#"
+
+  echo "   1.  Install IOST with Docker" 
+  echo "   2.  Install IOST on baremetal"
+  echo ""
+
+  read -p "  Select a number: " iNUM
+
+  case "$iNUM" in
+
+    1) echo ""
+       IOST_DOCKER="1"
+       IOST_BAREMETAL="0"
+       iost_admin_or_install
+    ;;
+
+    2) echo ""
+       IOST_DOCKER="0"
+       IOST_BAREMETAL="1"
+       iost_admin_or_install
+    ;;
+
+    *) echo ""
+       iost_admin_or_install
+
+    esac
+}
+
+
 #
 #  iost_install_iost () - master setup func
 #
@@ -1025,20 +1071,32 @@ clear
   echo "  #=--------------------------------------------------=#"
   echo "  #=--        IOST Install/Test/Admin Script        --=#"
   echo "  #=--  https://github.com/iost-official/go-iost    --=#"
-  echo "  #=--        Codebase Version: 3.0.1               --=#"
+  echo "  #=--        Codebase Version: 3.0.4               --=#"
   echo "  #=--------------------------------------------------=#"
 
+  if [ $IOST_BAREMETAL == '1' ]; then
+    echo "      Installing on: baremetal"
+  else if [ $IOST_DOCKER == '1' ]; then
+    echo "      Installing on: Docker"
+  fi
+
   echo ""
-  echo "    1.  Install IOST node" 
-  echo "    2.  Install & run IOST single node native blockchain" 
-  echo "    3.  Install IOST dApp development environment"
-  echo "    4.  Uninstall IOST (will wipe out everything)"
-  echo "    5.  Administer existing installation"
-  echo "    6.  Run iTest suite (requires working install)"
-  echo "    7.  Drop to a command prompt"
-  #echo "    8.  Connect to testnet"
-  #echo "    9.  Run test dApp "
-  echo "   10.  Quit"
+<<<<<<< HEAD
+  echo "    1.  Install IOST standard node" 
+  echo "    2.  Install IOST ServiNode "
+  echo "    3.  Install IOST development environment"
+  echo ""
+  echo "    4.  Administer IOST installation"
+  echo "    5.  Create IOST account"
+  echo "    6.  Run iTest suite"
+  echo ""
+  echo "    6.  Open the command line interface"
+  echo "    8.  Connect to testnet"
+  echo "    9.  Run test dApp "
+  echo ""
+  echo "   10.  Uninstall IOST development environment"
+  echo "   99.  Quit"
+>>>>>>> 43446ab93fbf47ad8d6226fd6704a77e06fe2322
   echo ""
 
   read -p "  Select a number: " iNUM
@@ -1051,13 +1109,15 @@ clear
     ;;
 
     2) echo ""
-       read -p "  ---> msg: [ServiNode install] not implemented yet, hit any key to continue" tIN
+<<<<<<< HEAD
+       read -p "  ---> msg: not implemented, hit any key to continue" tIN
        iost_admin_or_install
-    ;; 
-    4) echo ""
-       iost_install_rmfr
+
+       iost_install_init
+>>>>>>> 43446ab93fbf47ad8d6226fd6704a77e06fe2322
        read -p "---> msg: development environment removed, hit any key to continue" tIN
        iost_admin_or_install
+       iost_run 
     ;;
 
     3) iost_install_init 
@@ -1071,21 +1131,31 @@ clear
     ;;
 
     4) echo ""
-       #echo "  ---> msg: stopping iServer"
        read -p "  ---> msg: not implemented, hit any key to continue" tIN
        iost_run
     ;;
 
-
+<<<<<<< HEAD
     5) echo ""
+       read -p "  ---> msg: not implemented, hit any key to continue" tIN
+       iost_run
+    ;;
+>>>>>>> 43446ab93fbf47ad8d6226fd6704a77e06fe2322
+
+    6) echo ""
        echo "  ---> msg: running iTests"
        iost_run_iserver
        iost_run_itests
        iost_run
     ;;
 
-    6) echo "   ---> msg: opening a /bin/bash, type exit or CTRL-D to return"
+    7) echo "   ---> msg: opening a /bin/bash, type exit or CTRL-D to return"
        /bin/bash
+       iost_run
+    ;;
+
+    8) echo ""
+       read -p "  ---> msg: not implemented, hit any key to continue" tIN
        iost_run
     ;;
 
@@ -1095,6 +1165,12 @@ clear
     ;;
 
     10) echo ""
+       iost_install_rmfr
+       echo "  ---> msg: uninstalled"
+       exit
+    ;;
+
+    99) echo ""
        echo "  ---> msg: exiting"
        exit
     ;;
@@ -1103,6 +1179,7 @@ clear
 
 }
 
+iost_baremetal_or_docker
 iost_admin_or_install
 iost_install_init
 iost_warning_requirements
