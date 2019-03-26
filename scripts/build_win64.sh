@@ -9,7 +9,8 @@
 readonly IOST_RELEASE="3.0.4"
 
 # package.io not supported on cosmic yet
-readonly UBUNTU_MANDATORY=('16.04' '16.10' '18.04');  # 'xenial' 'yakkety' 'bionic'
+# 'xenial' 'yakkety' 'bionic', 'linuxmint'
+readonly UBUNTU_MANDATORY=('16.04' '16.10' '18.04', '19');  
 readonly CENTOS_MANDATORY=('centos7');
 readonly DEBIAN_MANDATORY=('stretch');
 readonly MACOS_MANDATORY=('Darwin', 'Hitchens');
@@ -21,8 +22,6 @@ readonly NVM_MANDATORY="v0.34.0"
 
 # install and blockchain logs
 readonly SERVER_LOG="/tmp/bootstrap.sh.$$.log"
-readonly ISERVER_LOG="/tmp/iserver.$$.log"
-readonly ITEST_LOG="/tmp/itest.$$.log"
 
 
 
@@ -50,7 +49,7 @@ iost_install_init () {
 
   # 2nd - test if we can sudo
   echo "---> msg: performing [sudo] check"
-  sudo $(pwd)/scripts/exit.sh
+  sudo $(pwd)/exit.sh
   if (( $? >= 1 )); then
     echo "---> err: cannot [sudo]"
     exit; 98
@@ -62,6 +61,7 @@ iost_install_init () {
   # - Ubuntu: 16.04, 16.10, 18.04
   # - Debian: 9.1-6, 10
   # - CentOS: 7.0-6
+  # -   Mint: 19
   # -  MacOS: 14.0.0-2
   # -    Win: 10, Server 2016-2019
 
@@ -85,7 +85,7 @@ iost_install_init () {
   if [ -n "$DIST" ]; then
     DIST=${DIST,,}
     echo "---> msg: determining package installer for [$PRETTY_NAME]"
-      case "$DIST" in
+      case $DIST in
 
         centos|rhel)
           pkg_installer="/usr/bin/yum "
@@ -108,7 +108,7 @@ iost_install_init () {
             exit 77
           fi
           ;;
-        ubuntu)
+        ubuntu|linuxmint)
             if echo ${UBUNTU_MANDATORY[@]} | grep -q -w ${VERSION_ID}; then
             pkg_installer="/usr/bin/apt-get -y "
             pkg_purge=" purge "
@@ -118,7 +118,7 @@ iost_install_init () {
             # setup packages-ubuntu.txt
             echo "---> msg: [$PRETTY_NAME] is supported and using [$pkg_installer]"
           else
-            echo "---> err: [${PRETTY_NAME}] is not supported, view $SERVER_LOG"
+            echo "---> err: [$PRETTY_NAME] is not supported, view $SERVER_LOG"
             exit 76
           fi
           ;;
@@ -318,12 +318,10 @@ iost_install_golang () {
 
 iost_install_golang_deps () {
 
-   exit;
-   cd
-   mkdir -p go/src
-   cd go/src
+   echo "---> msg: iost_install_golang_deps() "
+   echo "---> msg: echo GOPATH: $GOPATH"
+   cd $GOPATH
 
-   # cd $GOPATH
    # mkdir src
    # cd src
    go get github.com/iost-official/go-iost
@@ -365,6 +363,7 @@ package_split=(${package//\// })
 package_name=${package_split[-1]}
 
 #platforms=("windows/amd64" "windows/386" "darwin/amd64")
+
 platforms=("windows/amd64")
 
 iost_install_init 
