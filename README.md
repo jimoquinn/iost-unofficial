@@ -1,18 +1,16 @@
 # iost-unofficial
-bootstrap.sh - for bare metal or VM greenfield install on Ubuntu 16.04 or 18.04.  
-This script will install all the tools necessary to develop in the IOST ecosystem.  
+bootstrap.sh - for greenfield installs, either bare metal or VM on 
+Ubuntu 16.04 or 18.04.  This script will install all the tools necessary 
+to develop in the IOST ecosystem.  
 
 It will install the following:
-* RocksDB
 * Golang
 * nvm
 * node
 * npm
-* docker
 * build-essential, git, git-lfs, curl, updates, and more
 
 IOST Installation (work in progress)
-* scaf
 * iwallet
 * iserver
 * testnet
