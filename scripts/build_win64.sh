@@ -50,7 +50,7 @@ iost_install_init () {
 
   # 2nd - test if we can sudo
   echo "---> msg: performing [sudo] check"
-  sudo $(pwd)/data/exit.sh
+  sudo $(pwd)/scripts/exit.sh
   if (( $? >= 1 )); then
     echo "---> err: cannot [sudo]"
     exit; 98
@@ -316,12 +316,16 @@ iost_install_golang () {
 }
 
 
-iost_install_golang_deps {
+iost_install_golang_deps () {
 
+   exit;
+   cd
+   mkdir -p go/src
+   cd go/src
 
-   cd $GOPATH
-   mkdir src
-   cd src
+   # cd $GOPATH
+   # mkdir src
+   # cd src
    go get github.com/iost-official/go-iost
    go get golang.org/x/crypto/ssh/terminal
 
@@ -352,7 +356,7 @@ iost_install_golang_deps {
 #CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ GOOS=windows GOARCH=amd64 go build -o kubeapps.exe .
 
 
-package=$1
+package="/home/vagrant/"
 if [[ -z "$package" ]]; then
   echo "usage: $0 <package-name>"
   exit 1
@@ -365,7 +369,10 @@ platforms=("windows/amd64")
 
 iost_install_init 
 iost_install_packages
+
+echo "install golang----------"
 iost_install_golang
+echo "install golang----------"
 iost_install_golang_deps
 iost_install_iost
  
