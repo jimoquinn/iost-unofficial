@@ -5,8 +5,8 @@
 #                IOST "One Click" Install 
 #         Baremetal Development Environment
 #         **  For Greenfield Installs Only  **
-#  
-#   Wed Mar 20 22:58:33 UTC 2019
+#   
+#  Thu Apr 18 04:49:24 UTC 2019
 #
 #  Objective:  to provide a single script that will install
 #  all the necessary dependecies and IOST code required to be
@@ -54,7 +54,7 @@ IOST_DOCKER=""
 IOST_BAREMETAL=""
 
 # readonly
-readonly IOST_RELEASE="3.0.4"
+readonly IOST_RELEASE="3.0.9"
 
 # package.io not supported on cosmic yet
 readonly UBUNTU_MANDATORY=('16.04' '16.10' '18.04');  # 'xenial' 'yakkety' 'bionic'
@@ -62,8 +62,8 @@ readonly CENTOS_MANDATORY=('centos7');
 readonly DEBIAN_MANDATORY=('stretch');
 readonly MACOS_MANDATORY=('Darwin', 'Hitchens');
 
-readonly GOLANG_MANDATORY="1.11.3"
-readonly NODE_MANDATORY="v10.14.2"
+readonly GOLANG_MANDATORY="1.12.4"
+readonly NODE_MANDATORY="v10.15.3"
 readonly NPM_MANDATORY="v6.4.1"
 readonly NVM_MANDATORY="v0.34.0"
 readonly DOCKER_MANDATORY="v18.06.0-ce"
@@ -75,8 +75,8 @@ readonly FOR_VAGRANT="1"
 readonly IOST_CLEAN_INSTALL="1"
 
 # install and blockchain logs
-readonly SERVER_LOG="/tmp/bootstrap.sh.$$.log"
-readonly ISERVER_LOG="/tmp/iserver.$$.log"
+readonly INSTALL_LOG="/tmp/bootstrap.sh.$$.log"
+readonly IINSTALL_LOG="/tmp/iserver.$$.log"
 readonly ITEST_LOG="/tmp/itest.$$.log"
 
 
@@ -132,7 +132,7 @@ iost_install_init () {
   echo "#=-------------------------------------------------------------------------=#"
   echo "#-----------------   IOST Install - pre-init      -------------------------=#"
   echo "#=-------------------------------------------------------------------------=#"
-  echo "---> msg: start: iost_install_init () " | tee -a $SERVER_LOG
+  echo "---> msg: start: iost_install_init () " | tee -a $INSTALL_LOG
 
   # 1st - confirm that we are not running under root
   if [[ $(whoami) == "root" ]]; then
@@ -147,7 +147,7 @@ iost_install_init () {
 
   # 2nd - test if we can sudo 
   echo "---> msg: performing [sudo] check"
-  sudo $(pwd)/data/exit.sh
+  sudo $(pwd)/exit.sh
   if (( $? >= 1 )); then
     echo "---> err: cannot [sudo]"
     exit; 98
@@ -201,7 +201,7 @@ iost_install_init () {
             # setup packages-debian.txt
             echo "---> msg: [$PRETTY_NAME] is supported and using [$pkg_installer]"
           else
-            echo "---> err: [$VERSION_ID] [${PRETTY_NAME}] is not supported, view $SERVER_LOG"
+            echo "---> err: [$VERSION_ID] [${PRETTY_NAME}] is not supported, view $INSTALL_LOG"
             exit 77
           fi
           ;;
@@ -215,13 +215,13 @@ iost_install_init () {
             # setup packages-ubuntu.txt
             echo "---> msg: [$PRETTY_NAME] is supported and using [$pkg_installer]"
           else
-            echo "---> err: [${PRETTY_NAME}] is not supported, view $SERVER_LOG"
+            echo "---> err: [${PRETTY_NAME}] is not supported, view $INSTALL_LOG"
             exit 76
           fi
           ;;
 
         *)
-          echo "---> err: the package installer for [$PRETTY_INSTALLER] is unsupported, view $SERVER_LOG"
+          echo "---> err: the package installer for [$PRETTY_INSTALLER] is unsupported, view $INSTALL_LOG"
           exit 95
           ;;
 
@@ -236,7 +236,7 @@ iost_install_init () {
   #command -v git >/dev/null 2>&1 || { echo >&2 "I require foo but it's not installed.  Aborting."; exit 1; }
   if exists git; then
     echo "---> run: $pkg_installer install git"
-    sudo $pkg_installer install git  >> $SERVER_LOG 2>&1
+    sudo $pkg_installer install git  >> $INSTALL_LOG 2>&1
   else
     mygit=$(git --version 2>/dev/null)
     echo "---> msg: $mygit already installed"
@@ -246,7 +246,9 @@ iost_install_init () {
   #
   #  unset any variables
   #
-  unset $NVM_DIR
+  if [ ! -z $NVM_DIR ]; then
+    unset NVM_DIR
+  fi
 
 
   #
@@ -259,7 +261,7 @@ iost_install_init () {
   # -  IOST: iwallet, iserver, scaf, 
   #
   if [ -f "$HOME/.iost_env" ]; then
-    echo "---> irk: previous install found!"
+    echo "---> irk: previous IOST install found!"
     read -p "---> irk: should I remove this previous version? (Y/n): " rCONT
 
     if [ ! -z "$rCONT" ]; then
@@ -272,7 +274,7 @@ iost_install_init () {
     fi
   fi
 
-  echo "---> msg: done: iost_install_init () " | tee -a $SERVER_LOG
+  echo "---> msg: done: iost_install_init () " | tee -a $INSTALL_LOG
 	
 }
 
@@ -292,16 +294,16 @@ iost_install_rmfr () {
   echo "#=-------------------------------------------------------------------------=#"
   echo "#-----------------   IOST Install - removing previous install  ------------=#"
   echo "#=-------------------------------------------------------------------------=#"
-  echo "---> msg: start: iost_install_rmfr () " | tee -a $SERVER_LOG
-  echo "---> msg: view log file: $SERVER_LOG"
+  echo "---> msg: start: iost_install_rmfr () " | tee -a $INSTALL_LOG
+  echo "---> msg: view log file: $INSTALL_LOG"
 
 
   if [ $DOCKER_INSTALL ]; then
     echo "---> run: sudo systemctl disable docker-ce"
-    sudo systemctl disable docker >> $SERVER_LOG 2>&1
+    sudo systemctl disable docker >> $INSTALL_LOG 2>&1
     echo "---> run: sudo systemctl stop docker-ce"
-    sudo systemctl stop docker >> $SERVER_LOG 2>&1
-    sudo $pkg_installer purge docker-ce >> $SERVER_LOG 2>&1
+    sudo systemctl stop docker >> $INSTALL_LOG 2>&1
+    sudo $pkg_installer purge docker-ce >> $INSTALL_LOG 2>&1
 
     if [ -f "/etc/apt/sources.list.d/docker.list" ]; then
       echo "---> run: sudo rm -fr /etc/apt/sources.list.d/docker.list" 
@@ -310,22 +312,22 @@ iost_install_rmfr () {
   fi
 
   echo "---> run: sudo $pkg_installer purge docker-ce libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev  "
-  sudo $pkg_installer purge libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev    >> $SERVER_LOG 2>&1
+  sudo $pkg_installer purge libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev    >> $INSTALL_LOG 2>&1
 
   echo "---> run: sudo $pkg_installer purge git git-lfs software-properties-common  build-essential curl  " 
-  sudo $pkg_installer purge git git-lfs software-properties-common  build-essential curl    >> $SERVER_LOG 2>&1
+  sudo $pkg_installer purge git git-lfs software-properties-common  build-essential curl    >> $INSTALL_LOG 2>&1
 
   pkg_installert=$pkg_installer
   pkg_installer="$pkg_installer purge "
   echo "---> run: sudo $dev_tools" 
-  sudo $dev_tools                                  >> $SERVER_LOG 2>&1
+  sudo "$dev_tools                                  >> $INSTALL_LOG 2>&1"
   pkg_installer=$pkg_installert
 
   echo "---> run: sudo $pkg_installer purge apt-transport-https  "
-  sudo $pkg_installer purge apt-transport-https    >> $SERVER_LOG 2>&1
+  sudo $pkg_installer purge apt-transport-https    >> $INSTALL_LOG 2>&1
 
   echo "---> run: sudo $pkg_installer autoremove  " 
-  sudo $pkg_installer autoremove                   >> $SERVER_LOG 2>&1
+  sudo $pkg_installer autoremove                   >> $INSTALL_LOG 2>&1
 
   if [ -f "$HOME/.iost_env" ]; then
     echo "---> run: rm -fr $HOME/.iost_env"
@@ -338,7 +340,7 @@ iost_install_rmfr () {
     rm -fr $HOME/.nvm
   fi
 
-  echo "---> msg: done: iost_install_rmfr () " | tee -a $SERVER_LOG
+  echo "---> msg: done: iost_install_rmfr () " | tee -a $INSTALL_LOG
 
 }
 
@@ -368,7 +370,7 @@ iost_warning_requirements () {
   echo "Please read carefully as these are hard requirements:"; echo ""
   echo "  1.  This is for a greenfield install, do not install on a configured system."
   echo "  2.  Do not run as the root user.  Run under a user that can sudo to root (man visudo)."
-  echo "  3.  The install log file will be located:  $SERVER_LOG "
+  echo "  3.  The install log file will be located:  $INSTALL_LOG "
   echo ""; echo "";
 
 
@@ -407,34 +409,35 @@ iost_install_packages () {
   echo '#------------------     IOST Install - installing packages   --------------=#' 
   echo '#=-------------------------------------------------------------------------=#'
 
-  echo "---> msg: start: iost_install_packages()" | tee -a $SERVER_LOG
+  echo "---> msg: start: iost_install_packages()" | tee -a $INSTALL_LOG
 
   #$sec_updt=$($pkg_installer list --upgradable | grep security | wc -l)
   #$reg_updt=$($pkg_installer list --upgradable | wc -l)
 
   echo "---> run: sudo $pkg_installer install apt-transport-https ca-certificates "
-  sudo $pkg_installer install apt-transport-https ca-certificates  >> $SERVER_LOG 2>&1
+  sudo $pkg_installer install apt-transport-https ca-certificates  >> $INSTALL_LOG 2>&1
 
   #echo "---> msg: $sec_updt security udpates and $reg_updt regular updates needed"
   #if (( $reg_updt >= 25 )); then
   #  echo "---> msg: NOTE: given the large number if updagtes, this may take a while"
   #fi
 
-
   echo "---> run: sudo $pkg_installer update"
-  sudo $pkg_installer update                               >> $SERVER_LOG 2>&1
+  sudo $pkg_installer update                               >> $INSTALL_LOG 2>&1
 
+  # 2019/04/18 - 18.04 cannot run unattended (grub and ??) 18.04
+  DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade
   echo "---> run: sudo $pkg_installer upgrade "
-  sudo $pkg_installer upgrade                              >> $SERVER_LOG 2>&1
+  sudo $pkg_installer upgrade                              >> $INSTALL_LOG 2>&1
 
   echo "---> run: sudo $pkg_installer install software-properties-common "
-  sudo $pkg_installer install software-properties-common   >> $SERVER_LOG 2>&1
+  sudo $pkg_installer install software-properties-common   >> $INSTALL_LOG 2>&1
 
   #echo "---> run: sudo add-apt-repository ppa:git-core/ppa "
-  #sudo add-apt-repository ppa:git-core/ppa  -y            >> $SERVER_LOG 2>&1
+  #sudo add-apt-repository ppa:git-core/ppa  -y            >> $INSTALL_LOG 2>&1
 
   echo "---> run: sudo $dev_tools"
-  sudo $dev_tools                                          >> $INSTALL_LOG 2>&1
+  sudo "$dev_tools                                          >> $INSTALL_LOG 2>&1"
 
   echo "---> run: sudo $pkg_installer install build-essential curl git "
   sudo $pkg_installer install build-essential curl git     >> $INSTALL_LOG 2>&1
@@ -599,6 +602,8 @@ iost_install_golang () {
   CHK_SETUP=$(grep "IOST setup" $HOME/.bashrc > /dev/null >&1)  
   if [ -z "$CHK_SETUP" ]; then 
     echo "---> msg: did not find IOST setup in .bashrc, adding"
+    # insert a blank line b/c webiny-cms didn't add a newline on their update to .bashrc
+    echo ""                                  >> $HOME/.bashrc
     echo "if [ -f "$HOME/.iost_env" ]; then" >> $HOME/.bashrc
     echo "  source $HOME/.iost_env"          >> $HOME/.bashrc
     echo "fi"                                >> $HOME/.bashrc
@@ -697,7 +702,7 @@ iost_run_iserver () {
     
     tPID=$(iost_start_iserver)
     
-    read -p "  ---> msg: server log is located: $SERVER_LOG, hit any key to continue"
+    read -p "  ---> msg: server log is located: $INSTALL_LOG, hit any key to continue"
   fi
 
 }
@@ -755,7 +760,7 @@ iost_install_iost_core () {
   echo '#=-------------------------------------------------------------------------=#'
   echo '#=--------- IOST Install - install core                               -----=#'
   echo '#=-------------------------------------------------------------------------=#'
-  echo "---> msg: start: iost_install_core ()" | tee -a $SERVER_LOG
+  echo "---> msg: start: iost_install_core ()" | tee -a $INSTALL_LOG
 
 
   echo "---> msg: setup the environment $HOME/.iost_env"
@@ -771,20 +776,20 @@ iost_install_iost_core () {
   echo "---> msg: cd $GOPATH/src"
   cd $GOPATH/src
   echo "---> msg: go get -d github.com/iost-official/go-iost"
-  go get -d github.com/iost-official/go-iost >> $SERVER_LOG 2>&1
+  go get -d github.com/iost-official/go-iost >> $INSTALL_LOG 2>&1
 
   echo "---> msg: use [cd $IOST_ROOT]"
   cd $IOST_ROOT
 
   echo "---> run: make build install"
-  make build install >> $SERVER_LOG 2>&1 
+  make build install >> $INSTALL_LOG 2>&1 
 
   echo "  ---> run: cd vm/v8vm/v8"
   cd vm/v8vm/v8
   echo "  ---> run: make clean js_bin vm install"
   #make clean js_bin vm install
-  make clean js_bin vm install deploy >> $SERVER_LOG 2>&1
-  make deploy                         >> $SERVER_LOG 2>&1
+  make clean js_bin vm install deploy >> $INSTALL_LOG 2>&1
+  make deploy                         >> $INSTALL_LOG 2>&1
 
   read -p "---> msg: core IOST is installed, continue to the IOST Admin Menu? (Y/n): " tADM
 
@@ -801,7 +806,7 @@ iost_install_iost_core () {
   # call the IOST Admin Menu
   #iost_run
   #echo "---> run: iserver -f ./config/iserver.yml"
-  #nohup iserver -f ./config/iserver.yml  >> $SERVER_LOG 2>&1 &
+  #nohup iserver -f ./config/iserver.yml  >> $INSTALL_LOG 2>&1 &
   #echo "---> msg: check nohup.out for iserver messages"
   #sleep 10
 
@@ -817,12 +822,12 @@ iost_install_iost_iwallet () {
   echo '#=-------------------------------------------------------------------------=#'
   echo '#=------------------   IOST Install - build iwallet    --------------------=#'
   echo '#=-------------------------------------------------------------------------=#'
-  echo "---> start: iost_install_iwallet ()" | tee -a $SERVER_LOG
+  echo "---> start: iost_install_iwallet ()" | tee -a $INSTALL_LOG
 
   #iost && cd iwallet/contract
   #npm install
 
-  echo "---> end: iost_install_iwallet ()" | tee -a $SERVER_LOG
+  echo "---> end: iost_install_iwallet ()" | tee -a $INSTALL_LOG
 }
 
 
@@ -836,9 +841,9 @@ iost_install_iserver () {
   echo '  #=---------   IOST Install - iserver  --------------=#'
   echo "  #=--------------------------------------------------=#"
 
-  echo "---> start: iost_install_iserver ()" | tee -a $SERVER_LOG
+  echo "---> start: iost_install_iserver ()" | tee -a $INSTALL_LOG
   cd $IOST_ROOT
-  echo "---> end: iost_install_iserver ()" | tee -a $SERVER_LOG
+  echo "---> end: iost_install_iserver ()" | tee -a $INSTALL_LOG
 }
 
 
@@ -1034,22 +1039,22 @@ clear
   echo "  #=--  https://github.com/iost-official/go-iost    --=#"
   echo "  #=--        Codebase Version: $IOST_RELEASE               --=#"
   echo "  #=--------------------------------------------------=#"
-
-  echo "   1.  Install IOST with Docker" 
-  echo "   2.  Install IOST on baremetal"
+  echo ""
+  echo "   1.  Install IOST on baremetal"
+  #echo "   2.  Install IOST with Docker" 
   echo ""
 
   read -p "  Select a number: " iNUM
 
   case "$iNUM" in
 
-    1) echo ""
+    2) echo ""
        IOST_DOCKER="1"
        IOST_BAREMETAL="0"
        iost_admin_or_install
     ;;
 
-    2) echo ""
+    1) echo ""
        IOST_DOCKER="0"
        IOST_BAREMETAL="1"
        iost_admin_or_install
@@ -1071,7 +1076,7 @@ clear
   echo "  #=--------------------------------------------------=#"
   echo "  #=--        IOST Install/Test/Admin Script        --=#"
   echo "  #=--  https://github.com/iost-official/go-iost    --=#"
-  echo "  #=--        Codebase Version: 3.0.4               --=#"
+  echo "  #=--        Codebase Version: $IOST_RELEASE               --=#"
   echo "  #=--------------------------------------------------=#"
 
   #if [ $IOST_BAREMETAL == '1' ]; then
@@ -1081,9 +1086,9 @@ clear
   #fi
 
   echo ""
-  echo "    1.  Install IOST standard node" 
-  echo "    2.  Install IOST ServiNode "
-  echo "    3.  Install IOST development environment"
+  echo "    1.  Install IOST development environment"
+  #echo "    2.  Install IOST standard node" 
+  #echo "    3.  Install IOST ServiNode "
   echo ""
   echo "    4.  Administer IOST installation"
   echo "    5.  Create IOST account"
@@ -1101,7 +1106,7 @@ clear
 
   case "$iNUM" in
 
-    1) echo ""
+    3) echo ""
        read -p "  ---> msg: [node install] not implemented yet, hit any key to continue" tIN
        iost_admin_or_install
     ;;
@@ -1116,7 +1121,7 @@ clear
        iost_run 
     ;;
 
-    3) iost_install_init 
+    1) iost_install_init 
        iost_warning_requirements
        iost_install_packages
        iost_install_nvm_node_npm
