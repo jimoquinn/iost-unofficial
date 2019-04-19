@@ -1,10 +1,10 @@
 #!/bin/bash  
 
-# vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+# vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 #
-#                IOST "One Click" Install 
-#         Baremetal Development Environment
-#         **  For Greenfield Installs Only  **
+#             IOST "One Click" Install 
+#              Development Environment
+#        **  For Greenfield Installs Only  **
 #   
 #  Thu Apr 18 04:49:24 UTC 2019
 #
@@ -16,7 +16,7 @@
 #  install of Linux.  It will check for previous install attemps, 
 #  remove all the prevous installed dependicies, including config
 #  or source that you may have modified, and start the install 
-#  again.  Consider yourself warned.
+#  again.  
 #
 #  We'll install the following: 
 #
@@ -76,7 +76,8 @@ readonly IOST_CLEAN_INSTALL="1"
 
 # install and blockchain logs
 readonly INSTALL_LOG="/tmp/bootstrap.sh.$$.log"
-readonly IINSTALL_LOG="/tmp/iserver.$$.log"
+readonly SERVER_LOG="/tmp/iserver.$$.log"
+readonly SERVER_ERR_LOG="/tmp/iserver.err.$$.log"
 readonly ITEST_LOG="/tmp/itest.$$.log"
 
 
@@ -368,8 +369,8 @@ iost_warning_requirements () {
   echo "#-----------------   IOST Install - warning and requirements   ------------=#"
   echo "#=-------------------------------------------------------------------------=#"
   echo "Please read carefully as these are hard requirements:"; echo ""
-  echo "  1.  This is for a greenfield install, do not install on a configured system."
-  echo "  2.  Do not run as the root user.  Run under a user that can sudo to root (man visudo)."
+  echo "  1.  Do not install on a configured system."
+  echo "  2.  Run as a user that can sudo to root (man visudo)."
   echo "  3.  The install log file will be located:  $INSTALL_LOG "
   echo ""; echo "";
 
@@ -426,7 +427,7 @@ iost_install_packages () {
   sudo $pkg_installer update                               >> $INSTALL_LOG 2>&1
 
   # 2019/04/18 - 18.04 cannot run unattended (grub and ??) 18.04
-  DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade
+  DEBIAN_FRONTEND=noninteractive sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade >> $INSTALL_LOG 2>&1
   echo "---> run: sudo $pkg_installer upgrade "
   sudo $pkg_installer upgrade                              >> $INSTALL_LOG 2>&1
 
@@ -437,7 +438,7 @@ iost_install_packages () {
   #sudo add-apt-repository ppa:git-core/ppa  -y            >> $INSTALL_LOG 2>&1
 
   echo "---> run: sudo $dev_tools"
-  sudo "$dev_tools                                          >> $INSTALL_LOG 2>&1"
+  sudo $dev_tools                                          >> $INSTALL_LOG 2>&1
 
   echo "---> run: sudo $pkg_installer install build-essential curl git "
   sudo $pkg_installer install build-essential curl git     >> $INSTALL_LOG 2>&1
@@ -913,7 +914,7 @@ iost_run () {
   clear
 
   echo "  #=--------------------------------------------------=#"
-  echo "  #=--------- IOST Install Administration Menu  ------=#"
+  echo "  #=---------    IOST   Administration Menu     ------=#"
   echo "  #=--------------------------------------------------=#"
 
   echo ""
@@ -1121,7 +1122,8 @@ clear
        iost_run 
     ;;
 
-    1) iost_install_init 
+    1) iost_admin_or_install
+       iost_install_init 
        iost_warning_requirements
        iost_install_packages
        iost_install_nvm_node_npm
@@ -1178,8 +1180,8 @@ clear
 
 }
 
-iost_baremetal_or_docker
 iost_admin_or_install
+#iost_baremetal_or_docker
 iost_install_init
 iost_warning_requirements
 iost_install_packages
