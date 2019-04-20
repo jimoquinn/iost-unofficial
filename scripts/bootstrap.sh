@@ -92,6 +92,7 @@ readonly INSTALL_LOG="/tmp/bootstrap.sh.$$.log"		# stdout & stderr
 readonly SERVER_LOG="/tmp/iserver.$$.log"		# stdout 
 readonly SERVER_ERR_LOG="/tmp/iserver.err.$$.log"	# stderr
 readonly ITEST_LOG="/tmp/itest.$$.log"			# stdout & stderr
+readonly IWALLET_LOG="/tmp/iwallet.$$.log"		# stdout & stderr
 
 # variables
 IOST_DOCKER=""
@@ -899,27 +900,30 @@ iost_install_iost_core () {
 
 }
 
-
-
 #  
-#  iost_install_dapp ()
+#  iost_test_iwallet()
 #
-iost_install_dapp () {
-  echo "---> msg: go get -d github.com/iost-official/scaffold"
-  go get -d github.com/iost-official/scaffold
+iost_test_iwallet () {
+  clear
+  . ~/.iost_env
+  echo "---> run: iwallet state"
+  iwallet state > $IWALLET_LOG 2>&1
 
-  echo "---> msg: cd  $GOPATH/src/github.com/iost-official/scaffold"
-  cd  $GOPATH/src/github.com/iost-official/scaffold
 
-  echo "---> msg: npm install"
-  npm install
-  echo "---> msg: npm link"
-  npm link
+  if (( $? >= 1 )); then
+    echo ""; echo ""
+    cat $IWALLET_LOG | more
+    echo ""; echo ""
+    echo "  ---> err: make sure iServer is running"
+    return $?
+  else 
+    cat $IWALLET_LOG | more
+  fi
 
-  echo "cd - && scaf --version"
-  cd -
-  scaf --version
+
 }
+
+
 
 
 #
@@ -996,85 +1000,6 @@ iost_baremetal_or_docker ()  {
 
 
 #
-#  iost_xxx() - the main menu where we can control various
-#  parts of the IOST ecosystem
-#
-iost_xxx () {
-  source $HOME/.iost_env
-
-  clear
-
-  echo "  #=--------------------------------------------------=#"
-  echo "  #=---------    IOST   Administration Menu     ------=#"
-  echo "  #=--------------------------------------------------=#"
-
-  echo ""
-  echo "    1.  Start local iServer           [working]"
-  echo "    2.  Stop local iServer            [working]"
-  echo "    3.  Run itest suite               [working]"
-  echo "    4.  Connect to testnet            [n/a]"
-  echo "    5.  Setup dApp development tools  [n/a]"
-  echo "    6.  Run test dApp                 [n/a]"
-  echo "    7.  Drop to a command prompt      [working]"
-  echo "    9.  Quit"
-  echo ""
-
-  read -p "  Select a number: " iNUM
-
-  case "$iNUM" in
-
-    1) echo ""
-       echo "  ---> msg: starting iServer"
-       #iost_run_iserver
-       #iost_run
-    ;;
-
-    2) echo ""
-       echo "  ---> msg: stopping iServer"
-       #iost_stop_iserver
-       #iost_run
-    ;;
-
-    3) echo ""
-       echo "  ---> msg: running iTests"
-       #iost_run_iserver
-       #iost_run_itests
-       #iost_run
-    ;;
-
-    4) echo ""
-       #echo "  ---> msg: stopping iServer"
-       read -p "  ---> msg: not implemented, hit any key to continue" tIN
-       #iost_run
-    ;;
-
-    5) echo ""
-       read -p "  ---> msg: not implemented, hit any key to continue" tIN
-       #iost_run
-    ;;
-
-    6) echo ""
-       read -p "  ---> msg: not implemented, hit any key to continue" tIN
-       #iost_run
-    ;;
-
-    7) echo "   ---> msg: opening a /bin/bash, type exit or CTRL-D to return"
-       /bin/bash
-       #iost_run
-    ;;
-
-    9) echo ""
-       echo "  ---> msg: exiting"
-       exit
-    ;;
-
-  esac
-
-}
-
-
-
-#
 #  iost_install_iost () - master setup func
 #
 iost_install_iost () {
@@ -1113,6 +1038,9 @@ iost_install_iost () {
 iost_main_menu ()  {
   clear
 
+  # hoover up the environment
+  . ~/.iost_env
+
   echo "  #=--------------------------------------------------=#"
   echo "  #=--        IOST Install/Test/Admin Script        --=#"
   echo "  #=--  https://github.com/iost-official/go-iost    --=#"
@@ -1127,11 +1055,12 @@ iost_main_menu ()  {
   echo "    4.  iServer stop local node"
   echo "    5.  iServer restart local node"
   echo ""
-  echo "    6.  Run iTest suite"
-  echo "    7.  Run test dApp"
+  echo "    6.  Run iWallet to check node status"
+  echo "    7.  Run iTest suite"
+  echo "    8.  Run test dApp"
   echo ""
-  echo "    8.  Open the command line interface"
-  echo "    9.  View last install log"
+  echo "    9.  Open the command line interface"
+  echo "   10.  View last install log"
   echo ""
   echo "   99.  Quit"
   echo ""
@@ -1181,25 +1110,31 @@ iost_main_menu ()  {
     ;;
 
     6) echo ""
+       iost_test_iwallet
+       read -p "  ---> msg: hit any key to continue" tIN
+       iost_main_menu
+    ;;
+
+    7) echo ""
        echo "  ---> msg: running iTests"
        iost_run_iserver
        iost_run_itests
        iost_main_menu
     ;;
 
-    7) clear
+    8) clear
        echo ""
        echo "   ---> msg: opening a /bin/bash, type exit or CTRL-D to return"
        /bin/bash
        iost_main_menu
     ;;
 
-    8) echo "   ---> msg: opening a /bin/bash, type exit or CTRL-D to return"
+    9) echo "   ---> msg: opening a /bin/bash, type exit or CTRL-D to return"
        /bin/bash
        iost_main_menu
     ;;
 
-    9) clear
+   10) clear
        echo ""
        echo "  ---> msg: view install log"
        echo ""; echo ""
