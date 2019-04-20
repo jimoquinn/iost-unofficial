@@ -90,6 +90,7 @@ readonly DOCKER_USE="0"    				# 1-yes | 0-no
 # install and blockchain logs
 readonly INSTALL_LOG="/tmp/bootstrap.sh.$$.log"		# stdout & stderr
 readonly SERVER_LOG="/tmp/iserver.$$.log"		# stdout 
+readonly SERVER_START_LOG="/tmp/iserver.start.$$.log"	# stdout 
 readonly SERVER_ERR_LOG="/tmp/iserver.err.$$.log"	# stderr
 readonly ITEST_LOG="/tmp/itest.$$.log"			# stdout & stderr
 readonly IWALLET_LOG="/tmp/iwallet.$$.log"		# stdout & stderr
@@ -102,57 +103,47 @@ IOST_BAREMETAL=""
 #  NO NEED TO MODIFY BELOW THIS LINE UNLESS THE BUILD IS TOTALLY BROKEN
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+source libs/ui.sh
 
-# exists () 
-# iost_distro_detect () 
-# iost_install_init () 
-# iost_install_rmfr () 
-# iost_warning_requirements () 
-# iost_install_packages () 
-# iost_install_nvm_node_npm () 
-# iost_install_docker ()
-# iost_install_golang () 
-# iost_stop () 
-# iost_start_iserver () 
-# iost_stop_iserver () 
+#
+# IOST Install Functions 
+# ---
+# iost_install_iost_core()    - iwallet, iserver
+# iost_install_itest()        - 
+# iost_install_iost() 
+
+#
+# IOST Admin Functions 
+# ---
+# iost_start_iserver()	      - iServer start
+# iost_restart_iserver()      - iServer restart
+# iost_stop_iserver()         - iServer stop
 # iost_check_iserver () 
-# iost_restart_iserver () {
-# iost_install_iost_core () 
-# iost_install_dapp () 
-# iost_run_itests () 
-# iost_baremetal_or_docker ()  
-# iost_install_iost () 
-# iost_main_menu ()  
-
+# iost_run()                  - only starts iServer
+# iost_stop()                 - only stops iServer
+# iost_run_itests() 
 
 #
 # Install Functions for Dependencies
-# 
+# ---
 # iost_warning_reqirements()  - 
 # iost_install_packages()     - 
 # iost_install_nvm_node_npm() - 
 # iost_install_docker()       -
 # iost_install_golang()       -
-
-
-#
-# Install Functions for IOST
-# 
-# iost_install_iost_core()    - iwallet, iserver
-# iost_install_itest()        - 
-
+# iost_baremetal_or_docker()  
 
 #
-# Admin Functions
-#
+# General Functions
+# ---
+# iost_install_init() 
+# iost_install_rmfr() 
+# iost_warning_requirements() 
 # iost_main_menu()            - admin main menu
-# iost_start_iserver()	      - iServer start
-# iost_restart_iserver()      - iServer restart
-# iost_stop_iserver()         - iServer stop
 # iost_sudo_confirm()         - test for sudo
 # iost_distro_detect()        - what distro?
-# iost_run()                  - only starts iServer
-# iost_stop()                 - only stops iServer
+# exists() 		      - check OS for command
+#
 
 
 #
@@ -185,12 +176,10 @@ trap '_error_handler ${LINENO} $?' ERR
 
 
 #
-# 
+#  iost_distro_detect() - 
 #
 iost_distro_detect () {
 
-  # 3rd - for installed apps
-  # check for: 
   # - Ubuntu: 16.04, 16.10, 18.04
   # - Debian: 9.1-6, 10
   # - CentOS: 7.0-6
@@ -744,7 +733,7 @@ iost_install_golang () {
 #
 iost_run () {
   cd $IOST_ROOT
-  nohup iserver -f config/iserver.yml 2>$SERVER_ERR_LOG >$SERVER_LOG&
+  nohup iserver -f config/iserver.yml 2>$SERVER_START_LOG >$SERVER_LOG&
   sleep 5
 }
 
@@ -756,7 +745,7 @@ iost_stop () {
   # check for a running iServer
   tpid=$(pidof iserver);
   if [ -z $tpid ]; then
-    echo "  ---> msg: iServer not running..."   | tee -a $SERVER_LOG
+    echo "  ---> msg: iServer not running..."   				| tee -a $SERVER_LOG
   else
     kill -15 $tpid  >> $SERVER_LOG 2>&1
     sleep 5
@@ -772,10 +761,18 @@ iost_start_iserver () {
   # check for a running iServer
   tpid=$(pidof iserver);
   if [ -z $tpid ]; then
-    echo "  ---> msg: iServer not running, now starting..." 
+    echo "  ---> msg: iServer not running, now starting..." 			| tee -a $SERVER_LOG
     iost_run
+
+    # the start log should have zero lines unless there is an error
+    if $(wc -l $SERVER_START_LOG >= 0) {
+
+      ERR=`cat $SERVER_START_LOG`
+      echo "  ---> msg: iServer start error:" 					| tee -a $SERVER_LOG
+      echo "  ---> msg: [$ERR]" 			 			| tee -a $SERVER_LOG
+    }
   else
-    echo "  ---> msg: iServer running as pid [$tpid], no need to start "
+    echo "  ---> msg: iServer running as pid [$tpid], no need to start "	| tee -a $SERVER_LOG
   fi
 }
 
