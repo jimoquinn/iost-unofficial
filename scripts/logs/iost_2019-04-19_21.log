@@ -1,4 +1,4 @@
-Info 2019-04-19 14:14:02.380 main.go:86 Config Information:
+Info 2019-04-19 21:14:16.069 main.go:86 Config Information:
 acc:
   id: producer000
   seckey: 1rA******
@@ -53,27 +53,27 @@ version:
   netname: debugnet
   protocolversion: "1.0"
 
-Info 2019-04-19 14:14:02.380 main.go:88 build time:20190419_091835+0000
-Info 2019-04-19 14:14:02.380 main.go:89 git hash:87e20138cd208f386ec41d6d4d25963792d2edd9
-Info 2019-04-19 14:14:02.380 main.go:90 code version:3.0.9
-Info 2019-04-19 14:14:02.398 recovery.go:14 Genesis is not exist.
-Fatal 2019-04-19 14:14:02.398 config.go:157 Failed to open config file 'config/genesis/genesis.yml', open config/genesis/genesis.yml: no such file or directory
+Info 2019-04-19 21:14:16.069 main.go:88 build time:20190419_211136+0000
+Info 2019-04-19 21:14:16.069 main.go:89 git hash:87e20138cd208f386ec41d6d4d25963792d2edd9
+Info 2019-04-19 21:14:16.069 main.go:90 code version:3.0.9
+Info 2019-04-19 21:14:16.090 recovery.go:14 Genesis is not exist.
+Fatal 2019-04-19 21:14:16.090 config.go:157 Failed to open config file 'config/genesis/genesis.yml', open config/genesis/genesis.yml: no such file or directory
 goroutine 1 [running]:
-runtime/debug.Stack(0xfd5995, 0x23, 0xc0000ebac0)
+runtime/debug.Stack(0xfd5995, 0x23, 0xc000775ac0)
 	/usr/local/go/src/runtime/debug/stack.go:24 +0x9d
-github.com/iost-official/go-iost/ilog.(*Logger).Fatalf(0xc0002f39d0, 0xfd5995, 0x23, 0xc0000ebac0, 0x2, 0x2)
+github.com/iost-official/go-iost/ilog.(*Logger).Fatalf(0xc0003099d0, 0xfd5995, 0x23, 0xc000775ac0, 0x2, 0x2)
 	/home/vagrant/go/src/github.com/iost-official/go-iost/ilog/logger.go:227 +0x95
 github.com/iost-official/go-iost/ilog.Fatalf(...)
 	/home/vagrant/go/src/github.com/iost-official/go-iost/ilog/ilog.go:142
-github.com/iost-official/go-iost/common.LoadYamlAsViper(0xc000036580, 0x1a, 0x2)
+github.com/iost-official/go-iost/common.LoadYamlAsViper(0xc0000368a0, 0x1a, 0x2)
 	/home/vagrant/go/src/github.com/iost-official/go-iost/common/config.go:157 +0x23a
-github.com/iost-official/go-iost/consensus/genesis.GenGenesisByFile(0x1271400, 0xc0000ba000, 0xc0002da370, 0xe, 0x0, 0x0, 0x1)
+github.com/iost-official/go-iost/consensus/genesis.GenGenesisByFile(0x1271400, 0xc00007a280, 0xc000300140, 0xe, 0x0, 0x0, 0x0)
 	/home/vagrant/go/src/github.com/iost-official/go-iost/consensus/genesis/genesis.go:26 +0xad
-github.com/iost-official/go-iost/chainbase.(*ChainBase).checkGenesis(0xc00028afa0, 0xc0000950e0, 0x2, 0xc0000ba000)
+github.com/iost-official/go-iost/chainbase.(*ChainBase).checkGenesis(0xc00016c3c0, 0xc00012ae40, 0x2, 0xc00007a280)
 	/home/vagrant/go/src/github.com/iost-official/go-iost/chainbase/recovery.go:20 +0x1a6
-github.com/iost-official/go-iost/chainbase.New(0xc0000950e0, 0x7730f3, 0xc0000b9770, 0xc0002fbbf0)
+github.com/iost-official/go-iost/chainbase.New(0xc00012ae40, 0x7730f3, 0xc000011768, 0xc000318ab0)
 	/home/vagrant/go/src/github.com/iost-official/go-iost/chainbase/chainbase.go:40 +0x395
-github.com/iost-official/go-iost/iserver.New(0xc0000950e0, 0x0)
+github.com/iost-official/go-iost/iserver.New(0xc00012ae40, 0x0)
 	/home/vagrant/go/src/github.com/iost-official/go-iost/iserver/iserver.go:36 +0x4d
 main.main()
 	/home/vagrant/go/src/github.com/iost-official/go-iost/cmd/iserver/main.go:97 +0x47f

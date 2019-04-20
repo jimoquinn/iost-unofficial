@@ -24,7 +24,7 @@ clear
 #  Admin Menu that will
 #  - IOST Install
 #  - IOST Removal
-#  - iserver start/stop/restart
+#  - iServer start/stop/restart
 #  - run itest 
 #  - view install log
 #  - kkk
@@ -101,34 +101,61 @@ IOST_BAREMETAL=""
 #  NO NEED TO MODIFY BELOW THIS LINE UNLESS THE BUILD IS TOTALLY BROKEN
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+
+# exists () 
+# iost_distro_detect () 
+# iost_install_init () 
+# iost_install_rmfr () 
+# iost_warning_requirements () 
+# iost_install_packages () 
+# iost_install_nvm_node_npm () 
+# iost_install_docker ()
+# iost_install_golang () 
+# iost_stop () 
+# iost_start_iserver () 
+# iost_stop_iserver () 
+# iost_check_iserver () 
+# iost_restart_iserver () {
+# iost_install_iost_core () 
+# iost_install_dapp () 
+# iost_run_itests () 
+# iost_baremetal_or_docker ()  
+# iost_install_iost () 
+# iost_main_menu ()  
+
+
 #
 # Install Functions for Dependencies
 # 
-# iost_warning_reqirements()
-# iost_sudo_confirm()
-# iost_install_packages()
-# iost_install_nvm_node_npm()
-# iost_install_docker()
-# iost_install_golang()
+# iost_warning_reqirements()  - 
+# iost_install_packages()     - 
+# iost_install_nvm_node_npm() - 
+# iost_install_docker()       -
+# iost_install_golang()       -
 
 
 #
 # Install Functions for IOST
 # 
-# iost_install_iserver()
-# iost_install_iwallet()
-# iost_install_itest()
+# iost_install_iost_core()    - iwallet, iserver
+# iost_install_itest()        - 
 
 
 #
 # Admin Functions
 #
-# iost_start_iserver ()	  - iserver start
-# iost_restart_iserver () - iserver restart
-# iost_stop_iserver ()    - iserver stop
+# iost_main_menu()            - admin main menu
+# iost_start_iserver()	      - iServer start
+# iost_restart_iserver()      - iServer restart
+# iost_stop_iserver()         - iServer stop
+# iost_sudo_confirm()         - test for sudo
+# iost_distro_detect()        - what distro?
+# iost_run()                  - only starts iServer
+# iost_stop()                 - only stops iServer
+
 
 #
-#
+# exists()  - does the command exist in the OS?
 #
 exists () {
 
@@ -307,7 +334,7 @@ iost_install_init () {
   # -  apt: git, git-lfs, software-properties-common, build-essential, curl,
   #    libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev 
   # -  nvm, node, npm, yarn, docker, golang, 
-  # -  IOST: iwallet, iserver, scaf, 
+  # -  IOST: iwallet, iServer, scaf, 
   #
   if [ -f "$HOME/.iost_env" ]; then
     echo "---> irk: previous IOST install found!"
@@ -337,7 +364,7 @@ iost_install_rmfr () {
   #    libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev 
   #    docker
   # -  nvm, node, npm, yarn, golang, 
-  # -  IOST: iwallet, iserver, scaf, 
+  # -  IOST: iwallet, iServer, scaf, 
 
 
   #
@@ -405,19 +432,6 @@ iost_install_rmfr () {
 
   echo "---> msg: done: iost_install_rmfr () " | tee -a $INSTALL_LOG
 
-}
-
-
-#
-#  TODO: iost_install_end () 
-#
-#  - prompt to launch iwallet
-#  - prompt to launch iserver
-#  - prompt to start dApp dev environment
-#
-iost_install_end () {
-  echo "---> msg: done: iost_install_end () "
-  echo "---> msg: done: iost_install_end () "
 }
 
 
@@ -720,12 +734,12 @@ iost_install_golang () {
   echo "---> msg: done: iost_install_golang ()" | tee -a $INSTALL_LOG
 }
 
+
 # -------------------------------------------------------------------------------------------------
-
-
+#  start: iServer start/stop/restart
 
 #
-#  iost_run() -  simply start the iserver
+#  iost_run() -  simply start the iServer
 #
 iost_run () {
   cd $IOST_ROOT
@@ -733,14 +747,15 @@ iost_run () {
   sleep 5
 }
 
+
 #
-#  iost_stop() -  simply stop the iserver
+#  iost_stop() -  simply stop the iServer
 #
 iost_stop () {
-  # check for a running iserver
+  # check for a running iServer
   tpid=$(pidof iserver);
   if [ -z $tpid ]; then
-    echo "  ---> msg: iServer not running, continuing..."   | tee -a $SERVER_LOG
+    echo "  ---> msg: iServer not running..."   | tee -a $SERVER_LOG
   else
     kill -15 $tpid  >> $SERVER_LOG 2>&1
     sleep 5
@@ -749,14 +764,14 @@ iost_stop () {
 
 
 #
-#  iost_start_iserver() -  simply start iserver
+#  iost_start_iserver() -  simply start iServer
 #
 iost_start_iserver () {
 
-  # check for a running iserver
+  # check for a running iServer
   tpid=$(pidof iserver);
   if [ -z $tpid ]; then
-    echo "  ---> msg: iServer not running, now starting" 
+    echo "  ---> msg: iServer not running, now starting..." 
     iost_run
   else
     echo "  ---> msg: iServer running as pid [$tpid], no need to start "
@@ -769,14 +784,14 @@ iost_start_iserver () {
 #
 iost_stop_iserver () {
 
-  # check for a running iserver
+  # check for a running iServer
   tpid=$(pidof iserver);
   if [ -z $tpid ]; then
-    echo "  ---> msg: iServer not running, continuing" | tee -a $SERVER_LOG
+    echo "  ---> msg: iServer not running..." | tee -a $SERVER_LOG
   else
-    echo "  ---> msg: iServer running as pid [$tpid], now stopping"
+    echo "  ---> msg: iServer running as pid [$tpid], now stopping..."
     iost_stop
-    echo "  ---> msg: iServer stopped, continuing " | tee -a $SERVER_LOG
+    echo "  ---> msg: iServer stopped..." | tee -a $SERVER_LOG
   fi
 }
 
@@ -784,11 +799,11 @@ iost_stop_iserver () {
 #
 #  iost_check_iserver() - confirm that local iServer is running
 #  usage: if iost_check_server; then; echo "running"; fi
-#  >=1 - successful, the iserver is running
-#   =0 - not successful, the iserver is not running
+#  >=1 - successful, the iServer is running
+#   =0 - not successful, the iServer is not running
 iost_check_iserver () {
 
-  # check for a running iserver
+  # check for a running iServer
   tpid=$(pidof iserver);
 
   if (( $? == 1 )); then
@@ -813,12 +828,12 @@ iost_restart_iserver () {
   # 0=running, 1=not running
   if iost_check_iserver; then
     # tpid - this is a global variable set in iost_check_iserver()
-    echo "  ---> msg: iServer running at pid [$tpid], now stopping"  | tee -a $SERVER_LOG
+    echo "  ---> msg: iServer running at pid [$tpid], now stopping..."  | tee -a $SERVER_LOG
     iost_stop
-    echo "  ---> msg: iServer starting"
+    echo "  ---> msg: iServer starting..."
     iost_run
   else
-    echo "  ---> msg: iServer starting" 
+    echo "  ---> msg: iServer starting..." 
     iost_run
     #tPID=$(iost_start_iserver)
     #read -p "  ---> msg: iServer log is located: $SERVER_LOG, hit any key to continue"
@@ -826,9 +841,9 @@ iost_restart_iserver () {
 
 }
 
-
-
+#  end: iServer start/stop/restart
 # -------------------------------------------------------------------------------------------------
+
 
 #
 #  iost_install_iost_core  () - install the IOST core code
@@ -849,9 +864,9 @@ iost_install_iost_core () {
   ###go get -d github.com/iost-official/go-iost
   ###cd github.com/iost-official/go-iost/
 
-  echo "---> msg: env | grep GO"
-  res=$(env | grep GO > /dev/null 2>&1)
-  echo "---> msg: res [$res]"
+  #echo "---> msg: env | grep GO"
+  #res=$(env | grep GO > /dev/null 2>&1)
+  #echo "---> msg: res [$res]"
 
   echo "---> msg: cd $GOPATH/src"
   cd $GOPATH/src
@@ -882,49 +897,8 @@ iost_install_iost_core () {
     fi
   fi
 
-
-  # call the IOST Admin Menu
-  #iost_run
-  #echo "---> run: iserver -f ./config/iserver.yml"
-  #nohup iserver -f ./config/iserver.yml  >> $INSTALL_LOG 2>&1 &
-  #echo "---> msg: check nohup.out for iserver messages"
-  #sleep 10
-
 }
 
-
-#
-#  iost_install_iost_iwallet ()
-#
-iost_install_iost_iwallet () {
-
-  echo ''; echo ''
-  echo '#=-------------------------------------------------------------------------=#'
-  echo '#=------------------   IOST Install - build iwallet    --------------------=#'
-  echo '#=-------------------------------------------------------------------------=#'
-  echo "---> start: iost_install_iwallet ()" | tee -a $INSTALL_LOG
-
-  #iost && cd iwallet/contract
-  #npm install
-
-  echo "---> end: iost_install_iwallet ()" | tee -a $INSTALL_LOG
-}
-
-
-
-#  
-#  iost_install_iserver ()
-#
-iost_install_iserver () {
-  echo ''; echo ''
-  echo "  #=--------------------------------------------------=#"
-  echo '  #=---------   IOST Install - iserver  --------------=#'
-  echo "  #=--------------------------------------------------=#"
-
-  echo "---> start: iost_install_iserver ()" | tee -a $INSTALL_LOG
-  cd $IOST_ROOT
-  echo "---> end: iost_install_iserver ()" | tee -a $INSTALL_LOG
-}
 
 
 #  
@@ -982,12 +956,50 @@ iost_run_itests () {
 }
 
 
+#
+#  iost_install_iost () - master setup func
+#
+iost_baremetal_or_docker ()  {
+  clear
+
+  echo "  #=--------------------------------------------------=#"
+  echo "  #=--        IOST Install, Test, or Admin          --=#"
+  echo "  #=--  https://github.com/iost-official/go-iost    --=#"
+  echo "  #=--        Codebase Version: $IOST_RELEASE               --=#"
+  echo "  #=--------------------------------------------------=#"
+  echo ""
+  echo "   1.  Install IOST on baremetal"
+  echo "   2.  Install IOST with Docker" 
+  echo ""
+
+  read -p "  Select a number: " iNUM
+
+  case "$iNUM" in
+
+    2) echo ""
+       IOST_DOCKER="1"
+       IOST_BAREMETAL="0"
+       iost_main_menu
+    ;;
+
+    1) echo ""
+       IOST_DOCKER="0"
+       IOST_BAREMETAL="1"
+       iost_main_menu
+    ;;
+
+    *) echo ""
+       iost_main_menu
+
+    esac
+}
+
 
 #
-#  iost_run() - the main menu where we can control various
+#  iost_xxx() - the main menu where we can control various
 #  parts of the IOST ecosystem
 #
-iost_run () {
+iost_xxx () {
   source $HOME/.iost_env
 
   clear
@@ -1013,42 +1025,42 @@ iost_run () {
 
     1) echo ""
        echo "  ---> msg: starting iServer"
-       iost_run_iserver
-       iost_run
+       #iost_run_iserver
+       #iost_run
     ;;
 
     2) echo ""
        echo "  ---> msg: stopping iServer"
-       iost_stop_iserver
-       iost_run
+       #iost_stop_iserver
+       #iost_run
     ;;
 
     3) echo ""
        echo "  ---> msg: running iTests"
-       iost_run_iserver
-       iost_run_itests
-       iost_run
+       #iost_run_iserver
+       #iost_run_itests
+       #iost_run
     ;;
 
     4) echo ""
        #echo "  ---> msg: stopping iServer"
        read -p "  ---> msg: not implemented, hit any key to continue" tIN
-       iost_run
+       #iost_run
     ;;
 
     5) echo ""
        read -p "  ---> msg: not implemented, hit any key to continue" tIN
-       iost_run
+       #iost_run
     ;;
 
     6) echo ""
        read -p "  ---> msg: not implemented, hit any key to continue" tIN
-       iost_run
+       #iost_run
     ;;
 
     7) echo "   ---> msg: opening a /bin/bash, type exit or CTRL-D to return"
        /bin/bash
-       iost_run
+       #iost_run
     ;;
 
     9) echo ""
@@ -1092,44 +1104,6 @@ iost_install_iost () {
 
 
 
-#
-#  iost_install_iost () - master setup func
-#
-iost_baremetal_or_docker ()  {
-clear
-
-  echo "  #=--------------------------------------------------=#"
-  echo "  #=--        IOST Install, Test, or Admin          --=#"
-  echo "  #=--  https://github.com/iost-official/go-iost    --=#"
-  echo "  #=--        Codebase Version: $IOST_RELEASE               --=#"
-  echo "  #=--------------------------------------------------=#"
-  echo ""
-  echo "   1.  Install IOST on baremetal"
-  echo "   2.  Install IOST with Docker" 
-  echo ""
-
-  read -p "  Select a number: " iNUM
-
-  case "$iNUM" in
-
-    2) echo ""
-       IOST_DOCKER="1"
-       IOST_BAREMETAL="0"
-       iost_main_menu
-    ;;
-
-    1) echo ""
-       IOST_DOCKER="0"
-       IOST_BAREMETAL="1"
-       iost_main_menu
-    ;;
-
-    *) echo ""
-       iost_main_menu
-
-    esac
-}
-
 
 #
 #  iost_main_menu () 
@@ -1145,21 +1119,13 @@ iost_main_menu ()  {
   echo "  #=--        Codebase Version: $IOST_RELEASE               --=#"
   echo "  #=--------------------------------------------------=#"
 
-  #if [ $IOST_BAREMETAL == '1' ]; then
-  #  echo "      Installing on: baremetal"
-  #else if [ $IOST_DOCKER == '1' ]; then
-  #  echo "      Installing on: Docker"
-  #fi
-
   echo ""
   echo "    1.  IOST Install development environment"
   echo "    2.  IOST Uninstall development environment"
-  #echo "    2.  Install IOST standard node" 
-  #echo "    3.  Install IOST ServiNode "
   echo ""
-  echo "    3.  iserver start local node"
-  echo "    4.  iserver stop local node"
-  echo "    5.  iserver restart local node"
+  echo "    3.  iServer start local node"
+  echo "    4.  iServer stop local node"
+  echo "    5.  iServer restart local node"
   echo ""
   echo "    6.  Run iTest suite"
   echo "    7.  Run test dApp"
@@ -1197,18 +1163,20 @@ iost_main_menu ()  {
 
     3) echo ""
        iost_start_iserver
-       read -p "---> msg: [node install] not implemented yet, hit any key to continue" tIN
+       read -p "  ---> msg: iServer started, hit any key to continue" tIN
        iost_main_menu
     ;;
 
 
     4) echo ""
-       read -p "---> msg: not implemented, hit any key to continue" tIN
+       iost_stop_iserver
+       read -p "  ---> msg: hit any key to continue" tIN
        iost_main_menu
     ;;
 
     5) echo ""
-       read -p "---> msg: not implemented, hit any key to continue" tIN
+       iost_restart_iserver
+       read -p "  ---> msg: hit any key to continue" tIN
        iost_main_menu
     ;;
 
