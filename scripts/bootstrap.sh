@@ -1,12 +1,15 @@
 #!/bin/bash  
 
+clear
+
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 #
-#             IOST "One Click" Install 
-#              Development Environment
-#        **  For Greenfield Installs Only  **
-#   
-#  Thu Apr 18 04:49:24 UTC 2019
+#             IOST "One Click" Install     
+#              Development Environment     
+#            Best for Greenfield Installs    
+#        Debian/Ubuntu/Redhat full VM or container
+#
+#  Sat Apr 20 06:40:40 UTC 2019
 #
 #  Objective:  to provide a single script that will install
 #  all the necessary dependecies and IOST code required to be
@@ -18,8 +21,15 @@
 #  or source that you may have modified, and start the install 
 #  again.  
 #
-#  We'll install the following: 
+#  Admin Menu that will
+#  - IOST Install
+#  - IOST Removal
+#  - iserver start/stop/restart
+#  - run itest 
+#  - view install log
+#  - kkk
 #
+#  We'll install the following: 
 #  - updates and patches for your distro
 #  - apt-transport-https ca-certificates 
 #  - software-properties-common 
@@ -49,44 +59,50 @@
 # MODIFY VERSIONS ONLY IF NECESSARY
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-# variables
-IOST_DOCKER=""
-IOST_BAREMETAL=""
 
-# readonly
+# IOST release version: https://github.com/iost-official/go-iost
 readonly IOST_RELEASE="3.0.9"
 
-# package.io not supported on cosmic yet
-readonly UBUNTU_MANDATORY=('16.04' '16.10' '18.04');  # 'xenial' 'yakkety' 'bionic'
-readonly CENTOS_MANDATORY=('centos7');
-readonly DEBIAN_MANDATORY=('stretch');
-readonly MACOS_MANDATORY=('Darwin', 'Hitchens');
 
+# Dependicies
 readonly GOLANG_MANDATORY="1.12.4"
 readonly NODE_MANDATORY="v10.15.3"
 readonly NPM_MANDATORY="v6.4.1"
 readonly NVM_MANDATORY="v0.34.0"
 readonly DOCKER_MANDATORY="v18.06.0-ce"
-readonly DOCKER_INSTALL="0"    # 1-yes | 0-no
+
+
+# package.io not supported on cosmic yet
+# Supported UNIX distributions
+readonly UBUNTU_MANDATORY=('16.04' '16.10' '18.04');  	# Ubuntu 'xenial' 'yakkety' 'bionic'
+readonly CENTOS_MANDATORY=('centos7' 'rhel');		# Redhat & CentOS
+readonly DEBIAN_MANDATORY=('stretch');			# Debian Stretch
+readonly MACOS_MANDATORY=('Darwin', 'Hitchens');        # OSX 
+
 
 # misc unused flags - use later for automatic install
-readonly IOST_MANDATORY=""
-readonly FOR_VAGRANT="1"	
-readonly IOST_CLEAN_INSTALL="1"
+readonly IOST_UNATTENDED=""				# unattended install
+readonly IOST_CLEAN_INSTALL="0"				# unattended install, force remove of previous IOST install
+readonly VAGRANT_USE=""					# use Vagrant box
+readonly DOCKER_USE="0"    				# 1-yes | 0-no
+
 
 # install and blockchain logs
-readonly INSTALL_LOG="/tmp/bootstrap.sh.$$.log"
-readonly SERVER_LOG="/tmp/iserver.$$.log"
-readonly SERVER_ERR_LOG="/tmp/iserver.err.$$.log"
-readonly ITEST_LOG="/tmp/itest.$$.log"
+readonly INSTALL_LOG="/tmp/bootstrap.sh.$$.log"		# stdout & stderr
+readonly SERVER_LOG="/tmp/iserver.$$.log"		# stdout 
+readonly SERVER_ERR_LOG="/tmp/iserver.err.$$.log"	# stderr
+readonly ITEST_LOG="/tmp/itest.$$.log"			# stdout & stderr
 
+# variables
+IOST_DOCKER=""
+IOST_BAREMETAL=""
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 #  NO NEED TO MODIFY BELOW THIS LINE UNLESS THE BUILD IS TOTALLY BROKEN
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 #
-# list of functions
+# Install Functions for Dependencies
 # 
 # iost_warning_reqirements()
 # iost_sudo_confirm()
@@ -95,10 +111,26 @@ readonly ITEST_LOG="/tmp/itest.$$.log"
 # iost_install_docker()
 # iost_install_golang()
 
+
+#
+# Install Functions for IOST
+# 
+# iost_install_iserver()
+# iost_install_iwallet()
+# iost_install_itest()
+
+
+#
+# Admin Functions
+#
+# iost_start_iserver ()	  - iserver start
+# iost_restart_iserver () - iserver restart
+# iost_stop_iserver ()    - iserver stop
+
 #
 #
 #
-exists() {
+exists () {
 
   test -x $(command -v $1)
   if (( $? >= 1 )); then
@@ -127,33 +159,7 @@ trap '_error_handler ${LINENO} $?' ERR
 #
 # 
 #
-iost_install_init () {
-  clear
-  echo ""; echo ""
-  echo "#=-------------------------------------------------------------------------=#"
-  echo "#-----------------   IOST Install - pre-init      -------------------------=#"
-  echo "#=-------------------------------------------------------------------------=#"
-  echo "---> msg: start: iost_install_init () " | tee -a $INSTALL_LOG
-
-  # 1st - confirm that we are not running under root
-  if [[ $(whoami) == "root" ]]; then
-      echo 'WARNING:  You should not run this as the "root" user. Modify the sudoers with visudo.'
-      echo 'Example, once in the editor, add the following to the bottom of the file.  Be sure '
-      echo 'to replace NON-ROOT_USER with your actual user id (run "whoami" at the command prompt).'
-      echo ''
-      echo 'NON-ROOT-USER ALL=(ALL:ALL) ALL'
-      echo ''
-      exit 99
-  fi
-
-  # 2nd - test if we can sudo 
-  echo "---> msg: performing [sudo] check"
-  sudo $(pwd)/exit.sh
-  if (( $? >= 1 )); then
-    echo "---> err: cannot [sudo]"
-    exit; 98
-  fi
-
+iost_distro_detect () {
 
   # 3rd - for installed apps
   # check for: 
@@ -192,6 +198,7 @@ iost_install_init () {
           git_lfs="sudo $pkg_installer install epel-release"
           dev_tools="sudo $pkg_installer groupinstall \"Development Tools]""
           #dev_tools="sudo $pkg_installer groupinstall "\"Development Tools\""
+          #dev_tools_purge="sudo $pkg_installer groupinstall "\"Development Tools\""
           echo "---> msg: [$PRETTY_NAME] is supported and using [$pkg_installer]"
           ;;
 
@@ -208,11 +215,13 @@ iost_install_init () {
           ;;
         ubuntu)
             if echo ${UBUNTU_MANDATORY[@]} | grep -q -w ${VERSION_ID}; then
+            pkg_bare="/usr/bin/apt-get "
             pkg_installer="/usr/bin/apt-get -y "
             pkg_purge=" purge "
             pkg_yes=" -y "
             git_lfs="curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash"
             dev_tools="$pkg_installer software-properties-common  build-essential"
+            dev_tools_purge="$pkg_installer  purge software-properties-common  build-essential"
             # setup packages-ubuntu.txt
             echo "---> msg: [$PRETTY_NAME] is supported and using [$pkg_installer]"
           else
@@ -229,11 +238,50 @@ iost_install_init () {
         esac
     fi
 
+}
+
+
+#
+# 
+#
+iost_install_init () {
+  clear
+  echo "$INSTALL_LOG" > /tmp/install.name.log
+  echo ""; echo ""
+  echo "#=-------------------------------------------------------------------------=#"
+  echo "#-----------------   IOST Install - pre-init      -------------------------=#"
+  echo "#=-------------------------------------------------------------------------=#"
+  echo "---> msg: start: iost_install_init () " | tee -a $INSTALL_LOG
+
+  # 1st - confirm that we are not running under root
+  if [[ $(whoami) == "root" ]]; then
+      echo 'WARNING:  You should not run this as the "root" user. Modify the sudoers with visudo.'
+      echo 'Example, once in the editor, add the following to the bottom of the file.  Be sure '
+      echo 'to replace NON-ROOT_USER with your actual user id (run "whoami" at the command prompt).'
+      echo ''
+      echo 'NON-ROOT-USER ALL=(ALL:ALL) ALL'
+      echo ''
+      exit 99
+  fi
+
+  # 2nd - test if we can sudo 
+  echo "---> msg: performing [sudo] check"
+  sudo $(pwd)/exit.sh
+  if (( $? >= 1 )); then
+    echo "---> err: cannot [sudo]"
+    exit; 98
+  fi
+
+
+  #
+  #  determine distro and set variables
+  #
+  iost_distro_detect
+
 
   #
   #  check that git is installed
   #
-
   #command -v git >/dev/null 2>&1 || { echo >&2 "I require foo but it's not installed.  Aborting."; exit 1; }
   if exists git; then
     echo "---> run: $pkg_installer install git"
@@ -291,20 +339,30 @@ iost_install_rmfr () {
   # -  nvm, node, npm, yarn, golang, 
   # -  IOST: iwallet, iserver, scaf, 
 
+
+  #
+  #  saturate environment
+  #
+  source ~/.iost_env
+
   echo ""; echo ""
   echo "#=-------------------------------------------------------------------------=#"
   echo "#-----------------   IOST Install - removing previous install  ------------=#"
   echo "#=-------------------------------------------------------------------------=#"
   echo "---> msg: start: iost_install_rmfr () " | tee -a $INSTALL_LOG
   echo "---> msg: view log file: $INSTALL_LOG"
+  #
+  #  determine distro and set variables
+  #
+  iost_distro_detect
 
 
-  if [ $DOCKER_INSTALL ]; then
+  if [ $DOCKER_USE -eq '1' ]; then
     echo "---> run: sudo systemctl disable docker-ce"
     sudo systemctl disable docker >> $INSTALL_LOG 2>&1
     echo "---> run: sudo systemctl stop docker-ce"
     sudo systemctl stop docker >> $INSTALL_LOG 2>&1
-    sudo $pkg_installer purge docker-ce >> $INSTALL_LOG 2>&1
+    sudo $pkg_installer $pkg_purge docker-ce >> $INSTALL_LOG 2>&1
 
     if [ -f "/etc/apt/sources.list.d/docker.list" ]; then
       echo "---> run: sudo rm -fr /etc/apt/sources.list.d/docker.list" 
@@ -312,20 +370,17 @@ iost_install_rmfr () {
     fi
   fi
 
-  echo "---> run: sudo $pkg_installer purge docker-ce libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev  "
-  sudo $pkg_installer purge libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev    >> $INSTALL_LOG 2>&1
+  echo "---> run: sudo $pkg_installer $pkg_purge libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev  "
+  sudo $pkg_installer $pkg_purge libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev    >> $INSTALL_LOG 2>&1
 
-  echo "---> run: sudo $pkg_installer purge git git-lfs software-properties-common  build-essential curl  " 
-  sudo $pkg_installer purge git git-lfs software-properties-common  build-essential curl    >> $INSTALL_LOG 2>&1
+  echo "---> run: sudo $pkg_installer $pkg_purge git git-lfs software-properties-common  build-essential curl  " 
+  sudo $pkg_installer $pkg_purge git git-lfs software-properties-common  build-essential curl    >> $INSTALL_LOG 2>&1
 
-  pkg_installert=$pkg_installer
-  pkg_installer="$pkg_installer purge "
-  echo "---> run: sudo $dev_tools" 
-  sudo "$dev_tools                                  >> $INSTALL_LOG 2>&1"
-  pkg_installer=$pkg_installert
+  echo "---> run: sudo $dev_tools_purge" 
+  sudo $dev_tools_purge                           >> $INSTALL_LOG 2>&1
 
-  echo "---> run: sudo $pkg_installer purge apt-transport-https  "
-  sudo $pkg_installer purge apt-transport-https    >> $INSTALL_LOG 2>&1
+  echo "---> run: sudo $pkg_installer $pkg_purge apt-transport-https  "
+  sudo $pkg_installer $pkg_purge apt-transport-https    >> $INSTALL_LOG 2>&1
 
   echo "---> run: sudo $pkg_installer autoremove  " 
   sudo $pkg_installer autoremove                   >> $INSTALL_LOG 2>&1
@@ -340,6 +395,13 @@ iost_install_rmfr () {
     echo "---> run: rm -fr $HOME/.nvm" 
     rm -fr $HOME/.nvm
   fi
+
+  # remove IOST source
+  if [ -d "$HOME/go/src/github.com/iost-official/go-iost" ]; then
+    echo "---> run: rm -fr $HOME/go/src/github.com/iost-official/go-iost" 
+    rm -fr $HOME/go/src/github.com/iost-official/go-iost
+  fi
+
 
   echo "---> msg: done: iost_install_rmfr () " | tee -a $INSTALL_LOG
 
@@ -368,22 +430,27 @@ iost_warning_requirements () {
   echo "#=-------------------------------------------------------------------------=#"
   echo "#-----------------   IOST Install - warning and requirements   ------------=#"
   echo "#=-------------------------------------------------------------------------=#"
-  echo "Please read carefully as these are hard requirements:"; echo ""
-  echo "  1.  Do not install on a configured system."
-  echo "  2.  Run as a user that can sudo to root (man visudo)."
-  echo "  3.  The install log file will be located:  $INSTALL_LOG "
+  #echo "Please read carefully as these are hard requirements:"; echo ""
+  #echo "  1.  Do not install on a configured system."
+  #echo "  2.  Run as a user that can sudo to root (man visudo)."
   echo ""; echo "";
 
 
   echo "This script will install the following:"; echo ""
-  echo "  -  Security updates and patches for $PRETTY_NAME"
+  echo "  -  updaets for $PRETTY_NAME"
   echo "  -  nvm version $NVM_MANDATORY"
   echo "  -  node version $NODE_MANDATORY"
   echo "  -  npm version $NPM_MANDATORY"
   echo "  -  nvm version $NVM_MANDATORY"
   echo "  -  Go Lang verson $GOLANG_MANDATORY"
-  #echo "  -  docker version $DOCKER_MANDATORY"
+
+  if [ $DOCKER_USE -eq '1' ]; then
+    echo "  -  docker version $DOCKER_MANDATORY"
+  fi
   #echo "  -  Many packages; software-properties-common, build-essential, curl, git, git-lfs, and more"
+  echo "  -  IOST release $IOST_RELEASE"
+  echo ''
+  echo "Install log is located:  $INSTALL_LOG "
   echo ''
 
   read -p "Continue?  (Y/n): " CONT
@@ -391,10 +458,6 @@ iost_warning_requirements () {
   if [ ! -z "$CONT" ]; then
     if [ $CONT == "n" ] || [ $CONT == 'N' ] || [ $CONT == '' ]; then
       echo ""; echo ""
-      echo "Best if you do not install unless you meet the above requirements."
-      echo "We know you don't give up that easy, so you will be back."
-      echo ""; 
-      echo ""
       exit 99
     fi
   fi
@@ -657,77 +720,47 @@ iost_install_golang () {
   echo "---> msg: done: iost_install_golang ()" | tee -a $INSTALL_LOG
 }
 
-#
-#  iost_check_iserver() - confirm that local iServer is running
-#  usage: if iost_check_server; then; echo "running"; fi
-#  >=1 - successful, the iserver is running
-#   =0 - not successful, the iserver is not running
-iost_check_iserver () {
+# -------------------------------------------------------------------------------------------------
 
+
+
+#
+#  iost_run() -  simply start the iserver
+#
+iost_run () {
+  cd $IOST_ROOT
+  nohup iserver -f config/iserver.yml 2>$SERVER_ERR_LOG >$SERVER_LOG&
+  sleep 5
+}
+
+#
+#  iost_stop() -  simply stop the iserver
+#
+iost_stop () {
   # check for a running iserver
   tpid=$(pidof iserver);
-
-  #echo "tpid: $tpid";
-
-  if (( $? == 1 )); then
-    #echo "not found tpid: $tpid";
-    return 0
+  if [ -z $tpid ]; then
+    echo "  ---> msg: iServer not running, continuing..."   | tee -a $SERVER_LOG
   else
-    #echo "found tpid: $tpid";
-    return $tpid
+    kill -15 $tpid  >> $SERVER_LOG 2>&1
+    sleep 5
   fi
-}
-
-#
-#  iost_run_iserver() 
-#  - if already running, stop then start or return
-#  - if not running, then start
-#  -  
-iost_run_iserver () {
-
-  local tPID
-
-  # 0=running, 1=not running
-  if iost_check_iserver; then
-    read -p "  ---> msg: iServer already running pid [$tpid], want to restart? (Y/n): " rSTRT
-    if [ ! -z "$rSTRT" ]; then
-      if [ $rSTRT == "y" ] || [ $rSTRT == 'Y' ] || [ $rSTRT == '' ]; then
-        iost_stop_iserver 
-	iost_start_iserver
-      else
-        read -p "  ---> msg: not restarting iServer, hit any key to contine " tCONT
-        iost_run
-      fi
-    fi
-  else
-    
-    tPID=$(iost_start_iserver)
-    
-    read -p "  ---> msg: server log is located: $INSTALL_LOG, hit any key to continue"
-  fi
-
 }
 
 
 #
-#  iost_start_iserver() -  simply start the iserver
+#  iost_start_iserver() -  simply start iserver
 #
 iost_start_iserver () {
 
   # check for a running iserver
   tpid=$(pidof iserver);
   if [ -z $tpid ]; then
-    read -p "  ---> msg: iServer not running, hit any key to contine " tCONT
+    echo "  ---> msg: iServer not running, now starting" 
     iost_run
   else
-    echo "  ---> msg: iServer running as pid [$tpid] and now stopping"
-    kill -15 $tpid
-    sleep 5
-    read -p "  ---> msg: iServer stopped, now starting" tCONT
-    iserver -f config/iserver.yaml
-    iost_run
+    echo "  ---> msg: iServer running as pid [$tpid], no need to start "
   fi
-
 }
 
 
@@ -739,17 +772,63 @@ iost_stop_iserver () {
   # check for a running iserver
   tpid=$(pidof iserver);
   if [ -z $tpid ]; then
-    read -p "  ---> msg: iServer not running, hit any key to contine " tCONT
+    echo "  ---> msg: iServer not running, continuing" | tee -a $SERVER_LOG
+  else
+    echo "  ---> msg: iServer running as pid [$tpid], now stopping"
+    iost_stop
+    echo "  ---> msg: iServer stopped, continuing " | tee -a $SERVER_LOG
+  fi
+}
+
+
+#
+#  iost_check_iserver() - confirm that local iServer is running
+#  usage: if iost_check_server; then; echo "running"; fi
+#  >=1 - successful, the iserver is running
+#   =0 - not successful, the iserver is not running
+iost_check_iserver () {
+
+  # check for a running iserver
+  tpid=$(pidof iserver);
+
+  if (( $? == 1 )); then
+    #echo "not running - not found tpid: $tpid";
+    return 1
+  else
+    #echo "running - found tpid: $tpid";
+    return 0
+  fi
+}
+
+
+#
+#  iost_restart_iserver()
+#  - if already running, stop then start or return
+#  - if not running, then start
+#  -
+iost_restart_iserver () {
+
+  local tPID
+
+  # 0=running, 1=not running
+  if iost_check_iserver; then
+    # tpid - this is a global variable set in iost_check_iserver()
+    echo "  ---> msg: iServer running at pid [$tpid], now stopping"  | tee -a $SERVER_LOG
+    iost_stop
+    echo "  ---> msg: iServer starting"
     iost_run
   else
-    echo "  ---> msg: iServer running as pid [$tpid] and now stopping"
-    kill -15 $tpid
-    read -p "  ---> msg: iServer stopped, hit any key to contine " tCONT
+    echo "  ---> msg: iServer starting" 
     iost_run
+    #tPID=$(iost_start_iserver)
+    #read -p "  ---> msg: iServer log is located: $SERVER_LOG, hit any key to continue"
   fi
 
 }
 
+
+
+# -------------------------------------------------------------------------------------------------
 
 #
 #  iost_install_iost_core  () - install the IOST core code
@@ -785,21 +864,21 @@ iost_install_iost_core () {
   echo "---> run: make build install"
   make build install >> $INSTALL_LOG 2>&1 
 
-  echo "  ---> run: cd vm/v8vm/v8"
+  echo "---> run: cd vm/v8vm/v8"
   cd vm/v8vm/v8
-  echo "  ---> run: make clean js_bin vm install"
+  echo "---> run: make clean js_bin vm install"
   #make clean js_bin vm install
   make clean js_bin vm install deploy >> $INSTALL_LOG 2>&1
   make deploy                         >> $INSTALL_LOG 2>&1
 
+  echo ""; echo "";
   read -p "---> msg: core IOST is installed, continue to the IOST Admin Menu? (Y/n): " tADM
 
   if [ ! -z "$tADM" ]; then
     if [ $tADM == "n" ] || [ $tADM == 'N' ] || [ $tADM == '' ]; then
-        echo "---> msg: our work is done, now exiting"
-	exit
+	exit 0
     else
-        iost_run
+        iost_main_menu
     fi
   fi
 
@@ -1011,22 +1090,6 @@ iost_install_iost () {
 
 #set -e
 
-#iost_check_iserver
-#echo "rc: $?"
-
-#ls
-#echo "rc: $?"
-
-iost_check_iserver
-#echo "rc: $?"
-
-if [[ "$(iost_check_iserver)" ]]; then
-  # echo "running"
-  echo ""
-else
-  # echo "not running"
-  echo ""
-fi
 
 
 #
@@ -1042,7 +1105,7 @@ clear
   echo "  #=--------------------------------------------------=#"
   echo ""
   echo "   1.  Install IOST on baremetal"
-  #echo "   2.  Install IOST with Docker" 
+  echo "   2.  Install IOST with Docker" 
   echo ""
 
   read -p "  Select a number: " iNUM
@@ -1052,27 +1115,29 @@ clear
     2) echo ""
        IOST_DOCKER="1"
        IOST_BAREMETAL="0"
-       iost_admin_or_install
+       iost_main_menu
     ;;
 
     1) echo ""
        IOST_DOCKER="0"
        IOST_BAREMETAL="1"
-       iost_admin_or_install
+       iost_main_menu
     ;;
 
     *) echo ""
-       iost_admin_or_install
+       iost_main_menu
 
     esac
 }
 
 
 #
-#  iost_install_iost () - master setup func
+#  iost_main_menu () 
+#  - main menu
+#  - bypassed if UNATTENDED=1
 #
-iost_admin_or_install ()  {
-clear
+iost_main_menu ()  {
+  clear
 
   echo "  #=--------------------------------------------------=#"
   echo "  #=--        IOST Install/Test/Admin Script        --=#"
@@ -1087,19 +1152,21 @@ clear
   #fi
 
   echo ""
-  echo "    1.  Install IOST development environment"
+  echo "    1.  IOST Install development environment"
+  echo "    2.  IOST Uninstall development environment"
   #echo "    2.  Install IOST standard node" 
   #echo "    3.  Install IOST ServiNode "
   echo ""
-  echo "    4.  Administer IOST installation"
-  echo "    5.  Create IOST account"
+  echo "    3.  iserver start local node"
+  echo "    4.  iserver stop local node"
+  echo "    5.  iserver restart local node"
+  echo ""
   echo "    6.  Run iTest suite"
+  echo "    7.  Run test dApp"
   echo ""
-  echo "    6.  Open the command line interface"
-  echo "    8.  Connect to testnet"
-  echo "    9.  Run test dApp "
+  echo "    8.  Open the command line interface"
+  echo "    9.  View last install log"
   echo ""
-  echo "   10.  Uninstall IOST development environment"
   echo "   99.  Quit"
   echo ""
 
@@ -1107,72 +1174,76 @@ clear
 
   case "$iNUM" in
 
-    3) echo ""
-       read -p "  ---> msg: [node install] not implemented yet, hit any key to continue" tIN
-       iost_admin_or_install
-    ;;
-
-    2) echo ""
-       read -p "  ---> msg: not implemented, hit any key to continue" tIN
-       iost_admin_or_install
-
-       iost_install_init
-       read -p "---> msg: development environment removed, hit any key to continue" tIN
-       iost_admin_or_install
-       iost_run 
-    ;;
-
     1) iost_admin_or_install
        iost_install_init 
        iost_warning_requirements
        iost_install_packages
        iost_install_nvm_node_npm
-       #iost_install_docker
+
+       if [ $DOCKER_USE -eq '1' ]; then
+         iost_install_docker
+       fi
+
        iost_install_golang
        iost_install_iost
        iost_run 
     ;;
 
+    2) echo ""
+       iost_install_rmfr
+       read -p "---> msg: uninstalled, hit any key to continue" tIN
+       iost_main_menu
+    ;;
+
+    3) echo ""
+       iost_start_iserver
+       read -p "---> msg: [node install] not implemented yet, hit any key to continue" tIN
+       iost_main_menu
+    ;;
+
+
     4) echo ""
-       read -p "  ---> msg: not implemented, hit any key to continue" tIN
-       iost_run
+       read -p "---> msg: not implemented, hit any key to continue" tIN
+       iost_main_menu
     ;;
 
     5) echo ""
-       read -p "  ---> msg: not implemented, hit any key to continue" tIN
-       iost_run
+       read -p "---> msg: not implemented, hit any key to continue" tIN
+       iost_main_menu
     ;;
 
     6) echo ""
        echo "  ---> msg: running iTests"
        iost_run_iserver
        iost_run_itests
-       iost_run
+       iost_main_menu
     ;;
 
-    7) echo "   ---> msg: opening a /bin/bash, type exit or CTRL-D to return"
+    7) clear
+       echo ""
+       echo "   ---> msg: opening a /bin/bash, type exit or CTRL-D to return"
        /bin/bash
-       iost_run
+       iost_main_menu
     ;;
 
-    8) echo ""
-       read -p "  ---> msg: not implemented, hit any key to continue" tIN
-       iost_run
+    8) echo "   ---> msg: opening a /bin/bash, type exit or CTRL-D to return"
+       /bin/bash
+       iost_main_menu
     ;;
 
-    9) echo ""
-       echo "  ---> msg: exiting"
-       exit
+    9) clear
+       echo ""
+       echo "  ---> msg: view install log"
+       echo ""; echo ""
+       more `cat /tmp/install.name.log`
+       echo ""; echo ""
+       read -p "---> msg: end of log, any key to continue" tIN
+       echo "";
+       iost_main_menu
     ;;
 
-    10) echo ""
-       iost_install_rmfr
-       echo "  ---> msg: uninstalled"
-       exit
-    ;;
 
     99) echo ""
-       echo "  ---> msg: exiting"
        exit
     ;;
 
@@ -1180,16 +1251,16 @@ clear
 
 }
 
-iost_admin_or_install
+iost_main_menu
 #iost_baremetal_or_docker
-iost_install_init
-iost_warning_requirements
-iost_install_packages
-iost_install_nvm_node_npm
+#iost_install_init
+#iost_warning_requirements
+#iost_install_packages
+#iost_install_nvm_node_npm
 #iost_install_docker
-iost_install_golang
-iost_install_iost
-iost_run
+#iost_install_golang
+#iost_install_iost
+#iost_run
 
 
 ###
