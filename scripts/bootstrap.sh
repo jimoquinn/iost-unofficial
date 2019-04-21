@@ -23,7 +23,6 @@ clear
 #   -  JavaScript SDK
 #   -  JavaScript example smart contracts
 #   -  Go SDK
-#   -  Go example smart contracts
 #   -  easy setup for local testnet node
 #
 #   Distros Supported:
@@ -228,7 +227,7 @@ iost_distro_detect () {
         debian)
           # check version is supported
           if echo ${DEBIAN_MANDATORY[@]} | grep -q -w ${VERSION_ID}; then
-            pkg_installer="/usr/bin/apt-get -y"
+            pkg_installer="/usr/bin/apt-get -y "
             # setup packages-debian.txt
             echo "---> msg: [$PRETTY_NAME] is supported and using [$pkg_installer]"
           else
@@ -246,9 +245,9 @@ iost_distro_detect () {
             dev_tools="$pkg_installer software-properties-common  build-essential"
             dev_tools_purge="$pkg_installer  purge software-properties-common  build-essential"
             # setup packages-ubuntu.txt
-            echo "---> $OK_COLOR msg: [$PRETTY_NAME] is supported and using [$pkg_installer]"
+            echo "---> msg: [$PRETTY_NAME] is supported and using [$pkg_installer]"
           else
-            echo "---> $ERROR_COLOR err: [${PRETTY_NAME}] is not supported, view $INSTALL_LOG"
+            echo "---> err: [${PRETTY_NAME}] is not supported, view $INSTALL_LOG"
             exit 76
           fi
           ;;
@@ -301,6 +300,16 @@ iost_install_init () {
   #
   iost_distro_detect
 
+  #
+  # check status of the distro's packages
+  #
+  echo "---> run: sudo $pkg_installer check"
+  sudo $pkg_installer check 				  >> $INSTALL_LOG 2>&1
+  if (( $? >= 1 )); then
+    echo "---> err: [$pkg_installer check] failed, see $INSTALL_LOG"
+    echo "";
+    exit 79
+  fi
 
   #
   #  check that git is installed
@@ -330,7 +339,7 @@ iost_install_init () {
   # -  apt: git, git-lfs, software-properties-common, build-essential, curl,
   #    libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev 
   # -  nvm, node, npm, yarn, docker, golang, 
-  # -  IOST: iwallet, iServer, scaf, 
+  # -  IOST: iwallet, iserver
   #
   if [ -f "$HOME/.iost_env" ]; then
     echo "---> irk: previous IOST install found!"
@@ -360,13 +369,16 @@ iost_install_rmfr () {
   #    libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev 
   #    docker
   # -  nvm, node, npm, yarn, golang, 
-  # -  IOST: iwallet, iServer, scaf, 
+  # -  IOST: iwallet, iserver, scaf, 
 
 
   #
   #  saturate environment
   #
-  source ~/.iost_env
+  if [ -r $HOME/.iost_env ]; then
+    echo "  ---> msg: $HOME/.iost_env present, adding to environment..."                   | tee -a $INSTALL_LOG
+    source $HOME/.iost_env
+  fi
 
   echo ""; echo ""
   echo "#=-------------------------------------------------------------------------=#"
@@ -374,6 +386,7 @@ iost_install_rmfr () {
   echo "#=-------------------------------------------------------------------------=#"
   echo "---> msg: start: iost_install_rmfr () " | tee -a $INSTALL_LOG
   echo "---> msg: view log file: $INSTALL_LOG"
+
   #
   #  determine distro and set variables
   #
@@ -424,7 +437,6 @@ iost_install_rmfr () {
     echo "---> run: rm -fr $HOME/go/src/github.com/iost-official/go-iost" 
     rm -fr $HOME/go/src/github.com/iost-official/go-iost
   fi
-
 
   echo "---> msg: done: iost_install_rmfr () " | tee -a $INSTALL_LOG
 
@@ -485,6 +497,10 @@ iost_install_packages () {
 
   echo "---> msg: start: iost_install_packages()" | tee -a $INSTALL_LOG
 
+  # second, run update 
+  echo "---> run: sudo $pkg_installer update"
+  sudo $pkg_installer update                               >> $INSTALL_LOG 2>&1
+
   #$sec_updt=$($pkg_installer list --upgradable | grep security | wc -l)
   #$reg_updt=$($pkg_installer list --upgradable | wc -l)
 
@@ -496,13 +512,12 @@ iost_install_packages () {
   #  echo "---> msg: NOTE: given the large number if updagtes, this may take a while"
   #fi
 
-  echo "---> run: sudo $pkg_installer update"
-  sudo $pkg_installer update                               >> $INSTALL_LOG 2>&1
-
   # 2019/04/18 - 18.04 cannot run unattended (grub and ??) 18.04
-  DEBIAN_FRONTEND=noninteractive sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade >> $INSTALL_LOG 2>&1
-  echo "---> run: sudo $pkg_installer upgrade "
-  sudo $pkg_installer upgrade                              >> $INSTALL_LOG 2>&1
+  echo "---> run: DEBIAN_FRONTEND=noninteractive sudo apt-get -qy -o DPkg::options::=\"--force-confdef\" -o DPkg::options::=\"--force-confold\" upgrade"
+  DEBIAN_FRONTEND=noninteractive sudo apt-get -qy -o DPkg::options::="--force-confdef" -o DPkg::options::="--force-confold" upgrade
+  #DEBIAN_FRONTEND=noninteractive sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade >> $INSTALL_LOG 2>&1
+  #echo "---> run: sudo $pkg_installer upgrade "
+  #sudo $pkg_installer upgrade                              >> $INSTALL_LOG 2>&1
 
   echo "---> run: sudo $pkg_installer install software-properties-common "
   sudo $pkg_installer install software-properties-common   >> $INSTALL_LOG 2>&1
@@ -728,6 +743,57 @@ iost_install_golang () {
   fi
 
   echo "---> msg: done: iost_install_golang ()" | tee -a $INSTALL_LOG
+}
+
+#
+#  iost_install_sdk_iostjs() -
+#
+iost_install_sdk_iostjs () {
+  echo ""; echo ""
+  echo "#=-------------------------------------------------------------------------=#"
+  echo "#=------------------   IOST Install - Installing SDK iost.js  -------------=#"
+  echo "#=-------------------------------------------------------------------------=#"
+
+  echo "---> msg: start: iost_install_sdk_iostjs ()" 				| tee -a $INSTALL_LOG
+
+  echo "---> cmd: cd $HOME/iost-unofficial " 					| tee -a $INSTALL_LOG
+  cd $HOME/iost-unofficial
+
+  echo "---> cmd: git clone https://github.com/iost-official/iostjs.git" 	| tee -a $INSTALL_LOG
+  git clone https://github.com/iost-official/iostjs.git
+
+  echo "---> cmd: cd iost.js" 							| tee -a $INSTALL_LOG
+  cd iost.js
+
+  echo "---> cmd: node install"							| tee -a $INSTALL_LOG
+  node install
+
+
+}
+
+#
+#  iost_install_sdk_go_sdk() -
+#
+iost_install_sdk_go_sdk () {
+  echo ""; echo ""
+  echo "#=-------------------------------------------------------------------------=#"
+  echo "#=------------------   IOST Install - Installing SDK go-sdk   -------------=#"
+  echo "#=-------------------------------------------------------------------------=#"
+
+  echo "---> msg: start: iost_install_sdk_go_sdk()"  				| tee -a $INSTALL_LOG
+
+  echo "---> cmd: "$HOME/go/src/github.com/iost-official/go-iost"
+  cd "$HOME/go/src/github.com/iost-official/go-iost"
+  #alias IOST="cd $IOST_ROOT"
+  echo "---> cmd: cd $IOST_ROOT 		     				| tee -a $INSTALL_LOG
+  cd $IOST_ROOT
+
+  echo "---> cmd: git clone https://github.com/iost-official/go-iost.git" 	| tee -a $INSTALL_LOG
+  git clone https://github.com/iost-official/go-iost.git
+
+
+  echo "---> msg: end: iost_install_sdk_go_sdk()"  				| tee -a $INSTALL_LOG
+
 }
 
 #  end: IOST install
@@ -1015,7 +1081,7 @@ iost_view_install_log () {
 
 
 #
-#  iost_install_iost () - master setup func
+#  iost_baremetal_or_docker () - master setup func
 #
 iost_baremetal_or_docker ()  {
   clear
@@ -1130,6 +1196,8 @@ iost_main_menu ()  {
 
        iost_install_golang
        iost_install_iost
+       iost_install_sdk_iostjs
+       iost_install_sdk_go_sdk
        iost_run 
     ;;
 
