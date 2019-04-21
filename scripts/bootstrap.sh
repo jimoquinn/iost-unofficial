@@ -240,9 +240,9 @@ iost_distro_detect () {
             dev_tools="$pkg_installer software-properties-common  build-essential"
             dev_tools_purge="$pkg_installer  purge software-properties-common  build-essential"
             # setup packages-ubuntu.txt
-            echo "---> msg: [$PRETTY_NAME] is supported and using [$pkg_installer]"
+            echo "---> $OK_COLOR msg: [$PRETTY_NAME] is supported and using [$pkg_installer]"
           else
-            echo "---> err: [${PRETTY_NAME}] is not supported, view $INSTALL_LOG"
+            echo "---> $ERROR_COLOR err: [${PRETTY_NAME}] is not supported, view $INSTALL_LOG"
             exit 76
           fi
           ;;
@@ -724,6 +724,71 @@ iost_install_golang () {
   echo "---> msg: done: iost_install_golang ()" | tee -a $INSTALL_LOG
 }
 
+#  end: IOST install
+# -------------------------------------------------------------------------------------------------
+
+
+
+# -------------------------------------------------------------------------------------------------
+#  start: IOST install
+
+#
+#  iost_install_iost_core  () - install the IOST core code
+#
+iost_install_iost_core () {
+
+  echo ""; echo ""
+
+  echo "#=-------------------------------------------------------------------------=#"
+  echo "#=--------- IOST Install - install core                               -----=#"
+  echo "#=-------------------------------------------------------------------------=#"
+  echo "---> msg: start: iost_install_core ()" | tee -a $INSTALL_LOG
+
+
+  echo "---> msg: setup the environment $HOME/.iost_env"
+  source $HOME/.iost_env
+
+  ###go get -d github.com/iost-official/go-iost
+  ###cd github.com/iost-official/go-iost/
+
+  #echo "---> msg: env | grep GO"
+  #res=$(env | grep GO > /dev/null 2>&1)
+  #echo "---> msg: res [$res]"
+
+  echo "---> msg: cd $GOPATH/src"
+  cd $GOPATH/src
+  echo "---> msg: go get -d github.com/iost-official/go-iost"
+  go get -d github.com/iost-official/go-iost >> $INSTALL_LOG 2>&1
+
+  echo "---> msg: use [cd $IOST_ROOT]"
+  cd $IOST_ROOT
+
+  echo "---> run: make build install"
+  make build install >> $INSTALL_LOG 2>&1
+
+  echo "---> run: cd vm/v8vm/v8"
+  cd vm/v8vm/v8
+  echo "---> run: make clean js_bin vm install"
+  #make clean js_bin vm install
+  make clean js_bin vm install deploy >> $INSTALL_LOG 2>&1
+  make deploy                         >> $INSTALL_LOG 2>&1
+
+  echo ""; echo "";
+  read -p "---> msg: core IOST is installed, continue to the IOST Admin Menu? (Y/n): " tADM
+
+  if [ ! -z "$tADM" ]; then
+    if [ $tADM == "n" ] || [ $tADM == 'N' ] || [ $tADM == '' ]; then
+        exit 0
+    else
+        iost_main_menu
+    fi
+  fi
+
+}
+
+#  end: IOST install
+# -------------------------------------------------------------------------------------------------
+
 
 # -------------------------------------------------------------------------------------------------
 #  start: iServer start/stop/restart
@@ -758,6 +823,11 @@ iost_stop () {
 #
 iost_start_iserver () {
 
+  if [ ! -r $HOME/.iost_env ]; then
+    echo "  ---> msg: iServer not installed, not starting..." 			| tee -a $SERVER_LOG
+    return 80
+  fi
+
   # check for a running iServer
   tpid=$(pidof iserver);
   if [ -z $tpid ]; then
@@ -765,12 +835,12 @@ iost_start_iserver () {
     iost_run
 
     # the start log should have zero lines unless there is an error
-    if $(wc -l $SERVER_START_LOG >= 0) {
-
-      ERR=`cat $SERVER_START_LOG`
-      echo "  ---> msg: iServer start error:" 					| tee -a $SERVER_LOG
-      echo "  ---> msg: [$ERR]" 			 			| tee -a $SERVER_LOG
-    }
+    #if $(wc -l $SERVER_START_LOG >= 0) {
+#
+#      ERR=`cat $SERVER_START_LOG`
+#      echo "  ---> msg: iServer start error:" 					| tee -a $SERVER_LOG
+#      echo "  ---> msg: [$ERR]" 			 			| tee -a $SERVER_LOG
+#    }
   else
     echo "  ---> msg: iServer running as pid [$tpid], no need to start "	| tee -a $SERVER_LOG
   fi
@@ -781,6 +851,10 @@ iost_start_iserver () {
 #  iost_stop_iserver() - gracefully shutdown iServer
 #
 iost_stop_iserver () {
+  if [ ! -r $HOME/.iost_env ]; then
+    echo "  ---> msg: iServer not installed, not stopping..." 			| tee -a $SERVER_LOG
+    return 81
+  fi
 
   # check for a running iServer
   tpid=$(pidof iserver);
@@ -800,6 +874,9 @@ iost_stop_iserver () {
 #  >=1 - successful, the iServer is running
 #   =0 - not successful, the iServer is not running
 iost_check_iserver () {
+  if [ ! -r $HOME/.iost_env ]; then
+    return 82
+  fi
 
   # check for a running iServer
   tpid=$(pidof iserver);
@@ -821,17 +898,22 @@ iost_check_iserver () {
 #  -
 iost_restart_iserver () {
 
+  if [ ! -r $HOME/.iost_env ]; then
+    echo "  ---> msg: iServer not installed, not restarting..."  		| tee -a $SERVER_LOG
+    return 84
+  fi
+
   local tPID
 
   # 0=running, 1=not running
   if iost_check_iserver; then
     # tpid - this is a global variable set in iost_check_iserver()
-    echo "  ---> msg: iServer running at pid [$tpid], now stopping..."  | tee -a $SERVER_LOG
+    echo "  ---> msg: iServer running at pid [$tpid], now stopping..."  	| tee -a $SERVER_LOG
     iost_stop
-    echo "  ---> msg: iServer starting..."
+    echo "  ---> msg: iServer starting..." 					| tee -a $SERVER_LOG
     iost_run
   else
-    echo "  ---> msg: iServer starting..." 
+    echo "  ---> msg: iServer starting..."  					| tee -a $SERVER_LOG
     iost_run
     #tPID=$(iost_start_iserver)
     #read -p "  ---> msg: iServer log is located: $SERVER_LOG, hit any key to continue"
@@ -843,84 +925,30 @@ iost_restart_iserver () {
 # -------------------------------------------------------------------------------------------------
 
 
-#
-#  iost_install_iost_core  () - install the IOST core code
-#
-iost_install_iost_core () {
-
-  echo ''; echo ''
-  
-  echo '#=-------------------------------------------------------------------------=#'
-  echo '#=--------- IOST Install - install core                               -----=#'
-  echo '#=-------------------------------------------------------------------------=#'
-  echo "---> msg: start: iost_install_core ()" | tee -a $INSTALL_LOG
-
-
-  echo "---> msg: setup the environment $HOME/.iost_env"
-  source $HOME/.iost_env
-
-  ###go get -d github.com/iost-official/go-iost
-  ###cd github.com/iost-official/go-iost/
-
-  #echo "---> msg: env | grep GO"
-  #res=$(env | grep GO > /dev/null 2>&1)
-  #echo "---> msg: res [$res]"
-
-  echo "---> msg: cd $GOPATH/src"
-  cd $GOPATH/src
-  echo "---> msg: go get -d github.com/iost-official/go-iost"
-  go get -d github.com/iost-official/go-iost >> $INSTALL_LOG 2>&1
-
-  echo "---> msg: use [cd $IOST_ROOT]"
-  cd $IOST_ROOT
-
-  echo "---> run: make build install"
-  make build install >> $INSTALL_LOG 2>&1 
-
-  echo "---> run: cd vm/v8vm/v8"
-  cd vm/v8vm/v8
-  echo "---> run: make clean js_bin vm install"
-  #make clean js_bin vm install
-  make clean js_bin vm install deploy >> $INSTALL_LOG 2>&1
-  make deploy                         >> $INSTALL_LOG 2>&1
-
-  echo ""; echo "";
-  read -p "---> msg: core IOST is installed, continue to the IOST Admin Menu? (Y/n): " tADM
-
-  if [ ! -z "$tADM" ]; then
-    if [ $tADM == "n" ] || [ $tADM == 'N' ] || [ $tADM == '' ]; then
-	exit 0
-    else
-        iost_main_menu
-    fi
-  fi
-
-}
-
 #  
 #  iost_test_iwallet()
 #
 iost_test_iwallet () {
-  clear
-  . ~/.iost_env
-  echo "---> run: iwallet state"
-  iwallet state > $IWALLET_LOG 2>&1
 
+  if [ ! -r $HOME/.iost_env ]; then
+    echo "  ---> msg: iServer not installed, cannot test iWallet..."  		| tee -a $SERVER_LOG
+    return 84
+  else
+    source $HOME/.iost_env
+    echo "---> run: iwallet state"
+    iwallet state > $IWALLET_LOG 2>&1
 
-  if (( $? >= 1 )); then
-    echo ""; echo ""
-    cat $IWALLET_LOG | more
-    echo ""; echo ""
-    echo "  ---> err: make sure iServer is running"
-    return $?
-  else 
-    cat $IWALLET_LOG | more
+    if (( $? >= 1 )); then
+      echo ""; echo ""
+      cat $IWALLET_LOG | more
+      echo ""; echo ""
+      echo "  ---> err: make sure iServer is running"
+      return $?
+    else 
+      cat $IWALLET_LOG | more
+    fi
   fi
-
-
 }
-
-
 
 
 #
@@ -932,7 +960,7 @@ iost_run_itests () {
 
   echo "  #=--------------------------------------------------=#"
   echo "  #=--------- IOST Install Administration Menu  ------=#"
-  echo '  #=-- itest run a_case, t_case, c_case, cv_case  ----=#'
+  echo "  #=-- itest run a_case, t_case, c_case, cv_case  ----=#"
   echo "  #=--------------------------------------------------=#"
   
 
@@ -958,6 +986,29 @@ iost_run_itests () {
 
 
 #
+#  iost_view_install_log ()
+#
+iost_view_install_log () {
+
+  if [ -r /tmp/install.name.log ]; then
+    echo ""
+    echo "  ---> msg: view install log"
+    echo ""; echo ""
+    more `cat /tmp/install.name.log`
+    echo ""; echo ""
+    read -p "  ---> msg: end of log, any key to continue" tIN
+    echo "";
+  else
+    echo ""
+    read -p "  ---> msg: $ERROR_COLOR no install log present, any key to continue" tIN
+    echo ""
+    return 86
+  fi 
+
+}
+
+
+#
 #  iost_install_iost () - master setup func
 #
 iost_baremetal_or_docker ()  {
@@ -977,20 +1028,21 @@ iost_baremetal_or_docker ()  {
 
   case "$iNUM" in
 
-    2) echo ""
-       IOST_DOCKER="1"
-       IOST_BAREMETAL="0"
-       iost_main_menu
-    ;;
-
     1) echo ""
        IOST_DOCKER="0"
        IOST_BAREMETAL="1"
        iost_main_menu
     ;;
 
+    2) echo ""
+       IOST_DOCKER="1"
+       IOST_BAREMETAL="0"
+       iost_main_menu
+    ;;
+
     *) echo ""
        iost_main_menu
+    ;;
 
     esac
 }
@@ -1018,14 +1070,6 @@ iost_install_iost () {
 }
 
 
-###
-###   START - beginning of the install script
-###
-
-#set -e
-
-
-
 
 #
 #  iost_main_menu () 
@@ -1036,7 +1080,9 @@ iost_main_menu ()  {
   clear
 
   # hoover up the environment
-  . ~/.iost_env
+  if [ -r $HOME/.iost_env ]; then
+    source $HOME/.iost_env
+  fi
 
   echo "  #=--------------------------------------------------=#"
   echo "  #=--        IOST Install/Test/Admin Script        --=#"
@@ -1089,10 +1135,9 @@ iost_main_menu ()  {
 
     3) echo ""
        iost_start_iserver
-       read -p "  ---> msg: iServer started, hit any key to continue" tIN
+       read -p "  ---> msg: hit any key to continue" tIN
        iost_main_menu
     ;;
-
 
     4) echo ""
        iost_stop_iserver
@@ -1131,25 +1176,24 @@ iost_main_menu ()  {
        iost_main_menu
     ;;
 
-   10) clear
-       echo ""
-       echo "  ---> msg: view install log"
-       echo ""; echo ""
-       more `cat /tmp/install.name.log`
-       echo ""; echo ""
-       read -p "---> msg: end of log, any key to continue" tIN
-       echo "";
+   10) iost_view_install_log
        iost_main_menu
     ;;
 
 
     99) echo ""
-       exit
+        exit
     ;;
 
   esac
-
 }
+
+
+
+###
+###   START - beginning of the install script
+###
+#set -e
 
 iost_main_menu
 #iost_baremetal_or_docker
@@ -1163,8 +1207,9 @@ iost_main_menu
 #iost_run
 
 
+
+
+
 ###
 ###   END - the end of the install script
 ###
-
-
