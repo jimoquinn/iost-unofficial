@@ -15,35 +15,45 @@ clear
 #  all the necessary dependecies and IOST code required to be
 #  productive in less than 15 minutes.  
 #
-#  This is a greenfield install only, so only use on a fresh 
-#  install of Linux.  It will check for previous install attemps, 
-#  remove all the prevous installed dependicies, including config
-#  or source that you may have modified, and start the install 
-#  again.  
+#  bootstrap.sh - for greenfield installs, either bare metal or VM. 
+#  This script will install all the tools necessary to develop 
+#  smartcontracts in JavaScript or Go in the IOST ecosystem.
 #
-#  Admin Menu that will
-#  - IOST Install
-#  - IOST Removal
-#  - iServer start/stop/restart
-#  - run itest 
-#  - view install log
-#  - kkk
 #
-#  We'll install the following: 
-#  - updates and patches for your distro
-#  - apt-transport-https ca-certificates 
-#  - software-properties-common 
-#  - build-essential curl git git-lfs 
-#  - libgflags-dev libsnappy-dev zlib1g-dev 
-#  - libbz2-dev liblz4-dev libzstd-dev   
-#  - nvm npm node
-#  - Go Lang
+#   IOST 3.0.9 Installation:
+#   -  iwallet
+#   -  iserver
+#   -  itest suite
+#   -  JavaScript SDK
+#   -  JavaScript example smart contracts
+#   -  Go SDK
+#   -  Go example smart contracts
+#   -  easy setup for local testnet node
 #
-#  IOST from github.com/iost-official/go-iost
-#  - iWallet - the wallet for IOST
-#  - iServer - the node/servinode daemon
-#  - v8vm    - the virtual machine
-#  - scaf    - dApp development tool
+#   Distros Supported:
+#   -  Ubuntu 16.04 (Xenial)
+#   -  Ubuntu 17.04 (Yakkity)
+#   -  Ubuntu 18.04 (Bionic)
+#
+#   Dependencies Installed:
+#   -  apt-transport-https ca-certificates
+#   -  software-properties-common
+#   -  build-essential curl git git-lfs
+#   -  libgflags-dev libsnappy-dev zlib1g-dev
+#   -  libbz2-dev liblz4-dev libzstd-dev
+#   -  distro updates
+#   -  nvm v0.34.0
+#   -  npm v6.4.2
+#   -  node v10.15.3
+#   -  Go 1.12.4
+#
+#   Admin Menu:
+#   -  IOST install
+#   -  IOST removal
+#   -  iServer start/stop/restart
+#   -  run iTest
+#   -  view install log
+#
 #
 #  Report bugs here:
 #  -  https://github.com/jimoquinn/iost-unofficial
