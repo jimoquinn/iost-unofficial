@@ -101,7 +101,7 @@ readonly ITEST_LOG="/tmp/itest.$$.log"			# stdout & stderr
 readonly IWALLET_LOG="/tmp/iwallet.$$.log"		# stdout & stderr
 
 # variables
-readonly SOURCE_DIR="$HOME/iost-unofficial"
+readonly TOP_DIR="$HOME/iost-unofficial"
 readonly SCRIPT_DIR="$HOME/iost-unofficial/scripts"
 IOST_DOCKER=""
 IOST_BAREMETAL=""
@@ -1035,23 +1035,28 @@ iost_test_iwallet () {
 iost_test_sdk_iostjs () {
 
   if [ ! -r $HOME/.iost_env ]; then
-    echo "  ---> msg: iServer not installed, cannot test iWallet..."            | tee -a $SERVER_LOG
+    echo "  ---> msg: iServer not installed, cannot test JavaScript SDK..."            | tee -a $SERVER_LOG
     return 84
   else
     source $HOME/.iost_env
-    echo "---> run: iwallet state"
-    iwallet state > $IWALLET_LOG 2>&1
+    cd $TOP_DIR/iost.js/examples
 
-    if (( $? >= 1 )); then
-      echo ""; echo ""
-      cat $IWALLET_LOG | more
-      echo ""; echo ""
+    echo "  ---> run: inode system_test.js "
+    node info.js > /tmp/iost.test.iost.js.txt 2>&1
+    rc=$?
+
+    if (( $rc >= 1 )); then
+      echo "rc: $rc"; echo ""
+      cat /tmp/iost.test.iost.js.txt | more
+      echo ""; echo "";
       echo "  ---> err: make sure iServer is running"
-      return $?
+      read -p "lll" z
+      return $rc
     else
-      cat $IWALLET_LOG | more
+      cat /tmp/iost.test.iost.js.txt | more
     fi
   fi
+      read -p "  ---> hit any key to continue..." z
 }
 
 
@@ -1288,7 +1293,11 @@ iost_main_menu ()  {
        iost_main_menu
     ;;
 
-    8) clear
+    8) iost_test_sdk_iostjs 
+       iost_main_menu
+    ;;
+
+    88) clear
        echo ""
        echo "   ---> msg: opening a /bin/bash, type exit or CTRL-D to return"
        /bin/bash
