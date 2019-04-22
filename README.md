@@ -5,14 +5,13 @@
 
 
    IOST 3.0.9 Installation:
+   -  easy setup for local testnet node
    -  iwallet
    -  iserver
    -  itest suite
    -  JavaScript SDK
    -  JavaScript example smart contracts
    -  Go SDK
-   -  Go example smart contracts
-   -  easy setup for local testnet node
 
    Distros Supported:
    -  Ubuntu 16.04 (Xenial)
