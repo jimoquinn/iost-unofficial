@@ -101,6 +101,8 @@ readonly ITEST_LOG="/tmp/itest.$$.log"			# stdout & stderr
 readonly IWALLET_LOG="/tmp/iwallet.$$.log"		# stdout & stderr
 
 # variables
+readonly SOURCE_DIR="$HOME/iost-unofficial"
+readonly SCRIPT_DIR="$HOME/iost-unofficial/scripts"
 IOST_DOCKER=""
 IOST_BAREMETAL=""
 
@@ -438,6 +440,21 @@ iost_install_rmfr () {
     rm -fr $HOME/go/src/github.com/iost-official/go-iost
   fi
 
+  # remove IOST Go SDK 
+  if [ -d "$HOME/go/src/github.com/iost-official/go-sdk" ]; then
+    echo "---> run: rm -fr $HOME/go/src/github.com/iost-official/go-sdk"
+    rm -fr $HOME/go/src/github.com/iost-official/go-sdk
+  fi
+
+
+  # remove IOST JavaScript SDK
+  if [ -d "$SOURCE_DIR/iost.js" ]; then
+    echo "---> run: rm -fr $SOURCE_DIR/iost.js"
+    #rm -fr $SOURCE_DIR/iost.js
+  fi
+
+  exit;
+
   echo "---> msg: done: iost_install_rmfr () " | tee -a $INSTALL_LOG
 
 }
@@ -514,8 +531,7 @@ iost_install_packages () {
 
   # 2019/04/18 - 18.04 cannot run unattended (grub and ??) 18.04
   echo "---> run: DEBIAN_FRONTEND=noninteractive sudo apt-get -qy -o DPkg::options::=\"--force-confdef\" -o DPkg::options::=\"--force-confold\" upgrade"
-  DEBIAN_FRONTEND=noninteractive sudo apt-get -qy -o DPkg::options::="--force-confdef" -o DPkg::options::="--force-confold" upgrade
-  #DEBIAN_FRONTEND=noninteractive sudo apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade >> $INSTALL_LOG 2>&1
+  DEBIAN_FRONTEND=noninteractive sudo apt-get -qy -o DPkg::options::="--force-confdef" -o DPkg::options::="--force-confold" upgrade  >> $INSTALL_LOG 2>&1
   #echo "---> run: sudo $pkg_installer upgrade "
   #sudo $pkg_installer upgrade                              >> $INSTALL_LOG 2>&1
 
@@ -757,16 +773,16 @@ iost_install_sdk_iostjs () {
   echo "---> msg: start: iost_install_sdk_iostjs ()" 				| tee -a $INSTALL_LOG
 
   echo "---> cmd: cd $HOME/iost-unofficial " 					| tee -a $INSTALL_LOG
-  cd $HOME/iost-unofficial
+  cd $HOME/iost-unofficial                                                      >> $INSTALL_LOG 2>&1
 
   echo "---> cmd: git clone https://github.com/iost-official/iostjs.git" 	| tee -a $INSTALL_LOG
-  git clone https://github.com/iost-official/iostjs.git
+  git clone https://github.com/iost-official/iost.js.git                        >> $INSTALL_LOG 2>&1
 
   echo "---> cmd: cd iost.js" 							| tee -a $INSTALL_LOG
-  cd iost.js
+  cd iost.js                                                                    >> $INSTALL_LOG 2>&1
 
   echo "---> cmd: node install"							| tee -a $INSTALL_LOG
-  node install
+  npm install                                                                   >> $INSTALL_LOG 2>&1
 
 
 }
@@ -782,15 +798,14 @@ iost_install_sdk_go_sdk () {
 
   echo "---> msg: start: iost_install_sdk_go_sdk()"  				| tee -a $INSTALL_LOG
 
-  echo "---> cmd: "$HOME/go/src/github.com/iost-official/go-iost"
-  cd "$HOME/go/src/github.com/iost-official/go-iost"
-  #alias IOST="cd $IOST_ROOT"
-  echo "---> cmd: cd $IOST_ROOT 		     				| tee -a $INSTALL_LOG
-  cd $IOST_ROOT
+  echo "---> run: cd $HOME/go/src/github.com/iost-official"			| tee -a $INSTALL_LOG
+  cd "$HOME/go/src/github.com/iost-official"					>> $INSTALL_LOG 2>&1
 
-  echo "---> cmd: git clone https://github.com/iost-official/go-iost.git" 	| tee -a $INSTALL_LOG
-  git clone https://github.com/iost-official/go-iost.git
+  echo "---> run: git clone https://github.com/iost-official/go-sdk.git" 	| tee -a $INSTALL_LOG
+  git clone https://github.com/iost-official/go-sdk.git  			>> $INSTALL_LOG 2>&1
 
+  echo "---> run: cd -"  							| tee -a $INSTALL_LOG
+  cd -  									>> $INSTALL_LOG 2>&1
 
   echo "---> msg: end: iost_install_sdk_go_sdk()"  				| tee -a $INSTALL_LOG
 
@@ -845,16 +860,6 @@ iost_install_iost_core () {
   make clean js_bin vm install deploy >> $INSTALL_LOG 2>&1
   make deploy                         >> $INSTALL_LOG 2>&1
 
-  echo ""; echo "";
-  read -p "---> msg: core IOST is installed, continue to the IOST Admin Menu? (Y/n): " tADM
-
-  if [ ! -z "$tADM" ]; then
-    if [ $tADM == "n" ] || [ $tADM == 'N' ] || [ $tADM == '' ]; then
-        exit 0
-    else
-        iost_main_menu
-    fi
-  fi
 
 }
 
@@ -996,6 +1001,8 @@ iost_restart_iserver () {
 #  end: iServer start/stop/restart
 # -------------------------------------------------------------------------------------------------
 
+# -------------------------------------------------------------------------------------------------
+#  start: test functions
 
 #  
 #  iost_test_iwallet()
@@ -1017,6 +1024,31 @@ iost_test_iwallet () {
       echo "  ---> err: make sure iServer is running"
       return $?
     else 
+      cat $IWALLET_LOG | more
+    fi
+  fi
+}
+
+#
+#  iost_test_sdk_iostjs ()
+#
+iost_test_sdk_iostjs () {
+
+  if [ ! -r $HOME/.iost_env ]; then
+    echo "  ---> msg: iServer not installed, cannot test iWallet..."            | tee -a $SERVER_LOG
+    return 84
+  else
+    source $HOME/.iost_env
+    echo "---> run: iwallet state"
+    iwallet state > $IWALLET_LOG 2>&1
+
+    if (( $? >= 1 )); then
+      echo ""; echo ""
+      cat $IWALLET_LOG | more
+      echo ""; echo ""
+      echo "  ---> err: make sure iServer is running"
+      return $?
+    else
       cat $IWALLET_LOG | more
     fi
   fi
@@ -1079,6 +1111,8 @@ iost_view_install_log () {
 
 }
 
+#  end: test functions
+# -------------------------------------------------------------------------------------------------
 
 #
 #  iost_baremetal_or_docker () - master setup func
@@ -1141,6 +1175,21 @@ iost_install_iost () {
 
 }
 
+#
+#  iost_install_run_admin () 
+#
+iost_install_run_admin () {
+  echo ""; echo "";
+  read -p "---> msg: core IOST is installed, continue to the IOST Admin Menu? (Y/n): " tADM
+
+  if [ ! -z "$tADM" ]; then
+    if [ $tADM == "n" ] || [ $tADM == 'N' ] || [ $tADM == '' ]; then
+        exit 0
+    else
+        iost_main_menu
+    fi
+  fi
+}
 
 
 #
@@ -1170,9 +1219,9 @@ iost_main_menu ()  {
   echo "    4.  iServer stop local node"
   echo "    5.  iServer restart local node"
   echo ""
-  echo "    6.  Run iWallet to check node status"
-  echo "    7.  Run iTest suite"
-  echo "    8.  Run test dApp"
+  echo "    6.  Test iWallet by checking node status"
+  echo "    7.  Test blockchain with iTest"
+  echo "    8.  Test JavaScript SDK"
   echo ""
   echo "    9.  Open the command line interface"
   echo "   10.  View last install log"
@@ -1198,6 +1247,7 @@ iost_main_menu ()  {
        iost_install_iost
        iost_install_sdk_iostjs
        iost_install_sdk_go_sdk
+       iost_install_run_admin 
        iost_run 
     ;;
 
