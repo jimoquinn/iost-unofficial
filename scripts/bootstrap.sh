@@ -374,13 +374,6 @@ iost_install_rmfr () {
   # -  IOST: iwallet, iserver, scaf, 
 
 
-  #
-  #  saturate environment
-  #
-  if [ -r $HOME/.iost_env ]; then
-    echo "  ---> msg: $HOME/.iost_env present, adding to environment..."                   | tee -a $INSTALL_LOG
-    source $HOME/.iost_env
-  fi
 
   echo ""; echo ""
   echo "#=-------------------------------------------------------------------------=#"
@@ -388,6 +381,27 @@ iost_install_rmfr () {
   echo "#=-------------------------------------------------------------------------=#"
   echo "---> msg: start: iost_install_rmfr () " | tee -a $INSTALL_LOG
   echo "---> msg: view log file: $INSTALL_LOG"
+
+  #
+  #  saturate environment
+  #
+  if [ -r $HOME/.iost_env ]; then
+    echo "  ---> msg: $HOME/.iost_env present, adding to environment..."                   	| tee -a $INSTALL_LOG
+    source $HOME/.iost_env
+  else 
+    echo    "---> msg: $HOME/.iost_env NOT present..."                   			| tee -a $INSTALL_LOG
+    echo    "---> msg: this may be a partial install or a green system..."                   	| tee -a $INSTALL_LOG
+    read -p "---> msg: do you want to continue with the removal?  (Y/n): " rCONT
+
+    if [ ! -z "$rCONT" ]; then
+      if [ $rCONT == "n" ] || [ $rCONT == 'N' ] || [ $rCONT == '' ]; then
+        echo "---> msg: not removing anything....";
+	iost_main_menu
+      else
+        echo "---> msg: will what is left of the previous install";
+      fi
+    fi
+  fi
 
   #
   #  determine distro and set variables
@@ -409,52 +423,60 @@ iost_install_rmfr () {
   fi
 
   echo "---> run: sudo $pkg_installer $pkg_purge libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev  "
-  sudo $pkg_installer $pkg_purge libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev    >> $INSTALL_LOG 2>&1
+  sudo $pkg_installer $pkg_purge libgflags-dev libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev    	>> $INSTALL_LOG 2>&1
 
   echo "---> run: sudo $pkg_installer $pkg_purge git git-lfs software-properties-common  build-essential curl  " 
-  sudo $pkg_installer $pkg_purge git git-lfs software-properties-common  build-essential curl    >> $INSTALL_LOG 2>&1
+  sudo $pkg_installer $pkg_purge git git-lfs software-properties-common  build-essential curl    		>> $INSTALL_LOG 2>&1
 
   echo "---> run: sudo $dev_tools_purge" 
-  sudo $dev_tools_purge                           >> $INSTALL_LOG 2>&1
+  sudo $dev_tools_purge                           	>> $INSTALL_LOG 2>&1
 
   echo "---> run: sudo $pkg_installer $pkg_purge apt-transport-https  "
   sudo $pkg_installer $pkg_purge apt-transport-https    >> $INSTALL_LOG 2>&1
 
   echo "---> run: sudo $pkg_installer autoremove  " 
-  sudo $pkg_installer autoremove                   >> $INSTALL_LOG 2>&1
+  sudo $pkg_installer autoremove                   	>> $INSTALL_LOG 2>&1
 
   if [ -f "$HOME/.iost_env" ]; then
     echo "---> run: rm -fr $HOME/.iost_env"
-    rm -fr $HOME/.iost_env
+    rm -fr "$HOME/.iost_env"
+  else 
+    echo "---> msg: [$HOME/.iost_env] not found so not removing..."
   fi
 
   unset NVM_DIR
   if [ -d "$HOME/.nvm" ]; then
     echo "---> run: rm -fr $HOME/.nvm" 
-    rm -fr $HOME/.nvm
+    rm -fr "$HOME/.nvm"
+  else 
+    echo "---> msg: [$HOME/.nvm] not found so not removing..."
   fi
 
   # remove IOST source
   if [ -d "$HOME/go/src/github.com/iost-official/go-iost" ]; then
     echo "---> run: rm -fr $HOME/go/src/github.com/iost-official/go-iost" 
-    rm -fr $HOME/go/src/github.com/iost-official/go-iost
+    rm -fr "$HOME/go/src/github.com/iost-official/go-iost"
+  else 
+    echo "---> msg: [$HOME/go/src/github.com/iost-official/go-iost] not found so not removing..."
   fi
 
   # remove IOST Go SDK 
   if [ -d "$HOME/go/src/github.com/iost-official/go-sdk" ]; then
     echo "---> run: rm -fr $HOME/go/src/github.com/iost-official/go-sdk"
-    rm -fr $HOME/go/src/github.com/iost-official/go-sdk
+    rm -fr "$HOME/go/src/github.com/iost-official/go-sdk"
+  else 
+    echo "---> msg: [$HOME/go/src/github.com/iost-official/go-sdk] not found so not removing..."
   fi
-
 
   # remove IOST JavaScript SDK
-  if [ -d "$SOURCE_DIR/iost.js" ]; then
-    echo "---> run: rm -fr $SOURCE_DIR/iost.js"
-    #rm -fr $SOURCE_DIR/iost.js
+  if [ -d "$TOP_DIR/iost.js" ]; then
+    echo "---> run: rm -fr $TOP_DIR/iost.js"
+    #rm -fr "$TOP_DIR/iost.js"
+  else 
+    echo "---> msg: [$TOP_DIR/iost.js] not found so not removing..."
   fi
 
-  exit;
-
+  read -p "Continue?  (Y/n): " CONT
   echo "---> msg: done: iost_install_rmfr () " | tee -a $INSTALL_LOG
 
 }
@@ -975,31 +997,30 @@ iost_check_iserver () {
 #  -
 iost_restart_iserver () {
 
+  local tPID
+
   if [ ! -r $HOME/.iost_env ]; then
     echo "  ---> msg: iServer not installed, not restarting..."  		| tee -a $SERVER_LOG
     return 84
-  fi
-
-  local tPID
-
-  # 0=running, 1=not running
-  if iost_check_iserver; then
-    # tpid - this is a global variable set in iost_check_iserver()
-    echo "  ---> msg: iServer running at pid [$tpid], now stopping..."  	| tee -a $SERVER_LOG
-    iost_stop
-    echo "  ---> msg: iServer starting..." 					| tee -a $SERVER_LOG
-    iost_run
-  else
-    echo "  ---> msg: iServer starting..."  					| tee -a $SERVER_LOG
-    iost_run
-    #tPID=$(iost_start_iserver)
-    #read -p "  ---> msg: iServer log is located: $SERVER_LOG, hit any key to continue"
+  else 
+    # 0=running, 1=not running
+    if iost_check_iserver; then
+      # tpid - this is a global variable set in iost_check_iserver()
+      echo "  ---> msg: iServer running at pid [$tpid], now stopping..."  	| tee -a $SERVER_LOG
+      iost_stop
+      echo "  ---> msg: iServer starting..." 					| tee -a $SERVER_LOG
+      iost_run
+    else
+      echo "  ---> msg: iServer starting..."  					| tee -a $SERVER_LOG
+      iost_run
+    fi
   fi
 
 }
 
 #  end: iServer start/stop/restart
 # -------------------------------------------------------------------------------------------------
+
 
 # -------------------------------------------------------------------------------------------------
 #  start: test functions
@@ -1014,7 +1035,7 @@ iost_test_iwallet () {
     return 84
   else
     source $HOME/.iost_env
-    echo "---> run: iwallet state"
+    echo "  ---> run: iwallet state"
     iwallet state > $IWALLET_LOG 2>&1
 
     if (( $? >= 1 )); then
@@ -1024,10 +1045,13 @@ iost_test_iwallet () {
       echo "  ---> err: make sure iServer is running"
       return $?
     else 
+      read -p "  ---> hit any key to view the test logs" ttLOGS
       cat $IWALLET_LOG | more
+      read -p "  ---> msg: end of log, hit any key to continue" tIN 
     fi
   fi
 }
+
 
 #
 #  iost_test_sdk_iostjs ()
@@ -1049,14 +1073,14 @@ iost_test_sdk_iostjs () {
       echo "rc: $rc"; echo ""
       cat /tmp/iost.test.iost.js.txt | more
       echo ""; echo "";
-      echo "  ---> err: make sure iServer is running"
-      read -p "lll" z
+      read -p "  ---> err: make sure iServer is running..." z
       return $rc
     else
+      read -p "  ---> msg: hit any key to view the test logs" ttLOGS
       cat /tmp/iost.test.iost.js.txt | more
+      read -p "  ---> msg: end of log, hit any key to continue" tIN 
     fi
   fi
-      read -p "  ---> hit any key to continue..." z
 }
 
 
@@ -1065,31 +1089,31 @@ iost_test_sdk_iostjs () {
 #
 iost_run_itests () {
 
-  echo ''; echo ''
+  if [ ! -r $HOME/.iost_env ]; then
+    echo "  ---> msg: iServer not installed, cannot run iTest..."            | tee -a $SERVER_LOG
+    return 84
+  else 
 
-  echo "  #=--------------------------------------------------=#"
-  echo "  #=--------- IOST Install Administration Menu  ------=#"
-  echo "  #=-- itest run a_case, t_case, c_case, cv_case  ----=#"
-  echo "  #=--------------------------------------------------=#"
-  
+    echo "  ----> cmd: cd $IOST_ROOT/test"
+    cd $IOST_ROOT 	>> $ITEST_LOG 2>&1
+    cd test		>> $ITEST_LOG 2>&1
 
-  cd $IOST_ROOT
-  echo "cd $IOST_ROOT/test"
-  cd test
-  echo "  ---> run: itest run a_case";
-  itest run a_case  >> $ITEST_LOG 2>&1
+    echo "  ---> run: itest run a_case";
+    itest run a_case  >> $ITEST_LOG 2>&1
 
-  echo "  ---> run: itest run t_case";
-  itest run t_case  >> $ITEST_LOG 2>&1
+    echo "  ---> run: itest run t_case";
+    itest run t_case  >> $ITEST_LOG 2>&1
 
-  echo "  ---> run: itest run c_case";
-  itest run c_case  >> $ITEST_LOG 2>&1
+    echo "  ---> run: itest run c_case";
+    itest run c_case  >> $ITEST_LOG 2>&1
 
-  echo "  ---> run: itest run cv_case";
-  itest run cv_case >> $ITEST_LOG 2>&1
+    echo "  ---> run: itest run cv_case";
+    itest run cv_case >> $ITEST_LOG 2>&1
 
-  read -p "  ---> hit any key to view the test logs" ttLOGS
-  vi $ITEST_LOG
+    read -p "  ---> hit any key to view the test logs" ttLOGS
+    more $ITEST_LOG
+    read -p "  ---> msg: end of log, hit any key to continue" tIN 
+  fi
 
 }
 
@@ -1280,31 +1304,28 @@ iost_main_menu ()  {
        iost_main_menu
     ;;
 
-    6) echo ""
-       iost_test_iwallet
+    6) iost_test_iwallet
        read -p "  ---> msg: hit any key to continue" tIN
        iost_main_menu
     ;;
 
-    7) echo ""
-       echo "  ---> msg: running iTests"
-       iost_run_iserver
-       iost_run_itests
+    7) iost_run_itests
+       read -p "  ---> msg: hit any key to continue" tIN
        iost_main_menu
     ;;
 
     8) iost_test_sdk_iostjs 
+       read -p "  ---> msg: hit any key to continue" tIN
        iost_main_menu
     ;;
 
-    88) clear
-       echo ""
-       echo "   ---> msg: opening a /bin/bash, type exit or CTRL-D to return"
-       /bin/bash
-       iost_main_menu
+    88) echo "   ---> msg: opening a /bin/bash, type exit or CTRL-D to return"
+        /bin/bash
+        iost_main_menu
     ;;
 
     9) echo "   ---> msg: opening a /bin/bash, type exit or CTRL-D to return"
+       echo ""
        /bin/bash
        iost_main_menu
     ;;
