@@ -552,7 +552,7 @@ iost_install_packages () {
   #fi
 
   # 2019/04/18 - 18.04 cannot run unattended (grub and ??) 18.04
-  echo "---> run: DEBIAN_FRONTEND=noninteractive sudo apt-get -qy -o DPkg::options::=\"--force-confdef\" -o DPkg::options::=\"--force-confold\" upgrade"
+  echo "---> run: DEBIAN_FRONTEND=noninteractive sudo apt-get -qy -o \"APT::Periodic::Unattended-Upgrade "1" -o DPkg::options::=\"--force-confdef\" -o DPkg::options::=\"--force-confold\" upgrade"
   DEBIAN_FRONTEND=noninteractive sudo apt-get -qy -o DPkg::options::="--force-confdef" -o DPkg::options::="--force-confold" upgrade  >> $INSTALL_LOG 2>&1
   #echo "---> run: sudo $pkg_installer upgrade "
   #sudo $pkg_installer upgrade                              >> $INSTALL_LOG 2>&1
