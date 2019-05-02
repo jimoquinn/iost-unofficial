@@ -1,6 +1,9 @@
-#!/bin/bash  
+#!/bin/bash   -
 
-clear
+#clear
+
+# IOST release version: https://github.com/iost-official/go-iost
+readonly IOST_RELEASE="3.0.10"
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 #
@@ -9,14 +12,15 @@ clear
 #            Best for Greenfield Installs    
 #        Debian/Ubuntu/Redhat full VM or container
 #
-#  Sat Apr 20 06:40:40 UTC 2019
+#  
+#          Wed May  1 19:59:03 UTC 2019
 #
 #  Objective:  to provide a single script that will install
 #  all the necessary dependecies and IOST code required to be
 #  productive in less than 15 minutes.  
 #
 #
-#   IOST 3.0.9 Installation:
+#   IOST 3.0.10 Installation:
 #   -  iwallet
 #   -  iserver
 #   -  itest suite
@@ -27,7 +31,7 @@ clear
 #
 #   Distros Supported:
 #   -  Ubuntu 16.04 (Xenial)
-#   -  Ubuntu 17.04 (Yakkity)
+#   -  Ubuntu 17.04 (Yakkety)
 #   -  Ubuntu 18.04 (Bionic)
 #
 #   Dependencies Installed:
@@ -65,10 +69,6 @@ clear
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-# IOST release version: https://github.com/iost-official/go-iost
-readonly IOST_RELEASE="3.0.9"
-
-
 # Dependicies
 readonly GOLANG_MANDATORY="1.12.4"
 readonly NODE_MANDATORY="v10.15.3"
@@ -80,8 +80,8 @@ readonly DOCKER_MANDATORY="v18.06.0-ce"
 # package.io not supported on cosmic yet
 # Supported UNIX distributions
 readonly UBUNTU_MANDATORY=('16.04' '16.10' '18.04');  	# Ubuntu 'xenial' 'yakkety' 'bionic'
-readonly CENTOS_MANDATORY=('centos7' 'rhel');		# Redhat & CentOS
-readonly DEBIAN_MANDATORY=('stretch');			# Debian Stretch
+readonly CENTOS_MANDATORY=('centos7' 'rhel');		        # Redhat & CentOS
+readonly DEBIAN_MANDATORY=('stretch');			            # Debian Stretch
 readonly MACOS_MANDATORY=('Darwin', 'Hitchens');        # OSX 
 
 
@@ -110,7 +110,9 @@ IOST_BAREMETAL=""
 #  NO NEED TO MODIFY BELOW THIS LINE UNLESS THE BUILD IS TOTALLY BROKEN
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-source libs/ui.sh
+if [ -r libs/ui.sh ]; then 
+  source libs/ui.sh
+fi
 
 #
 # IOST Install Functions 
@@ -1015,7 +1017,6 @@ iost_restart_iserver () {
       iost_run
     fi
   fi
-
 }
 
 #  end: iServer start/stop/restart
@@ -1030,25 +1031,35 @@ iost_restart_iserver () {
 #
 iost_test_iwallet () {
 
+  # is IOST installed?
   if [ ! -r $HOME/.iost_env ]; then
     echo "  ---> msg: iServer not installed, cannot test iWallet..."  		| tee -a $SERVER_LOG
     return 84
-  else
+  fi
+
+  #  usage: if iost_check_server; then; echo "running"; fi
+  #  >=1 - successful, the iServer is running
+  #   =0 - not successful, the iServer is not running
+
+  if iost_check_iserver; then
+    # tpid - this is a global variable set in iost_check_iserver()
+    echo "  ---> msg: iServer running at pid [$tpid]..."        | tee -a $SERVER_LOG
     source $HOME/.iost_env
     echo "  ---> run: iwallet state"
     iwallet state > $IWALLET_LOG 2>&1
-
     if (( $? >= 1 )); then
       echo ""; echo ""
       cat $IWALLET_LOG | more
       echo ""; echo ""
       echo "  ---> err: make sure iServer is running"
       return $?
-    else 
+    else
       read -p "  ---> hit any key to view the test logs" ttLOGS
       cat $IWALLET_LOG | more
-      read -p "  ---> msg: end of log, hit any key to continue" tIN 
+      read -p "  ---> msg: end of log, hit any key to continue" tIN
     fi
+  else
+    echo "  ---> msg: iServer not running, you should start it..." | tee -a $SERVER_LOG
   fi
 }
 
@@ -1096,18 +1107,18 @@ iost_run_itests () {
 
     echo "  ----> cmd: cd $IOST_ROOT/test"
     cd $IOST_ROOT 	>> $ITEST_LOG 2>&1
-    cd test		>> $ITEST_LOG 2>&1
+    cd test		      >> $ITEST_LOG 2>&1
 
-    echo "  ---> run: itest run a_case";
+    echo "  ---> run: itest run a_case"
     itest run a_case  >> $ITEST_LOG 2>&1
 
-    echo "  ---> run: itest run t_case";
+    echo "  ---> run: itest run t_case"
     itest run t_case  >> $ITEST_LOG 2>&1
 
-    echo "  ---> run: itest run c_case";
+    echo "  ---> run: itest run c_case"
     itest run c_case  >> $ITEST_LOG 2>&1
 
-    echo "  ---> run: itest run cv_case";
+    echo "  ---> run: itest run cv_case"
     itest run cv_case >> $ITEST_LOG 2>&1
 
     read -p "  ---> hit any key to view the test logs" ttLOGS
@@ -1350,16 +1361,6 @@ iost_main_menu ()  {
 #set -e
 
 iost_main_menu
-#iost_baremetal_or_docker
-#iost_install_init
-#iost_warning_requirements
-#iost_install_packages
-#iost_install_nvm_node_npm
-#iost_install_docker
-#iost_install_golang
-#iost_install_iost
-#iost_run
-
 
 
 

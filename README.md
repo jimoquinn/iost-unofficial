@@ -4,7 +4,7 @@
   or Go in the IOST ecosystem.
 
 
-   IOST 3.0.9 Installation:
+   IOST 3.0.10 Installation:
    -  easy setup for local testnet node
    -  iwallet
    -  iserver
