@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash 
 
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
@@ -21,7 +21,24 @@ readonly NPM_MANDATORY="v6.4.1"
 readonly NVM_MANDATORY="v0.34.0"
 
 # install and blockchain logs
-readonly SERVER_LOG="/tmp/bootstrap.sh.$$.log"
+readonly INSTALL_LOG="/tmp/build_win64.$$.log"         # stdout & stderr
+readonly SERVER_LOG="/tmp/iserver.$$.log"               # stdout
+#readonly SERVER_START_LOG="/tmp/iserver.start.$$.log"   # stdout
+#readonly SERVER_ERR_LOG="/tmp/iserver.err.$$.log"       # stderr
+#readonly ITEST_LOG="/tmp/itest.$$.log"                  # stdout & stderr
+#readonly IWALLET_LOG="/tmp/iwallet.$$.log"              # stdout & stderr
+
+#
+# exists()  - does the command exist in the OS?
+#
+exists () {
+
+  test -x $(command -v $1)
+  if (( $? >= 1 )); then
+    echo "---> err: command [$1] does not exist"
+    return $?
+  fi
+}
 
 
 
@@ -34,7 +51,7 @@ iost_install_init () {
   echo "#=-------------------------------------------------------------------------=#"
   echo "#-----------------   IOST Install - pre-init      -------------------------=#"
   echo "#=-------------------------------------------------------------------------=#"
-  echo "---> msg: start: iost_install_init () " | tee -a $SERVER_LOG
+  echo "---> msg: start: iost_install_init () " | tee -a $INSTALL_LOG
 
   # 1st - confirm that we are not running under root
   if [[ $(whoami) == "root" ]]; then
@@ -104,7 +121,7 @@ iost_install_init () {
             # setup packages-debian.txt
             echo "---> msg: [$PRETTY_NAME] is supported and using [$pkg_installer]"
           else
-            echo "---> err: [$VERSION_ID] [${PRETTY_NAME}] is not supported, view $SERVER_LOG"
+            echo "---> err: [$VERSION_ID] [${PRETTY_NAME}] is not supported, view $INSTALL_LOG"
             exit 77
           fi
           ;;
@@ -118,13 +135,13 @@ iost_install_init () {
             # setup packages-ubuntu.txt
             echo "---> msg: [$PRETTY_NAME] is supported and using [$pkg_installer]"
           else
-            echo "---> err: [$PRETTY_NAME] is not supported, view $SERVER_LOG"
+            echo "---> err: [$PRETTY_NAME] is not supported, view $INSTALL_LOG"
             exit 76
           fi
           ;;
 
         *)
-          echo "---> err: the package installer for [$PRETTY_INSTALLER] is unsupported, view $SERVER_LOG"
+          echo "---> err: the package installer for [$PRETTY_INSTALLER] is unsupported, view $INSTALL_LOG"
           exit 95
           ;;
 
@@ -139,7 +156,7 @@ iost_install_init () {
   #command -v git >/dev/null 2>&1 || { echo >&2 "I require foo but it's not installed.  Aborting."; exit 1; }
   if exists git; then
     echo "---> run: $pkg_installer install git"
-    sudo $pkg_installer install git  >> $SERVER_LOG 2>&1
+    sudo $pkg_installer install git  >> $INSTALL_LOG 2>&1
   else
     mygit=$(git --version 2>/dev/null)
     echo "---> msg: $mygit already installed"
@@ -149,7 +166,9 @@ iost_install_init () {
   #
   #  unset any variables
   #
-  unset $NVM_DIR
+  if [ ! -z $NVM_DIR ]; then
+    unset NVM_DIR
+  fi
 
 
   #
@@ -175,7 +194,7 @@ iost_install_init () {
     fi
   fi
 
-  echo "---> msg: done: iost_install_init () " | tee -a $SERVER_LOG
+  echo "---> msg: done: iost_install_init () " | tee -a $INSTALL_LOG
 
 }
 
@@ -190,13 +209,13 @@ iost_install_packages () {
   echo '#------------------     IOST Install - installing packages   --------------=#'
   echo '#=-------------------------------------------------------------------------=#'
 
-  echo "---> msg: start: iost_install_packages()" | tee -a $SERVER_LOG
+  echo "---> msg: start: iost_install_packages()" | tee -a $INSTALL_LOG
 
   #$sec_updt=$($pkg_installer list --upgradable | grep security | wc -l)
   #$reg_updt=$($pkg_installer list --upgradable | wc -l)
 
   echo "---> run: sudo $pkg_installer install apt-transport-https ca-certificates "
-  sudo $pkg_installer install apt-transport-https ca-certificates  >> $SERVER_LOG 2>&1
+  sudo $pkg_installer install apt-transport-https ca-certificates  >> $INSTALL_LOG 2>&1
 
   #echo "---> msg: $sec_updt security udpates and $reg_updt regular updates needed"
   #if (( $reg_updt >= 25 )); then
@@ -205,13 +224,13 @@ iost_install_packages () {
 
 
   echo "---> run: sudo $pkg_installer update"
-  sudo $pkg_installer update                               >> $SERVER_LOG 2>&1
+  sudo $pkg_installer update                               >> $INSTALL_LOG 2>&1
 
   echo "---> run: sudo $pkg_installer upgrade "
-  sudo $pkg_installer upgrade                              >> $SERVER_LOG 2>&1
+  sudo $pkg_installer upgrade                              >> $INSTALL_LOG 2>&1
 
   echo "---> run: sudo $pkg_installer install software-properties-common "
-  sudo $pkg_installer install software-properties-common   >> $SERVER_LOG 2>&1
+  sudo $pkg_installer install software-properties-common   >> $INSTALL_LOG 2>&1
 
   echo "---> run: sudo $dev_tools"
   sudo $dev_tools                                          >> $INSTALL_LOG 2>&1
@@ -255,7 +274,7 @@ iost_install_golang () {
   echo "#=------------------   IOST Install - Installing Golang    ----------------=#"
   echo "#=-------------------------------------------------------------------------=#"
 
-  echo "---> msg: start: iost_install_golang ()" | tee -a $SERVER_LOG
+  echo "---> msg: start: iost_install_golang ()" | tee -a $INSTALL_LOG
   IOST_ROOT="$HOME/go/src/github.com/iost-official/go-iost"
   alias IOST="cd $IOST_ROOT"
 
@@ -279,17 +298,17 @@ iost_install_golang () {
 
   if [ -f "/tmp/go${GOLANG_MANDATORY}.linux-amd64.tar.gz" ]; then
     echo "---> run: rm -fr /tmp/go${GOLANG_MANDATORY}.linux-amd64.tar.gz";
-    rm -fr /tmp/go${GOLANG_MANDATORY}.linux-amd64.tar.gz                               >> $SERVER_LOG 2>&1
+    rm -fr /tmp/go${GOLANG_MANDATORY}.linux-amd64.tar.gz                               >> $INSTALL_LOG 2>&1
   fi
 
   echo "---> run: cd /tmp && wget https://dl.google.com/go/go${GOLANG_MANDATORY}.linux-amd64.tar.gz"
-  cd /tmp && wget https://dl.google.com/go/go${GOLANG_MANDATORY}.linux-amd64.tar.gz    >> $SERVER_LOG 2>&1
+  cd /tmp && wget https://dl.google.com/go/go${GOLANG_MANDATORY}.linux-amd64.tar.gz    >> $INSTALL_LOG 2>&1
 
   echo "---> run: sudo tar -C /usr/local -xzf go${GOLANG_MANDATORY}.linux-amd64.tar.gz"
-  sudo tar -C /usr/local -xzf go${GOLANG_MANDATORY}.linux-amd64.tar.gz                 >> $SERVER_LOG 2>&1
+  sudo tar -C /usr/local -xzf go${GOLANG_MANDATORY}.linux-amd64.tar.gz                 >> $INSTALL_LOG 2>&1
 
-  echo "---> run: export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin"                    >> $SERVER_LOG 2>&1
-  echo "---> run: export GOPATH=$HOME/go"                                              >> $SERVER_LOG 2>&1
+  echo "---> run: export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin"                    >> $INSTALL_LOG 2>&1
+  echo "---> run: export GOPATH=$HOME/go"                                              >> $INSTALL_LOG 2>&1
 
   echo "export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin"                              >> $HOME/.iost_env
   echo "export GOPATH=$HOME/go"                                                        >> $HOME/.iost_env
@@ -305,14 +324,14 @@ iost_install_golang () {
   echo -n '---> msg: go version '
   GO_V=$(go version | cut -f3 -d' ' | sed 's/go//g' 2>/dev/null)
   if [ -z $GO_V ]; then
-    echo "---> msg: error: $GOLANG_MANDATORY install failed, check $SERVER_LOG"
+    echo "---> msg: error: $GOLANG_MANDATORY install failed, check $INSTALL_LOG"
     ERR=1
     exit 50
   else
     echo "$GO_V"
   fi
 
-  echo "---> msg: done: iost_install_golang ()" | tee -a $SERVER_LOG
+  echo "---> msg: done: iost_install_golang ()" | tee -a $INSTALL_LOG
 }
 
 
@@ -331,8 +350,41 @@ iost_install_golang_deps () {
    #vi github.com/iost-official/go-iost/iwallet/keystore.go
 }
 
-#
+iost_install_iost_core () {
 
+  echo ""; echo ""
+
+  echo "#=-------------------------------------------------------------------------=#"
+  echo "#=--------- IOST Install - install core                               -----=#"
+  echo "#=-------------------------------------------------------------------------=#"
+  echo "---> msg: start: iost_install_core ()" | tee -a $INSTALL_LOG
+
+
+  echo "---> msg: setup the environment $HOME/.iost_env"
+  source $HOME/.iost_env
+
+  echo "---> msg: cd $GOPATH/src"
+  cd $GOPATH/src
+  echo "---> msg: go get -d github.com/iost-official/go-iost"
+  go get -d github.com/iost-official/go-iost >> $INSTALL_LOG 2>&1
+
+  #echo "---> msg: use [cd $IOST_ROOT]"
+  #cd $IOST_ROOT
+
+  #echo "---> run: make build install"
+  #make build install >> $INSTALL_LOG 2>&1
+
+  #echo "---> run: cd vm/v8vm/v8"
+  #cd vm/v8vm/v8
+  #echo "---> run: make clean js_bin vm install"
+  ##make clean js_bin vm install
+  #make clean js_bin vm install deploy >> $INSTALL_LOG 2>&1
+  #make deploy                         >> $INSTALL_LOG 2>&1
+
+}
+
+
+#
 #2.  It took me a while to find the corresponding option on Linux, so 
 #    in case it helps someone else: The package g++-mingw-w64-x86-64 
 #    provides two files x86_64-w64-mingw32-g++-win32 and x86_64-w64-mingw32-g++-posix, 
@@ -373,13 +425,10 @@ echo "install golang----------"
 iost_install_golang
 echo "install golang----------"
 iost_install_golang_deps
-iost_install_iost
- 
+iost_install_iost_core
 
 for platform in "${platforms[@]}"
 do
-
-   
 
     platform_split=(${platform//\// })
     GOOS=${platform_split[0]}
