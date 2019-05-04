@@ -46,4 +46,30 @@
   ./bootstrap.sh
   ```
 
+  #  Admin Menu
+  ```
+  #=--------------------------------------------------=#
+  #=--        IOST Install/Test/Admin Script        --=#
+  #=--  https://github.com/iost-official/go-iost    --=#
+  #=--        Codebase Version: 3.0.10              --=#
+  #=--------------------------------------------------=#
+
+    1.  IOST Install development environment
+    2.  IOST Uninstall development environment
+
+    3.  iServer start local node
+    4.  iServer stop local node
+    5.  iServer restart local node
+
+    6.  Test iWallet by checking node status
+    7.  Test blockchain with iTest
+    8.  Test JavaScript SDK
+
+    9.  Open the command line interface
+   10.  View last install log
+
+   99.  Quit
+
+  Select a number:
+  ```
 
