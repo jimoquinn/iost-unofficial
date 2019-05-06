@@ -6,23 +6,24 @@
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 # readonly
-readonly IOST_RELEASE="3.0.4"
+readonly IOST_RELEASE="3.0.10"
 
 # package.io not supported on cosmic yet
 # 'xenial' 'yakkety' 'bionic', 'linuxmint'
-readonly UBUNTU_MANDATORY=('16.04' '16.10' '18.04', '19');  
+readonly UBUNTU_MANDATORY=('16.04' '16.10' '18.04', '19.04');  
 readonly CENTOS_MANDATORY=('centos7');
 readonly DEBIAN_MANDATORY=('stretch');
 readonly MACOS_MANDATORY=('Darwin', 'Hitchens');
 
-readonly GOLANG_MANDATORY="1.11.3"
+readonly GOLANG_MANDATORY="1.12.4"
 readonly NODE_MANDATORY="v10.14.2"
 readonly NPM_MANDATORY="v6.4.1"
 readonly NVM_MANDATORY="v0.34.0"
 
 # install and blockchain logs
-readonly INSTALL_LOG="/tmp/build_win64.$$.log"         # stdout & stderr
+readonly INSTALL_LOG="/tmp/build_win64.$$.log"          # stdout & stderr
 readonly SERVER_LOG="/tmp/iserver.$$.log"               # stdout
+
 #readonly SERVER_START_LOG="/tmp/iserver.start.$$.log"   # stdout
 #readonly SERVER_ERR_LOG="/tmp/iserver.err.$$.log"       # stderr
 #readonly ITEST_LOG="/tmp/itest.$$.log"                  # stdout & stderr
@@ -75,7 +76,7 @@ iost_install_init () {
 
   # 3rd - for installed apps
   # check for:
-  # - Ubuntu: 16.04, 16.10, 18.04
+  # - Ubuntu: 16.04, 16.10, 18.04, 19.04
   # - Debian: 9.1-6, 10
   # - CentOS: 7.0-6
   # -   Mint: 19
@@ -239,7 +240,8 @@ iost_install_packages () {
   sudo $pkg_installer install build-essential curl git     >> $INSTALL_LOG 2>&1
 
   echo "---> run: apt-get install gcc-multilib gcc-mingw-w64 mingw-w64-tools libnpth-mingw-w64-dev libssl-dev gdb-mingw-w64 gdb-mingw-w64-target libconfig++-dbg libconfig++-dev libconfig++9v5 libconfig-dbg libconfig-dev libconfig-doc libconfig9 libz-mingw-w64 libz-mingw-w64-dev mingw-ocaml -y"
-  sudo $pkg_installer install gcc-multilib gcc-mingw-w64 mingw-w64-tools libnpth-mingw-w64-dev libssl-dev gdb-mingw-w64 gdb-mingw-w64-target libconfig++-dbg libconfig++-dev libconfig++9v5 libconfig-dbg libconfig-dev libconfig-doc libconfig9 libz-mingw-w64 libz-mingw-w64-dev mingw-ocaml -y
+  #sudo $pkg_installer install gcc-multilib gcc-mingw-w64 mingw-w64-tools libnpth-mingw-w64-dev libssl-dev gdb-mingw-w64 gdb-mingw-w64-target libconfig++-dev libconfig++9v5 libconfig-dbg libconfig-dev libconfig-doc libconfig9 libz-mingw-w64 libz-mingw-w64-dev mingw-ocaml 
+  sudo $pkg_installer install gcc-multilib gcc-mingw-w64 mingw-w64-tools libnpth-mingw-w64-dev libssl-dev gdb-mingw-w64 gdb-mingw-w64-target libconfig++-dev libconfig++9v5 libconfig-dev libconfig-doc libconfig9 libz-mingw-w64 libz-mingw-w64-dev mingw-ocaml 
 
   # already handeled
   #if ! [ -x "$(command -v git)" ]; then
@@ -359,7 +361,6 @@ iost_install_iost_core () {
   echo "#=-------------------------------------------------------------------------=#"
   echo "---> msg: start: iost_install_core ()" | tee -a $INSTALL_LOG
 
-
   echo "---> msg: setup the environment $HOME/.iost_env"
   source $HOME/.iost_env
 
@@ -368,28 +369,17 @@ iost_install_iost_core () {
   echo "---> msg: go get -d github.com/iost-official/go-iost"
   go get -d github.com/iost-official/go-iost >> $INSTALL_LOG 2>&1
 
-  #echo "---> msg: use [cd $IOST_ROOT]"
-  #cd $IOST_ROOT
-
-  #echo "---> run: make build install"
-  #make build install >> $INSTALL_LOG 2>&1
-
-  #echo "---> run: cd vm/v8vm/v8"
-  #cd vm/v8vm/v8
-  #echo "---> run: make clean js_bin vm install"
-  ##make clean js_bin vm install
-  #make clean js_bin vm install deploy >> $INSTALL_LOG 2>&1
-  #make deploy                         >> $INSTALL_LOG 2>&1
-
+  echo "---> msg: end: iost_install_core ()" | tee -a $INSTALL_LOG
 }
 
 
 #
-#2.  It took me a while to find the corresponding option on Linux, so 
-#    in case it helps someone else: The package g++-mingw-w64-x86-64 
-#    provides two files x86_64-w64-mingw32-g++-win32 and x86_64-w64-mingw32-g++-posix, 
-#    and x86_64-w64-mingw32-g++ is aliased to one of them; see 
-#    update-alternatives --display x86_64-w64-mingw32-g++. – stewbasic Feb 24 '18 at 4:08
+#    The package g++-mingw-w64-x86-64 provides two files 
+#    -  x86_64-w64-mingw32-g++-win32 
+#    -  x86_64-w64-mingw32-g++-posix
+#    x86_64-w64-mingw32-g++ is aliased to one of them, see 
+#    update-alternatives --display x86_64-w64-mingw32-g++  
+#    – stewbasic Feb 24 '18 at 4:08
 #
 #flexdll/xenial 
 #
@@ -407,6 +397,7 @@ iost_install_iost_core () {
 
 
 package="/home/vagrant/"
+package="/home/vagrant/"
 if [[ -z "$package" ]]; then
   echo "usage: $0 <package-name>"
   exit 1
@@ -420,16 +411,13 @@ platforms=("windows/amd64")
 
 iost_install_init 
 iost_install_packages
-
-echo "install golang----------"
 iost_install_golang
-echo "install golang----------"
 iost_install_golang_deps
 iost_install_iost_core
 
 for platform in "${platforms[@]}"
 do
-
+    echo "PLATFORM: $platform ";
     platform_split=(${platform//\// })
     GOOS=${platform_split[0]}
     GOARCH=${platform_split[1]}
@@ -441,6 +429,8 @@ do
     if [ $GOOS = "windows" ]; then
         output_name+='.exe'
     fi  
+
+    echo "env GOOS=$GOOS GOARCH=$GOARCH CGO_ENABLED=\"1\"  CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ CXX_FOR_TARGET=\"/usr/bin/x86_64-w64-mingw32-g++\" CC_FOR_TARGET=\"/usr/bin/x86_64-w64-mingw32-gcc\" CGO_LDFLAGS=\"-L/usr/local/ssl/lib\" CGO_CFLAGS=\"-I/usr/local/ssl/include\" -std=\"c++11\" go build -o $output_name $package"
 
     env GOOS=$GOOS GOARCH=$GOARCH CGO_ENABLED="1"  CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ CXX_FOR_TARGET="/usr/bin/x86_64-w64-mingw32-g++" CC_FOR_TARGET="/usr/bin/x86_64-w64-mingw32-gcc" CGO_LDFLAGS="-L/usr/local/ssl/lib" CGO_CFLAGS="-I/usr/local/ssl/include" -std="c++11" go build -o $output_name $package
     if [ $? -ne 0 ]; then

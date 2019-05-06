@@ -859,13 +859,6 @@ iost_install_iost_core () {
   echo "---> msg: setup the environment $HOME/.iost_env"
   source $HOME/.iost_env
 
-  ###go get -d github.com/iost-official/go-iost
-  ###cd github.com/iost-official/go-iost/
-
-  #echo "---> msg: env | grep GO"
-  #res=$(env | grep GO > /dev/null 2>&1)
-  #echo "---> msg: res [$res]"
-
   echo "---> msg: cd $GOPATH/src"
   cd $GOPATH/src
   echo "---> msg: go get -d github.com/iost-official/go-iost"
@@ -1072,11 +1065,21 @@ iost_test_sdk_iostjs () {
   if [ ! -r $HOME/.iost_env ]; then
     echo "  ---> msg: iServer not installed, cannot test JavaScript SDK..."            | tee -a $SERVER_LOG
     return 84
-  else
+  fi
+
+  #  usage: if iost_check_server; then; echo "running"; fi
+  #  >=1 - successful, the iServer is running
+  #   =0 - not successful, the iServer is not running
+
+  if iost_check_iserver; then
+
     source $HOME/.iost_env
     cd $TOP_DIR/iost.js/examples
 
-    echo "  ---> run: inode system_test.js "
+    echo "  --->  run: sed -i 's/47.244.109.92/127.0.0.1/' info.js"                     | tee -a $SERVER_LOG
+    sed -i 's/47.244.109.92/127.0.0.1/' info.js
+
+    echo "  ---> run: node info.js "
     node info.js > /tmp/iost.test.iost.js.txt 2>&1
     rc=$?
 
@@ -1089,9 +1092,12 @@ iost_test_sdk_iostjs () {
     else
       read -p "  ---> msg: hit any key to view the test logs" ttLOGS
       cat /tmp/iost.test.iost.js.txt | more
-      read -p "  ---> msg: end of log, hit any key to continue" tIN 
+      read -p "  ---> msg: end of log, hit any key to continue" tIN
     fi
+  else
+    echo "  ---> msg: iServer not running, you should start it..." | tee -a $SERVER_LOG
   fi
+
 }
 
 
