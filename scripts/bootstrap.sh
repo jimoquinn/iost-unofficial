@@ -1,26 +1,23 @@
-#!/bin/bash   -
+#!/bin/bash 
 
-#clear
 
 # IOST release version: https://github.com/iost-official/go-iost
-readonly IOST_RELEASE="3.0.10"
+readonly IOST_RELEASE="3.1.0"
+
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 #
-#             IOST "One Click" Install     
-#              Development Environment     
-#            Best for Greenfield Installs    
-#        Debian/Ubuntu/Redhat full VM or container
+#          IOST Development Environment     
+#          Best for greenfield installs    
+#          Ubuntu in VM or OS container
 #
-#  
-#          Wed May  1 19:59:03 UTC 2019
+#          Wed May  8 19:33:17 UTC 2019
 #
 #  Objective:  to provide a single script that will install
 #  all the necessary dependecies and IOST code required to be
 #  productive in less than 15 minutes.  
 #
-#
-#   IOST 3.0.10 Installation:
+#   IOST 3.1.0 Installation:
 #   -  iwallet
 #   -  iserver
 #   -  itest suite
@@ -31,7 +28,6 @@ readonly IOST_RELEASE="3.0.10"
 #
 #   Distros Supported:
 #   -  Ubuntu 16.04 (Xenial)
-#   -  Ubuntu 17.04 (Yakkety)
 #   -  Ubuntu 18.04 (Bionic)
 #
 #   Dependencies Installed:
@@ -52,7 +48,6 @@ readonly IOST_RELEASE="3.0.10"
 #   -  iServer start/stop/restart
 #   -  run iTest
 #   -  view install log
-#
 #
 #  Report bugs here:
 #  -  https://github.com/jimoquinn/iost-unofficial
@@ -79,9 +74,9 @@ readonly DOCKER_MANDATORY="v18.06.0-ce"
 
 # package.io not supported on cosmic yet
 # Supported UNIX distributions
-readonly UBUNTU_MANDATORY=('16.04' '16.10' '18.04');  	# Ubuntu 'xenial' 'yakkety' 'bionic'
-readonly CENTOS_MANDATORY=('centos7' 'rhel');		        # Redhat & CentOS
-readonly DEBIAN_MANDATORY=('stretch');			            # Debian Stretch
+readonly UBUNTU_MANDATORY=('16.04' '18.04');  		# Ubuntu 'xenial' 'yakkety' 'bionic'
+readonly CENTOS_MANDATORY=('centos7' 'rhel');		# Redhat & CentOS
+readonly DEBIAN_MANDATORY=('stretch');			# Debian Stretch
 readonly MACOS_MANDATORY=('Darwin', 'Hitchens');        # OSX 
 
 
@@ -101,8 +96,10 @@ readonly ITEST_LOG="/tmp/itest.$$.log"			# stdout & stderr
 readonly IWALLET_LOG="/tmp/iwallet.$$.log"		# stdout & stderr
 
 # variables
-readonly TOP_DIR="$HOME/iost-unofficial"
-readonly SCRIPT_DIR="$HOME/iost-unofficial/scripts"
+#readonly TOP_DIR="$HOME/iost-unofficial"
+#readonly SCRIPT_DIR="$HOME/iost-unofficial/scripts"
+TOP_DIR="$HOME/iost-unofficial"
+SCRIPT_DIR="$HOME/iost-unofficial/scripts"
 IOST_DOCKER=""
 IOST_BAREMETAL=""
 
@@ -189,7 +186,7 @@ trap '_error_handler ${LINENO} $?' ERR
 #
 iost_distro_detect () {
 
-  # - Ubuntu: 16.04, 16.10, 18.04
+  # - Ubuntu: 16.04, 18.04
   # - Debian: 9.1-6, 10
   # - CentOS: 7.0-6
   # -  MacOS: 14.0.0-2
@@ -325,6 +322,18 @@ iost_install_init () {
   else
     mygit=$(git --version 2>/dev/null)
     echo "---> msg: $mygit already installed"
+  fi
+
+  #
+  #  check that git is installed
+  #
+  #command -v git >/dev/null 2>&1 || { echo >&2 "I require foo but it's not installed.  Aborting."; exit 1; }
+  if exists wget; then
+    echo "---> run: $pkg_installer install wget"
+    sudo $pkg_installer install wget >> $INSTALL_LOG 2>&1
+  else
+    mywget=$(wget --version | head -n1 2>/dev/null)
+    echo "---> msg: $mywget already installed"
   fi
 
 
@@ -473,12 +482,11 @@ iost_install_rmfr () {
   # remove IOST JavaScript SDK
   if [ -d "$TOP_DIR/iost.js" ]; then
     echo "---> run: rm -fr $TOP_DIR/iost.js"
-    #rm -fr "$TOP_DIR/iost.js"
+    rm -fr "$TOP_DIR/iost.js"
   else 
     echo "---> msg: [$TOP_DIR/iost.js] not found so not removing..."
   fi
 
-  read -p "Continue?  (Y/n): " CONT
   echo "---> msg: done: iost_install_rmfr () " | tee -a $INSTALL_LOG
 
 }
@@ -500,7 +508,7 @@ iost_warning_requirements () {
 
 
   echo "This script will install the following:"; echo ""
-  echo "  -  updaets for $PRETTY_NAME"
+  echo "  -  updates for $PRETTY_NAME"
   echo "  -  nvm version $NVM_MANDATORY"
   echo "  -  node version $NODE_MANDATORY"
   echo "  -  npm version $NPM_MANDATORY"
@@ -744,6 +752,8 @@ iost_install_golang () {
   echo "#"                         >> $HOME/.iost_env
   echo "# Start:  IOST setup"      >> $HOME/.iost_env
   echo "#"                         >> $HOME/.iost_env
+  echo "export TOP_DIR=$TOP_DIR"                                                       >> $HOME/.iost_env
+  echo "export SCRIPT_DIR=$SCRIPT_DIR"                                                 >> $HOME/.iost_env
   echo "export IOST_ROOT=$HOME/go/src/github.com/iost-official/go-iost"                >> $HOME/.iost_env
   echo "alias IOST=\"cd $IOST_ROOT\""                                                  >> $HOME/.iost_env
 
@@ -796,18 +806,19 @@ iost_install_sdk_iostjs () {
 
   echo "---> msg: start: iost_install_sdk_iostjs ()" 				| tee -a $INSTALL_LOG
 
-  echo "---> cmd: cd $HOME/iost-unofficial " 					| tee -a $INSTALL_LOG
+  echo "---> run: cd $HOME/iost-unofficial " 					| tee -a $INSTALL_LOG
   cd $HOME/iost-unofficial                                                      >> $INSTALL_LOG 2>&1
 
   echo "---> cmd: git clone https://github.com/iost-official/iostjs.git" 	| tee -a $INSTALL_LOG
   git clone https://github.com/iost-official/iost.js.git                        >> $INSTALL_LOG 2>&1
 
-  echo "---> cmd: cd iost.js" 							| tee -a $INSTALL_LOG
+  echo "---> run: cd iost.js" 							| tee -a $INSTALL_LOG
   cd iost.js                                                                    >> $INSTALL_LOG 2>&1
 
-  echo "---> cmd: node install"							| tee -a $INSTALL_LOG
+  echo "---> run: npm install"							| tee -a $INSTALL_LOG
   npm install                                                                   >> $INSTALL_LOG 2>&1
 
+  echo "---> msg: end: iost_install_sdk_iostjs ()" 				| tee -a $INSTALL_LOG
 
 }
 
@@ -1110,26 +1121,34 @@ iost_run_itests () {
     echo "  ---> msg: iServer not installed, cannot run iTest..."            | tee -a $SERVER_LOG
     return 84
   else 
+    #  usage: if iost_check_server; then; echo "running"; fi
+    #  >=1 - successful, the iServer is running
+    #   =0 - not successful, the iServer is not running
 
-    echo "  ----> cmd: cd $IOST_ROOT/test"
-    cd $IOST_ROOT 	>> $ITEST_LOG 2>&1
-    cd test		      >> $ITEST_LOG 2>&1
+    if iost_check_iserver; then
 
-    echo "  ---> run: itest run a_case"
-    itest run a_case  >> $ITEST_LOG 2>&1
+      echo "  ----> cmd: cd $IOST_ROOT/test"
+      cd $IOST_ROOT 	>> $ITEST_LOG 2>&1
+      cd test		      >> $ITEST_LOG 2>&1
 
-    echo "  ---> run: itest run t_case"
-    itest run t_case  >> $ITEST_LOG 2>&1
+      echo "  ---> run: itest run a_case"
+      itest run a_case  >> $ITEST_LOG 2>&1
 
-    echo "  ---> run: itest run c_case"
-    itest run c_case  >> $ITEST_LOG 2>&1
+      echo "  ---> run: itest run t_case"
+      itest run t_case  >> $ITEST_LOG 2>&1
 
-    echo "  ---> run: itest run cv_case"
-    itest run cv_case >> $ITEST_LOG 2>&1
+      echo "  ---> run: itest run c_case"
+      itest run c_case  >> $ITEST_LOG 2>&1
 
-    read -p "  ---> hit any key to view the test logs" ttLOGS
-    more $ITEST_LOG
-    read -p "  ---> msg: end of log, hit any key to continue" tIN 
+      echo "  ---> run: itest run cv_case"
+      itest run cv_case >> $ITEST_LOG 2>&1
+
+      read -p "  ---> hit any key to view the test logs" ttLOGS
+      more $ITEST_LOG
+      read -p "  ---> msg: end of log, hit any key to continue" tIN 
+    else
+      echo "  ---> msg: iServer not running, you should start it..." | tee -a $SERVER_LOG
+    fi
   fi
 
 }
@@ -1154,6 +1173,30 @@ iost_view_install_log () {
     echo ""
     return 86
   fi 
+
+}
+
+
+#
+#  iost_view_important_dev_info ()
+#
+iost_view_important_dev_info () {
+
+  if [ -r "$TOP_DIR/docs/view_important_dev_info.sh" ]; then
+    echo ""
+    echo "  ---> msg: view important developer information"
+    echo ""; echo ""
+    envsubst < $TOP_DIR/docs/view_important_dev_info.sh | more
+    #more `$HOME/iost-unofficial/docs/view_important_dev_info.sh`
+    echo ""; echo ""
+    read -p "  ---> msg: done, hit any key to continue" tIN
+    echo "";
+  else
+    echo ""
+    read -p "  ---> msg: no important developer information found, any key to continue" tIN
+    echo ""
+    return 86
+  fi
 
 }
 
@@ -1271,6 +1314,7 @@ iost_main_menu ()  {
   echo ""
   echo "    9.  Open the command line interface"
   echo "   10.  View last install log"
+  echo "   11.  View important developer information"
   echo ""
   echo "   99.  Quit"
   echo ""
@@ -1348,6 +1392,10 @@ iost_main_menu ()  {
     ;;
 
    10) iost_view_install_log
+       iost_main_menu
+    ;;
+
+   11) iost_view_important_dev_info
        iost_main_menu
     ;;
 
