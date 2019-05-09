@@ -4,7 +4,7 @@
   This script will install all the tools necessary to develop 
   smartcontracts in JavaScript or Go in the IOST ecosystem.
   Works best in OS containers like LXD/LXC or a full VM, but
-  is know to work in Docker as well.  Should install all the 
+  is known to work in Docker as well.  Should install all the 
   necessary dependecies and IOST code required to be productive 
   in about 15 minutes.
 
@@ -24,7 +24,7 @@
    Dependencies Installed:
    -  apt-transport-https ca-certificates
    -  software-properties-common
-   -  build-essential curl git git-lfs
+   -  build-essential curl wget git git-lfs
    -  libgflags-dev libsnappy-dev zlib1g-dev
    -  libbz2-dev liblz4-dev libzstd-dev
    -  distro updates
@@ -39,6 +39,7 @@
    -  iServer start/stop/restart
    -  run iTest
    -  view install log  
+   -  view environment vars, binaries and source code
 
 
   #  Build instructions
