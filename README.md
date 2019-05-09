@@ -1,8 +1,5 @@
 
 #          IOST Development Environment
-#          Best for greenfield installs
-#          Ubuntu in VM or OS container
-#          Thu May  9 23:17:37 UTC 2019
 
   This script will install all the tools necessary to develop 
   smartcontracts in JavaScript or Go in the IOST ecosystem.
