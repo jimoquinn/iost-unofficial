@@ -1,21 +1,27 @@
-  # iost-unofficial - simplyfing the IOST development ecosystem
-  bootstrap.sh - for greenfield installs, either bare metal or VM.  This script 
-  will install all the tools necessary to develop smartcontracts in JavaScript
-  or Go in the IOST ecosystem.
 
+#          IOST Development Environment
+#          Best for greenfield installs
+#          Ubuntu in VM or OS container
+#          Thu May  9 23:17:37 UTC 2019
 
-   IOST 3.0.10 Installation:
-   -  easy setup for local testnet node
+  This script will install all the tools necessary to develop 
+  smartcontracts in JavaScript or Go in the IOST ecosystem.
+  Works best in OS containers like LXD/LXC or a full VM, but
+  is know to work in Docker as well.  Should install all the 
+  necessary dependecies and IOST code required to be productive 
+  in about 15 minutes.
+
+   IOST 3.1.0 Installation:
    -  iwallet
    -  iserver
    -  itest suite
    -  JavaScript SDK
    -  JavaScript example smart contracts
    -  Go SDK
+   -  easy setup for local testnet node
 
    Distros Supported:
    -  Ubuntu 16.04 (Xenial)
-   -  Ubuntu 17.04 (Yakkity)
    -  Ubuntu 18.04 (Bionic)
 
    Dependencies Installed:
@@ -35,8 +41,7 @@
    -  IOST removal
    -  iServer start/stop/restart
    -  run iTest
-   -  view install log
-
+   -  view install log  
 
 
   #  Build instructions
@@ -46,12 +51,13 @@
   ./bootstrap.sh
   ```
 
+
   #  Admin Menu
   ```
   #=--------------------------------------------------=#
   #=--        IOST Install/Test/Admin Script        --=#
   #=--  https://github.com/iost-official/go-iost    --=#
-  #=--        Codebase Version: 3.0.10              --=#
+  #=--        Codebase Version: 3.1.0               --=#
   #=--------------------------------------------------=#
 
     1.  IOST Install development environment
@@ -67,6 +73,7 @@
 
     9.  Open the command line interface
    10.  View last install log
+   11.  View important developer information
 
    99.  Quit
 

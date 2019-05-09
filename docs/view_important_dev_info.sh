@@ -15,7 +15,7 @@
 #  Directory Structure 
 #
  - This script: 
-   $TOP_DIR
+   $TOP_DIR/scripts
 
  - IOST source:
    $HOME/go/src/github.com/go-iost

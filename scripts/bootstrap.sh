@@ -4,18 +4,19 @@
 # IOST release version: https://github.com/iost-official/go-iost
 readonly IOST_RELEASE="3.1.0"
 
-
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 #
-#          IOST Development Environment     
-#          Best for greenfield installs    
+#          IOST Development Environment
+#          Best for greenfield installs
 #          Ubuntu in VM or OS container
+#          Thu May  9 23:17:37 UTC 2019
 #
-#          Wed May  8 19:33:17 UTC 2019
-#
-#  Objective:  to provide a single script that will install
-#  all the necessary dependecies and IOST code required to be
-#  productive in less than 15 minutes.  
+#  This script will install all the tools necessary to develop
+#  smartcontracts in JavaScript or Go in the IOST ecosystem.
+#  Works best in OS containers like LXD/LXC or a full VM, but
+#  is know to work in Docker as well.  Should install all the
+#  necessary dependecies and IOST code required to be productive
+#  in about 15 minutes.
 #
 #   IOST 3.1.0 Installation:
 #   -  iwallet
@@ -48,6 +49,7 @@ readonly IOST_RELEASE="3.1.0"
 #   -  iServer start/stop/restart
 #   -  run iTest
 #   -  view install log
+#
 #
 #  Report bugs here:
 #  -  https://github.com/jimoquinn/iost-unofficial
