@@ -1,7 +1,7 @@
 
 #
 #  A list of the more important directories, binaries, and
-#  environment varables setup for IOST development.
+#  environment variables setup for IOST development.
 #
 #  Example, to run the JavaScript SDK examples:
 #    cd $TOP_DIR/iost.js/examples
