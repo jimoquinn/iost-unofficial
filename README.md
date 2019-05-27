@@ -1,12 +1,12 @@
 
 #          IOST Development Environment
 
-  This script will install all the tools necessary to develop 
-  smartcontracts in JavaScript or Go in the IOST ecosystem.
-  Works best in OS containers like LXD/LXC or a full VM, but
-  is known to work in Docker as well.  Should install all the 
-  necessary dependecies and IOST code required to be productive 
-  in about 15 minutes.
+  This script will install all the tools necessary to develop
+  smart contracts in JavaScript or interface with the blockchain
+  with Go or JavaScript.  Works best in OS containers like LXD/LXC
+  or a full VM, but is known to work in Docker as well.  Should
+  install all the necessary dependencies and IOST code required
+  to be productive in about 15 minutes.
 
    IOST 3.1.0 Installation:
    -  iwallet
@@ -15,7 +15,7 @@
    -  JavaScript SDK
    -  JavaScript example smart contracts
    -  Go SDK
-   -  easy setup for local testnet node
+   -  Easy setup for local testnet node
 
    Distros Supported:
    -  Ubuntu 16.04 (Xenial)
@@ -24,7 +24,7 @@
    Dependencies Installed:
    -  apt-transport-https ca-certificates
    -  software-properties-common
-   -  build-essential curl wget git git-lfs
+   -  build-essential curl git git-lfs
    -  libgflags-dev libsnappy-dev zlib1g-dev
    -  libbz2-dev liblz4-dev libzstd-dev
    -  distro updates
@@ -37,9 +37,10 @@
    -  IOST install
    -  IOST removal
    -  iServer start/stop/restart
-   -  run iTest
-   -  view install log  
-   -  view environment vars, binaries and source code
+   -  run iTest suite
+   -  run test contract
+   -  run JavaScript SDK test
+   -  view install log
 
 
   #  Build instructions
