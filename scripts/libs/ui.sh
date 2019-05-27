@@ -2,8 +2,11 @@
 
 export NO_COLOR='\033[0m'
 export OK_COLOR='\033[32;01m'
+export RUN_COLOR='\033[32;01m'
 export ERROR_COLOR='\033[31;01m'
 export WARN_COLOR='\033[33;01m'
+export MSG_COLOR='\033[33;01m'
+export CMD_COLOR='\033[33;01m'
 
 
 ui_log() {

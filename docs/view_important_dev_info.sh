@@ -3,12 +3,13 @@
 #  A list of the more important directories, binaries, and
 #  environment variables setup for IOST development.
 #
-#  Example, to run the JavaScript SDK examples:
-#    cd $TOP_DIR/iost.js/examples
-#    node info.js
+#  The JavaScript SDK examples:
+#    - \\$TOP_DIR/iost.js/examples
+#    - $TOP_DIR/iost.js/examples
 #
-#  To visit the IOST source code:
-#    cd $IOST_ROOT
+#  The IOST source code:
+#    - \\$IOST_ROOT
+#    - $IOST_ROOT
 #
 
 #
@@ -36,7 +37,7 @@
  - iserver
    $GOROOT/bin/iserver
 
- - iserver
+ - itest
    $GOROOT/bin/itest
 
  - node
