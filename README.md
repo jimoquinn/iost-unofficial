@@ -9,17 +9,19 @@
   to be productive in about 15 minutes.
 
    IOST 3.1.0 Installation:
+   -  Easy setup for local testnet node
    -  iwallet
    -  iserver
    -  itest suite
    -  JavaScript SDK
-   -  JavaScript example smart contracts
+   -  JavaScript example blockchain code
+   -  JavaScript example dApp code
    -  Go SDK
-   -  Easy setup for local testnet node
 
    Distros Supported:
    -  Ubuntu 16.04 (Xenial)
    -  Ubuntu 18.04 (Bionic)
+   -  Ubuntu 18.10 (Cosmic)
 
    Dependencies Installed:
    -  apt-transport-https ca-certificates
@@ -38,8 +40,9 @@
    -  IOST removal
    -  iServer start/stop/restart
    -  run iTest suite
-   -  run test contract
    -  run JavaScript SDK test
+   -  run blockchain test 
+   -  run dapp smart contract
    -  view install log
 
 
@@ -53,27 +56,26 @@
 
   #  Admin Menu
   ```
-  echo -e ""
-  echo -e "    1.  IOST Install development environment"
-  echo -e "    2.  IOST Uninstall development environment"
-  echo -e ""
-  echo -e "    3.  iServer start local node"
-  echo -e "    4.  iServer stop local node"
-  echo -e "    5.  iServer restart local node"
-  echo -e ""
-  echo -e "    6.  Test local node status with iWallet"
-  echo -e "    7.  Test local node with iTest"
-  echo -e "    8.  Test local node status with JavaScript SDK"
-  echo -e ""
-  echo -e "    9.  dApp run example contract"
-  echo -e "   10.  dApp run example contract"
-  echo -e ""
-  echo -e "   10.  Open the command line interface"
-  echo -e "   11.  View last install log"
-  echo -e "   12.  View important developer information"
-  echo -e ""
-  echo -e "   99.  Quit"
-  echo -e ""
+
+    1.  IOST Install development environment
+    2.  IOST Uninstall development environment
+
+    3.  iServer start local node
+    4.  iServer stop local node
+    5.  iServer restart local node
+
+    6.  Test local node status with iWallet
+    7.  Test local node with iTest
+    8.  Test local node status with JavaScript SDK
+
+    9.  dApp run example contract
+
+   10.  Open the command line interface
+   11.  View last install log
+   12.  View important developer information
+
+   99.  Quit"
+
 
   ```
 
