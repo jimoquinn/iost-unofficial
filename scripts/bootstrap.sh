@@ -19,13 +19,14 @@ readonly IOST_RELEASE="3.1.0"
 #  to be productive in about 15 minutes.
 #
 #   IOST 3.1.0 Installation:
+#   -  Easy setup for local testnet node
 #   -  iwallet
 #   -  iserver
 #   -  itest suite
 #   -  JavaScript SDK
-#   -  JavaScript example smart contracts
+#   -  JavaScript example blockchain code
+#   -  JavaScript example dApp code
 #   -  Go SDK
-#   -  Easy setup for local testnet node
 #
 #   Distros Supported:
 #   -  Ubuntu 16.04 (Xenial)
@@ -45,19 +46,19 @@ readonly IOST_RELEASE="3.1.0"
 #   -  Go 1.12.4
 #
 #   Admin Menu:
-#   -  IOST install 
-#   -  IOST removal 
+#   -  IOST install
+#   -  IOST removal
 #   -  iServer start/stop/restart
 #   -  run iTest suite
-#   -  run test contract
 #   -  run JavaScript SDK test
-#   -  view install log
+#   -  run Blockchain test
+#   -  run dapp smart contract
+#   -  view install log#
 #
 #  Report bugs here:
 #  -  https://github.com/jimoquinn/iost-unofficial
 #
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
