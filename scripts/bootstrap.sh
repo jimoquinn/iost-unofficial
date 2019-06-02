@@ -9,7 +9,7 @@ readonly IOST_RELEASE="3.1.0"
 #          IOST Development Environment
 #          Best for greenfield installs
 #          Ubuntu in VM or OS container
-#          Mon May 27 06:34:38 UTC 2019
+#          Sun Jun  2 01:51:47 UTC 2019
 #
 #  This script will install all the tools necessary to develop
 #  smart contracts in JavaScript or interface with the blockchain
@@ -30,6 +30,7 @@ readonly IOST_RELEASE="3.1.0"
 #   Distros Supported:
 #   -  Ubuntu 16.04 (Xenial)
 #   -  Ubuntu 18.04 (Bionic)
+#   -  Ubuntu 18.10 (Cosmic)
 #
 #   Dependencies Installed:
 #   -  apt-transport-https ca-certificates
@@ -71,7 +72,7 @@ readonly NVM_MANDATORY="v0.34.0"
 readonly DOCKER_MANDATORY="v18.06.0-ce"
 
 # Supported UNIX distributions
-readonly UBUNTU_MANDATORY=('16.04' '18.04');  		# Ubuntu 'xenial' 'yakkety' 'bionic'
+readonly UBUNTU_MANDATORY=('16.04' '18.04' '18.10');  	# Ubuntu 'xenial' 'yakkety' 'bionic'
 readonly CENTOS_MANDATORY=('centos7' 'rhel');		# Redhat & CentOS
 readonly DEBIAN_MANDATORY=('stretch');			# Debian Stretch
 readonly MACOS_MANDATORY=('Darwin', 'Hitchens');        # OSX 
@@ -800,6 +801,9 @@ iost_install_sdk_iostjs () {
   echo -e "---> $run npm install"					        
   npm install                                                                   >> $INSTALL_LOG 2>&1
 
+  echo -e "  ---> $cmd sed -i 's/47.244.109.92/127.0.0.1/' examples/info.js"             
+  sed -i 's/47.244.109.92/127.0.0.1/' examples/info.js			 		>> $INSTALL_LOG 2>&1
+
   cd -
   echo -e "---> $msg end: iost_install_sdk_iostjs ()" 				| tee -a $INSTALL_LOG
 
@@ -1073,8 +1077,7 @@ iost_test_sdk_iostjs () {
     source $HOME/.iost_env
     cd $TOP_DIR/iost.js/examples
 
-    echo -e "  ---> $run sed -i 's/47.244.109.92/127.0.0.1/' info.js"                     | tee -a $SERVER_LOG
-    sed -i 's/47.244.109.92/127.0.0.1/' info.js
+    echo -e "  ---> $cmd cd $TOP_DIR/iost.js/examples"                                    | tee -a $SERVER_LOG
 
     echo -e "  ---> $run node info.js "
     node info.js > /tmp/iost.test.iost.js.txt 2>&1
@@ -1294,13 +1297,15 @@ iost_main_menu ()  {
   echo -e "    4.  iServer stop local node"
   echo -e "    5.  iServer restart local node"
   echo -e ""
-  echo -e "    6.  Test iWallet by checking node status"
-  echo -e "    7.  Test blockchain with iTest"
-  echo -e "    8.  Test JavaScript SDK"
+  echo -e "    6.  Test local node status with iWallet"
+  echo -e "    7.  Test local node with iTest"
+  echo -e "    8.  Test local node status with JavaScript SDK"
   echo -e ""
-  echo -e "    9.  Open the command line interface"
-  echo -e "   10.  View last install log"
-  echo -e "   11.  View important developer information"
+  echo -e "    9.  dApp run example smart contract"
+  echo -e ""
+  echo -e "   10.  Open the command line interface"
+  echo -e "   11.  View last install log"
+  echo -e "   12.  View important developer information"
   echo -e ""
   echo -e "   99.  Quit"
   echo -e ""
@@ -1366,22 +1371,25 @@ iost_main_menu ()  {
        iost_main_menu
     ;;
 
-    88) echo -e "   ---> $msg opening a /bin/bash, type exit or CTRL-D to return"
-        /bin/bash
-        iost_main_menu
-    ;;
-
     9) echo -e "   ---> $msg opening a /bin/bash, type exit or CTRL-D to return"
        echo -e ""
        /bin/bash
        iost_main_menu
     ;;
 
-   10) iost_view_install_log
+
+
+    10) echo -e "   ---> $msg opening a /bin/bash, type exit or CTRL-D to return"
+       echo -e ""
+       /bin/bash
        iost_main_menu
     ;;
 
-   11) iost_view_important_dev_info
+   11) iost_view_install_log
+       iost_main_menu
+    ;;
+
+   12) iost_view_important_dev_info
        iost_main_menu
     ;;
 

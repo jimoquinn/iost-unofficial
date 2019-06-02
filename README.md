@@ -53,29 +53,27 @@
 
   #  Admin Menu
   ```
-  #=--------------------------------------------------=#
-  #=--        IOST Install/Test/Admin Script        --=#
-  #=--  https://github.com/iost-official/go-iost    --=#
-  #=--        Codebase Version: 3.1.0               --=#
-  #=--------------------------------------------------=#
+  echo -e ""
+  echo -e "    1.  IOST Install development environment"
+  echo -e "    2.  IOST Uninstall development environment"
+  echo -e ""
+  echo -e "    3.  iServer start local node"
+  echo -e "    4.  iServer stop local node"
+  echo -e "    5.  iServer restart local node"
+  echo -e ""
+  echo -e "    6.  Test local node status with iWallet"
+  echo -e "    7.  Test local node with iTest"
+  echo -e "    8.  Test local node status with JavaScript SDK"
+  echo -e ""
+  echo -e "    9.  dApp run example contract"
+  echo -e "   10.  dApp run example contract"
+  echo -e ""
+  echo -e "   10.  Open the command line interface"
+  echo -e "   11.  View last install log"
+  echo -e "   12.  View important developer information"
+  echo -e ""
+  echo -e "   99.  Quit"
+  echo -e ""
 
-    1.  IOST Install development environment
-    2.  IOST Uninstall development environment
-
-    3.  iServer start local node
-    4.  iServer stop local node
-    5.  iServer restart local node
-
-    6.  Test iWallet by checking node status
-    7.  Test blockchain with iTest
-    8.  Test JavaScript SDK
-
-    9.  Open the command line interface
-   10.  View last install log
-   11.  View important developer information
-
-   99.  Quit
-
-  Select a number:
   ```
 
