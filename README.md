@@ -8,7 +8,7 @@
   install all the necessary dependencies and IOST code required
   to be productive in about 15 minutes.
 
-   IOST 3.1.0 Installation:
+   IOST 3.1.1 Installation:
    -  Easy setup for local testnet node
    -  iwallet
    -  iserver

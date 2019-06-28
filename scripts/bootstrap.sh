@@ -2,14 +2,14 @@
 
 
 # IOST release version: https://github.com/iost-official/go-iost
-readonly IOST_RELEASE="3.1.0"
+readonly IOST_RELEASE="3.1.1"
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 #
 #          IOST Development Environment
 #          Best for greenfield installs
 #          Ubuntu in VM or OS container
-#          Sun Jun  2 01:51:47 UTC 2019
+#          Thu Jun 27 13:33:54 UTC 2019
 #
 #  This script will install all the tools necessary to develop
 #  smart contracts in JavaScript or interface with the blockchain
@@ -18,7 +18,7 @@ readonly IOST_RELEASE="3.1.0"
 #  install all the necessary dependencies and IOST code required 
 #  to be productive in about 15 minutes.
 #
-#   IOST 3.1.0 Installation:
+#   IOST 3.1.1 Installation:
 #   -  Easy setup for local testnet node
 #   -  iwallet
 #   -  iserver
@@ -93,8 +93,6 @@ readonly ITEST_LOG="/tmp/itest.$$.log"			# stdout & stderr
 readonly IWALLET_LOG="/tmp/iwallet.$$.log"		# stdout & stderr
 
 # variables
-#readonly TOP_DIR="$HOME/iost-unofficial"
-#readonly SCRIPT_DIR="$HOME/iost-unofficial/scripts"
 TOP_DIR="$HOME/iost-unofficial"
 SCRIPT_DIR="$HOME/iost-unofficial/scripts"
 IOST_DOCKER=""
@@ -1171,6 +1169,11 @@ iost_view_install_log () {
 #  iost_view_important_dev_info ()
 #
 iost_view_important_dev_info () {
+
+  if [ ! -r $HOME/.iost_env ]; then
+    echo -e "  ---> $msg iServer not installed, cannot test JavaScript SDK..."            | tee -a $SERVER_LOG
+    return 84
+  fi
 
   if [ -r "$TOP_DIR/docs/view_important_dev_info.sh" ]; then
     echo -e ""

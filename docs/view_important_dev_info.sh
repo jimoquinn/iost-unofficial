@@ -4,11 +4,11 @@
 #  environment variables setup for IOST development.
 #
 #  The JavaScript SDK examples:
-#    - \\$TOP_DIR/iost.js/examples
+#    - TOP_DIR/iost.js/examples
 #    - $TOP_DIR/iost.js/examples
 #
 #  The IOST source code:
-#    - \\$IOST_ROOT
+#    - IOST_ROOT
 #    - $IOST_ROOT
 #
 
