@@ -432,13 +432,14 @@ do
 
     echo "env GOOS=$GOOS GOARCH=$GOARCH CGO_ENABLED=\"1\"  CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ CXX_FOR_TARGET=\"/usr/bin/x86_64-w64-mingw32-g++\" CC_FOR_TARGET=\"/usr/bin/x86_64-w64-mingw32-gcc\" CGO_LDFLAGS=\"-L/usr/local/ssl/lib\" CGO_CFLAGS=\"-I/usr/local/ssl/include\" -std=\"c++11\" go build -o $output_name $package"
 
-    env GOOS=$GOOS GOARCH=$GOARCH CGO_ENABLED="1"  CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ CXX_FOR_TARGET="/usr/bin/x86_64-w64-mingw32-g++" CC_FOR_TARGET="/usr/bin/x86_64-w64-mingw32-gcc" CGO_LDFLAGS="-L/usr/local/ssl/lib" CGO_CFLAGS="-I/usr/local/ssl/include" -std="c++11" go build -o $output_name $package
+    env GOOS=windows GOARCH=amd64 CGO_ENABLED="1"  CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ CXX_FOR_TARGET="/usr/bin/x86_64-w64-mingw32-g++" CC_FOR_TARGET="/usr/bin/x86_64-w64-mingw32-gcc" CGO_LDFLAGS="-L/usr/local/ssl/lib" CGO_CFLAGS="-I/usr/local/ssl/include" -std="c++11" go build -o vagrant-windows-amd64.exe   /home/vagrant/go/src/github.com/iost-official/go-iost/iwallet
     if [ $? -ne 0 ]; then
         echo 'An error has occurred! Aborting the script execution...'
         exit 1
     fi
 
 
+    # env GOOS=$GOOS GOARCH=$GOARCH CGO_ENABLED="1"  CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ CXX_FOR_TARGET="/usr/bin/x86_64-w64-mingw32-g++" CC_FOR_TARGET="/usr/bin/x86_64-w64-mingw32-gcc" CGO_LDFLAGS="-L/usr/local/ssl/lib" CGO_CFLAGS="-I/usr/local/ssl/include" -std="c++11" go build -o $output_name $package
     # GOARCH=386 CGO_ENABLED=1 CXX_FOR_TARGET=i686-w64-mingw32-g++ CC_FOR_TARGET=i686-w64-mingw32-gcc    CGO_LDFLAGS="-L/usr/local/ssl/lib -lcrypto -lws2_32 -lgdi32 -lcrypt32" CGO_CFLAGS=-I/usr/local/ssl/include go build
     #env GO_ENABLED=1 CGO_ENABLED="1" CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ GOOS=windows GOARCH=amd64 go build -o $output_name $package
     #env GO_ENABLED=1 GOOS=$GOOS GOARCH=$GOARCH CGO_ENABLED="1"  CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ CXX_FOR_TARGET="/usr/bin/x86_64-w64-mingw32-g++" CC_FOR_TARGET="/usr/bin/x86_64-w64-mingw32-gcc" CGO_LDFLAGS="-L/usr/local/ssl/lib" CGO_CFLAGS="-I/usr/local/ssl/include" -std="c++11" go build -o $output_name $package
