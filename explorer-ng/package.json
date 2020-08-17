@@ -1,0 +1,11 @@
+{
+  "name": "explorer-ng",
+  "version": "1.0.0",
+  "description": "IOST Next Generation Blockchain Explorer",
+  "main": "index.js",
+  "author": "Jim O'Quinn",
+  "license": "MIT",
+  "dependencies": {
+    "mongodb": "^3.6.0"
+  }
+}

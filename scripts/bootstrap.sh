@@ -1,5 +1,9 @@
 #!/bin/bash 
 
+# TODO
+# - where did the go-sdk go?
+# - 
+
 
 # IOST release version: https://github.com/iost-official/go-iost
 readonly IOST_RELEASE="3.1.1"
@@ -9,7 +13,7 @@ readonly IOST_RELEASE="3.1.1"
 #          IOST Development Environment
 #          Best for greenfield installs
 #          Ubuntu in VM or OS container
-#          Thu Jun 27 13:33:54 UTC 2019
+#          Thu Aug 16 15:10:54 UTC 2020
 #
 #  This script will install all the tools necessary to develop
 #  smart contracts in JavaScript or interface with the blockchain
@@ -18,20 +22,35 @@ readonly IOST_RELEASE="3.1.1"
 #  install all the necessary dependencies and IOST code required 
 #  to be productive in about 15 minutes.
 #
-#   IOST 3.1.1 Installation:
-#   -  Easy setup for local testnet node
+#   IOST Installation:
+#   Complete IOST blockchain installed locally with testnet and
+#   blockchain explorer.  Both fully functional with no setup or
+#   configuration.
+#   -  IOST Blockchain Explorer
+#   -  IOST Blockchain 
+#
+#   IOST Development Tools
+#   -  local testnet node
 #   -  iwallet
 #   -  iserver
 #   -  itest suite
+#
+#   IOST Software Development Kits
+#   -  Go SDK 
 #   -  JavaScript SDK
+#   -  Java SDK
+#   -  Python SDK
+#   -  Ruby SDK
+#
+#  IOST Sample Code
 #   -  JavaScript example blockchain code
 #   -  JavaScript example dApp code
-#   -  Go SDK
+#   -  JavaScript iWallet Google Chrome extension
+#   -  Go examples
 #
 #   Distros Supported:
-#   -  Ubuntu 16.04 (Xenial)
+#   -  Ubuntu 20.20 (Focal)
 #   -  Ubuntu 18.04 (Bionic)
-#   -  Ubuntu 18.10 (Cosmic)
 #
 #   Dependencies Installed:
 #   -  apt-transport-https ca-certificates
@@ -43,9 +62,10 @@ readonly IOST_RELEASE="3.1.1"
 #   -  nvm v0.34.0
 #   -  npm v6.4.2
 #   -  node v10.15.3
-#   -  Go 1.12.4
+#   -  Go 1.13.1
+#   -  Mongodb 4.4
 #
-#   Admin Menu:
+#   Easy ASCII Admin Menu
 #   -  IOST install
 #   -  IOST removal
 #   -  iServer start/stop/restart
@@ -66,31 +86,31 @@ readonly IOST_RELEASE="3.1.1"
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 # Dependicies
-readonly GOLANG_MANDATORY="1.12.4"
+readonly GOLANG_MANDATORY="1.13.1"
 readonly NODE_MANDATORY="v10.15.3"
 readonly NPM_MANDATORY="v6.4.1"
 readonly NVM_MANDATORY="v0.34.0"
 readonly DOCKER_MANDATORY="v18.06.0-ce"
 
 # Supported UNIX distributions
-readonly UBUNTU_MANDATORY=('16.04' '18.04' '18.10');  	# Ubuntu 'xenial' 'yakkety' 'bionic'
-readonly CENTOS_MANDATORY=('centos7' 'rhel');		# Redhat & CentOS
-readonly DEBIAN_MANDATORY=('stretch');			# Debian Stretch
-readonly MACOS_MANDATORY=('Darwin', 'Hitchens');        # OSX 
+readonly UBUNTU_MANDATORY=('16.04' '18.04' '18.10', '20.04');  	# Ubuntu 'xenial' 'yakkety' 'bionic'
+readonly CENTOS_MANDATORY=('centos7' 'rhel');			# Redhat & CentOS
+readonly DEBIAN_MANDATORY=('stretch');				# Debian Stretch
+readonly MACOS_MANDATORY=('Darwin', 'Hitchens');        	# OSX 
 
 # misc unused flags - use later for automatic install
-readonly IOST_UNATTENDED=""				# unattended install
-readonly IOST_CLEAN_INSTALL="0"				# unattended install, force remove of previous IOST install
-readonly VAGRANT_USE=""					# use Vagrant box
-readonly DOCKER_USE="0"    				# 1-yes | 0-no
+readonly IOST_UNATTENDED=""					# unattended install
+readonly IOST_CLEAN_INSTALL="0"					# unattended install, force remove of previous IOST install
+readonly VAGRANT_USE=""						# use Vagrant box
+readonly DOCKER_USE="0"    					# 1-yes | 0-no
 
 # install and blockchain logs
-readonly INSTALL_LOG="/tmp/bootstrap.sh.$$.log"		# stdout & stderr
-readonly SERVER_LOG="/tmp/iserver.$$.log"		# stdout 
-readonly SERVER_START_LOG="/tmp/iserver.start.$$.log"	# stdout 
-readonly SERVER_ERR_LOG="/tmp/iserver.err.$$.log"	# stderr
-readonly ITEST_LOG="/tmp/itest.$$.log"			# stdout & stderr
-readonly IWALLET_LOG="/tmp/iwallet.$$.log"		# stdout & stderr
+readonly INSTALL_LOG="/tmp/bootstrap.sh.$$.log"			# stdout & stderr
+readonly SERVER_LOG="/tmp/iserver.$$.log"			# stdout 
+readonly SERVER_START_LOG="/tmp/iserver.start.$$.log"		# stdout 
+readonly SERVER_ERR_LOG="/tmp/iserver.err.$$.log"		# stderr
+readonly ITEST_LOG="/tmp/itest.$$.log"				# stdout & stderr
+readonly IWALLET_LOG="/tmp/iwallet.$$.log"			# stdout & stderr
 
 # variables
 TOP_DIR="$HOME/iost-unofficial"
@@ -271,9 +291,9 @@ iost_install_init () {
 
   echo -e "$INSTALL_LOG" > /tmp/install.name.log
   echo -e ""; echo -e ""
-  echo -e "#=-------------------------------------------------------------------------=#"
-  echo -e "#-----------------   IOST Install - pre-init      -------------------------=#"
-  echo -e "#=-------------------------------------------------------------------------=#"
+  echo -e "$dg#=-------------------------------------------------------------------------=#$zz"
+  echo -e "$dg#-----------------   IOST Install - pre-init      -------------------------=#$zz"
+  echo -e "$dg#=-------------------------------------------------------------------------=#$zz"
   echo -e "---> $msg start: iost_install_init () " | tee -a $INSTALL_LOG
 
   # 1st - confirm that we are not running under root
@@ -737,6 +757,7 @@ iost_install_golang () {
   echo -e "alias IOST=\"cd $IOST_ROOT\""                                       >> $HOME/.iost_env
 
   # if the tar.gz exists, don't download again
+  # https://golang.org/dl/go1.15.linux-amd64.tar.gz
   if [  ! -f "/tmp/go${GOLANG_MANDATORY}.linux-amd64.tar.gz" ]; then
     echo -e "---> $msg did not find [/tmp/go${GOLANG_MANDATORY}.linux-amd64.tar.gz], will download"  
     echo -e "---> $run cd /tmp && wget https://dl.google.com/go/go${GOLANG_MANDATORY}.linux-amd64.tar.gz"
@@ -746,7 +767,7 @@ iost_install_golang () {
   fi
 
   echo -e "---> $run sudo tar -C /usr/local -xzf go${GOLANG_MANDATORY}.linux-amd64.tar.gz"
-  sudo tar -C /usr/local -xzf go${GOLANG_MANDATORY}.linux-amd64.tar.gz                 >> $INSTALL_LOG 2>&1
+  sudo tar -C /usr/local -xzf /tmp/go${GOLANG_MANDATORY}.linux-amd64.tar.gz            >> $INSTALL_LOG 2>&1
   gzip go${GOLANG_MANDATORY}.linux-amd64.tar                                           >> $INSTALL_LOG 2>&1
 
 
@@ -1274,6 +1295,53 @@ iost_install_run_admin () {
 }
 
 
+# -------------------------------------------------------------------------------------------------
+#  START : sub_menu_components
+
+
+#
+#  iost_sub_menu_components() - install/reinstall/remove individual components
+#
+iost_sub_menu_components ()  {
+  clear
+
+  echo -e "  ${dg}#=--------------------------------------------------=#${zz}"
+  echo -e "  ${dg}#=--        IOST Install/Reinstall/Remove         --=#${zz}"
+  echo -e "  ${dg}#=--            Individual Compoents              --=#${zz}"
+  echo -e "  ${dg}#=--------------------------------------------------=#${zz}"
+  echo -e ""
+  echo -e "   1.  ${ly}Reinstall golang${zz}"
+  echo -e ""
+  echo -e "   2.  ${ly}Reinstall IOST${zz}"
+  echo -e ""
+  echo -e "  99.  ${ly}Return to main menu${zz}"
+  echo -e ""
+
+  read -p "  Select a number: " iNUM
+
+  case "$iNUM" in
+
+    1) echo -e ""
+       iost_install_golang
+       read -p "---> $msg finished, hit any key to continue" tIN
+    ;;
+
+    2) echo -e ""
+       iost_stop_iserver
+       iost_install_iost_core
+       read -p "---> $msg finished, hit any key to continue" tIN
+    ;;
+
+    *) echo -e ""
+       iost_main_menu
+    ;;
+
+    esac
+}
+
+
+
+
 #
 #  iost_main_menu () 
 #  - main menu
@@ -1287,31 +1355,33 @@ iost_main_menu ()  {
     source $HOME/.iost_env
   fi
 
-  echo -e "  #=--------------------------------------------------=#"
-  echo -e "  #=--        IOST Install/Test/Admin Script        --=#"
-  echo -e "  #=--  https://github.com/iost-official/go-iost    --=#"
-  echo -e "  #=--        Codebase Version: $IOST_RELEASE               --=#"
-  echo -e "  #=--------------------------------------------------=#"
+  echo -e "  $dg#=--------------------------------------------------=#$zz"
+  echo -e "  $dg#=--        IOST Install/Test/Admin Script        --=#$zz"
+  echo -e "  $dg#=--  https://github.com/iost-official/go-iost    --=#$zz"
+  echo -e "  $dg#=--        Codebase Version: $IOST_RELEASE               --=#$zz"
+  echo -e "  $dg#=--------------------------------------------------=#$zz"
 
   echo -e ""
-  echo -e "    1.  IOST Install development environment"
-  echo -e "    2.  IOST Uninstall development environment"
+  echo -e "    1.  ${ly}IOST Install development environment$zz"
+  echo -e "    2.  ${ly}IOST Uninstall development environment$zz"
   echo -e ""
-  echo -e "    3.  iServer start local node"
-  echo -e "    4.  iServer stop local node"
-  echo -e "    5.  iServer restart local node"
+  echo -e "    3.  ${ly}iServer start local node$zz"
+  echo -e "    4.  ${ly}iServer stop local node$zz"
+  echo -e "    5.  ${ly}iServer restart local node$zz"
   echo -e ""
-  echo -e "    6.  Test local node status with iWallet"
-  echo -e "    7.  Test local node with iTest"
-  echo -e "    8.  Test local node status with JavaScript SDK"
+  echo -e "    6.  ${ly}Test local node status with iWallet${zz}"
+  echo -e "    7.  ${ly}Test local node with iTest${zz}"
+  echo -e "    8.  ${ly}Test local node status with JavaScript SDK${zz}"
   echo -e ""
-  echo -e "    9.  dApp run example smart contract"
+  echo -e "    9.  ${ly}dApp run example smart contract${zz}"
   echo -e ""
-  echo -e "   10.  Open the command line interface"
-  echo -e "   11.  View last install log"
-  echo -e "   12.  View important developer information"
+  echo -e "   10.  ${ly}Open the command line interface${zz}"
+  echo -e "   11.  ${ly}View last install log${zz}"
+  echo -e "   12.  ${ly}View important developer information${zz}"
   echo -e ""
-  echo -e "   99.  Quit"
+  echo -e "   13.  ${ly}Submenu for individual components${zz}"
+  echo -e ""
+  echo -e "   99.  ${lr}Quit${zz}"
   echo -e ""
 
   read -p "  Select a number: " iNUM
@@ -1393,7 +1463,7 @@ iost_main_menu ()  {
        iost_main_menu
     ;;
 
-   12) iost_view_important_dev_info
+   13) iost_sub_menu_components
        iost_main_menu
     ;;
 

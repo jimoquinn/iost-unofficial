@@ -8,6 +8,52 @@ export WARN_COLOR='\033[33;01m'
 export MSG_COLOR='\033[33;01m'
 export CMD_COLOR='\033[33;01m'
 
+#
+# foreground
+#
+
+# default
+d="\e[39m"
+
+# light green
+lg="\e[92m"
+
+# dark green
+dg="\e[32m"
+
+# dark yellow
+dy="\e[33m"
+
+# light yellow
+ly="\e[93m"
+
+# dark red
+dr="\e[31m"
+
+# light red
+lr="\e[91m"
+
+# white
+w="\e[97m"
+
+# rest all
+zz="\e[0m"
+
+
+#
+# background
+#
+
+# background reset
+bd="\e[49m"
+
+# background red
+br="\e[41m"
+
+# background white
+bw="\e[107m"
+
+
 
 ui_log() {
   LOG_PREFIX="${DISTRIBUTION}-${RELEASE}"
