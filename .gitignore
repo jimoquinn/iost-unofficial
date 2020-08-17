@@ -9,6 +9,8 @@
 
 # IOST
 scripts/storage/*
+node_modules
+
 
 # sublime
 *.sublime-project
