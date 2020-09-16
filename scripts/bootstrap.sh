@@ -1310,9 +1310,13 @@ iost_sub_menu_components ()  {
   echo -e "  ${dg}#=--            Individual Compoents              --=#${zz}"
   echo -e "  ${dg}#=--------------------------------------------------=#${zz}"
   echo -e ""
-  echo -e "   1.  ${ly}Reinstall golang${zz}"
+  echo -e "   1.  ${ly}Install/Reinstall golang${zz}"
   echo -e ""
-  echo -e "   2.  ${ly}Reinstall IOST${zz}"
+  echo -e "   2.  ${ly}Install/Reinstall IOST${zz}"
+  echo -e ""
+  echo -e "   3.  ${ly}Install/Reinstall golang${zz}"
+  echo -e ""
+  echo -e "   4.  ${ly}Install/Reinstall IOST JavaScript SDK${zz}"
   echo -e ""
   echo -e "  99.  ${ly}Return to main menu${zz}"
   echo -e ""
@@ -1329,6 +1333,16 @@ iost_sub_menu_components ()  {
     2) echo -e ""
        iost_stop_iserver
        iost_install_iost_core
+       read -p "---> $msg finished, hit any key to continue" tIN
+    ;;
+
+    3) echo -e ""
+       iost_install_sdk_golang
+       read -p "---> $msg finished, hit any key to continue" tIN
+    ;;
+
+    4) echo -e ""
+       iost_install_sdk_iostjs
        read -p "---> $msg finished, hit any key to continue" tIN
     ;;
 
