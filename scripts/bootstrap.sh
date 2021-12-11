@@ -6,7 +6,7 @@
 
 
 # IOST release version: https://github.com/iost-official/go-iost
-readonly IOST_RELEASE="3.1.1"
+readonly IOST_RELEASE="3.7.3"
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 #
@@ -86,9 +86,9 @@ readonly IOST_RELEASE="3.1.1"
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 # Dependicies
-readonly GOLANG_MANDATORY="1.13.1"
-readonly NODE_MANDATORY="v10.15.3"
-readonly NPM_MANDATORY="v6.4.1"
+readonly GOLANG_MANDATORY="1.17.5"
+readonly NODE_MANDATORY="v16.13.1"
+readonly NPM_MANDATORY="v8.1.2"
 readonly NVM_MANDATORY="v0.34.0"
 readonly DOCKER_MANDATORY="v18.06.0-ce"
 
