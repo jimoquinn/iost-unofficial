@@ -10,6 +10,11 @@
 # IOST
 scripts/storage/*
 node_modules
+go-iost
+go-sdk
+scripts/logs/*
+scripts/logs/*
+
 
 
 # sublime

@@ -60,9 +60,9 @@ readonly IOST_RELEASE="3.7.3"
 #   -  libbz2-dev liblz4-dev libzstd-dev
 #   -  distro updates
 #   -  nvm v0.34.0
-#   -  npm v6.4.2
-#   -  node v10.15.3
-#   -  Go 1.13.1
+#   -  npm v8.1.2
+#   -  node v16.13.1
+#   -  Go 1.17.5
 #   -  Mongodb 4.4
 #
 #   Easy ASCII Admin Menu
@@ -729,7 +729,8 @@ iost_install_golang () {
   echo -e "#=-------------------------------------------------------------------------=#"
 
   echo -e "---> $msg start: iost_install_golang ()" | tee -a $INSTALL_LOG
-  export IOST_ROOT="$HOME/go/src/github.com/iost-official/go-iost"
+  # export IOST_ROOT="$HOME/go/src/github.com/iost-official/go-iost"
+  export IOST_ROOT="$HOME/iost-unofficial/go-iost"
   alias IOST="cd $IOST_ROOT"
 
   # check for logic that sources IOST env file
@@ -753,7 +754,7 @@ iost_install_golang () {
   echo -e "#"                         >> $HOME/.iost_env
   echo -e "export TOP_DIR=$TOP_DIR"                                            >> $HOME/.iost_env
   echo -e "export SCRIPT_DIR=$SCRIPT_DIR"                                      >> $HOME/.iost_env
-  echo -e "export IOST_ROOT=$HOME/go/src/github.com/iost-official/go-iost"     >> $HOME/.iost_env
+  echo -e "export IOST_ROOT=$HOME/iost-unofficial/go-iost"                     >> $HOME/.iost_env
   echo -e "alias IOST=\"cd $IOST_ROOT\""                                       >> $HOME/.iost_env
 
   # if the tar.gz exists, don't download again
@@ -840,8 +841,8 @@ iost_install_sdk_go_sdk () {
 
   echo -e "---> $msg start: iost_install_sdk_go_sdk()"  		        | tee -a $INSTALL_LOG
 
-  echo -e "---> $run cd $HOME/go/src/github.com/iost-official"			
-  cd "$HOME/go/src/github.com/iost-official"					>> $INSTALL_LOG 2>&1
+  echo -e "---> $run cd $HOME/iost-unofficial"			
+  cd "$HOME/iost-unofficial"							>> $INSTALL_LOG 2>&1
 
   echo -e "---> $run git clone https://github.com/iost-official/go-sdk.git" 	
   git clone https://github.com/iost-official/go-sdk.git  			>> $INSTALL_LOG 2>&1
@@ -877,23 +878,28 @@ iost_install_iost_core () {
   echo -e "---> $msg setup the environment $HOME/.iost_env"
   source $HOME/.iost_env
 
-  echo -e "---> $msg cd $GOPATH/src"
-  cd $GOPATH/src
-  echo -e "---> $msg go get -d github.com/iost-official/go-iost"
-  go get -d github.com/iost-official/go-iost >> $INSTALL_LOG 2>&1
+  echo -e "---> $msg cd $HOME"
+  cd $HOME
+  echo -e "---> $msg git clone https://github.com/iost-official/go-iost.git"
+  git clone https://github.com/iost-official/go-iost.git >> $INSTALL_LOG 2>&1
 
-  echo -e "---> $msg use [cd $IOST_ROOT]"
-  cd $IOST_ROOT
+  cd go-iost
+  git lfs pull
+  make vmlib_install
+  make build install
 
-  echo -e "---> $run make build install"
-  make build install >> $INSTALL_LOG 2>&1
+  # echo -e "---> $msg use [cd $IOST_ROOT]"
+  # cd $IOST_ROOT
 
-  echo -e "---> $run cd vm/v8vm/v8"
-  cd vm/v8vm/v8
-  echo -e "---> $run make clean js_bin vm install"
+  # echo -e "---> $run make build install"
+  # make build install >> $INSTALL_LOG 2>&1
+
+  # echo -e "---> $run cd vm/v8vm/v8"
+  # cd vm/v8vm/v8
+  # echo -e "---> $run make clean js_bin vm install"
   #make clean js_bin vm install
-  make clean js_bin vm install deploy >> $INSTALL_LOG 2>&1
-  make deploy                         >> $INSTALL_LOG 2>&1
+  # make clean js_bin vm install deploy >> $INSTALL_LOG 2>&1
+  # make deploy                         >> $INSTALL_LOG 2>&1
 
   echo -e "---> $msg end: iost_install_core ()" | tee -a $INSTALL_LOG
 
@@ -911,6 +917,7 @@ iost_install_iost_core () {
 #
 iost_run () {
   cd $IOST_ROOT
+  echo -ej "  ---> $msg nohup iserver -f config/iserver.yml 2>$SERVER_START_LOG >$SERVER_LOG&"
   nohup iserver -f config/iserver.yml 2>$SERVER_START_LOG >$SERVER_LOG&
   sleep 5
 }
@@ -1262,7 +1269,7 @@ iost_baremetal_or_docker ()  {
 #
 iost_install_iost () {
 
-  export IOST_ROOT=$HOME/go/src/github.com/iost-official/go-iost
+  export IOST_ROOT=$HOME/iost-unofficial/go-iost
   export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
   export GOPATH=$HOME/go
   source $HOME/.iost_env
