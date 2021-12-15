@@ -878,8 +878,8 @@ iost_install_iost_core () {
   echo -e "---> $msg setup the environment $HOME/.iost_env"
   source $HOME/.iost_env
 
-  echo -e "---> $msg cd $HOME"
-  cd $HOME
+  echo -e "---> $msg cd $TOP_DIR"
+  cd "$TOP_DIR"
   echo -e "---> $msg git clone https://github.com/iost-official/go-iost.git"
   git clone https://github.com/iost-official/go-iost.git >> $INSTALL_LOG 2>&1
 
