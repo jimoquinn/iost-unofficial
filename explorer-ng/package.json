@@ -6,6 +6,6 @@
   "author": "Jim O'Quinn",
   "license": "MIT",
   "dependencies": {
-    "mongodb": "^3.6.0"
+    "mongodb": "^3.6.10"
   }
 }
